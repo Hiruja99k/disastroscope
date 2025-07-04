@@ -72,6 +72,10 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
+			fontFamily: {
+				'orbitron': ['Orbitron', 'monospace'],
+				'exo': ['Exo 2', 'sans-serif'],
+			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
 				'gradient-hero': 'var(--gradient-hero)',
@@ -151,6 +155,68 @@ export default {
 					'100%': {
 						transform: 'translateX(100%)'
 					}
+				},
+				'matrix-rain': {
+					'0%': {
+						transform: 'translateY(-100%)',
+						opacity: '0'
+					},
+					'10%': {
+						opacity: '1'
+					},
+					'90%': {
+						opacity: '1'
+					},
+					'100%': {
+						transform: 'translateY(100vh)',
+						opacity: '0'
+					}
+				},
+				'rotate-3d': {
+					'0%': {
+						transform: 'rotateY(0deg) rotateX(0deg)'
+					},
+					'100%': {
+						transform: 'rotateY(360deg) rotateX(360deg)'
+					}
+				},
+				'glow-pulse': {
+					'0%, 100%': {
+						filter: 'brightness(1) drop-shadow(0 0 20px currentColor)'
+					},
+					'50%': {
+						filter: 'brightness(1.2) drop-shadow(0 0 40px currentColor)'
+					}
+				},
+				'slide-in-right': {
+					'0%': {
+						transform: 'translateX(100%)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'translateX(0)',
+						opacity: '1'
+					}
+				},
+				'slide-in-left': {
+					'0%': {
+						transform: 'translateX(-100%)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'translateX(0)',
+						opacity: '1'
+					}
+				},
+				'zoom-in': {
+					'0%': {
+						transform: 'scale(0.8)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'scale(1)',
+						opacity: '1'
+					}
 				}
 			},
 			animation: {
@@ -160,7 +226,13 @@ export default {
 				'fade-in-up': 'fade-in-up 0.8s ease-out',
 				'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
 				'float': 'float 3s ease-in-out infinite',
-				'scan': 'scan 2s linear infinite'
+				'scan': 'scan 2s linear infinite',
+				'matrix-rain': 'matrix-rain 3s linear infinite',
+				'rotate-3d': 'rotate-3d 20s linear infinite',
+				'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
+				'slide-in-right': 'slide-in-right 0.8s ease-out',
+				'slide-in-left': 'slide-in-left 0.8s ease-out',
+				'zoom-in': 'zoom-in 0.6s ease-out'
 			}
 		}
 	},
