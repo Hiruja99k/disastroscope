@@ -4,76 +4,30 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   ArrowRight, 
-  Database, 
-  Globe, 
-  BarChart, 
-  Bell,
-  Zap,
   Shield,
   Brain,
-  Satellite,
-  Activity,
+  Globe,
+  Zap,
+  BarChart,
+  Users,
   Target,
+  CheckCircle,
+  Star,
+  Award,
   TrendingUp,
-  AlertTriangle,
-  Cpu,
-  Cloud,
+  Database,
+  Activity,
+  Bell,
   Eye,
-  Rocket
+  Play,
+  Download,
+  Calendar,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useRef, useEffect, useState } from 'react';
+import { useRef } from 'react';
 import heroImage from '@/assets/hero-image.jpg';
-
-// Floating particles component
-const FloatingParticles = () => {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(50)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute w-1 h-1 bg-primary/30 rounded-full animate-float"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 3}s`,
-            animationDuration: `${3 + Math.random() * 2}s`
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
-// Matrix rain effect
-const MatrixRain = () => {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
-      {[...Array(20)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute text-primary/30 text-xs font-mono animate-matrix-rain"
-          style={{
-            left: `${i * 5}%`,
-            animationDelay: `${Math.random() * 3}s`,
-            animationDuration: `${4 + Math.random() * 2}s`
-          }}
-        >
-          01010101
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// Scanning line effect
-const ScanningLine = () => {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <div className="absolute w-full h-px bg-gradient-to-r from-transparent via-primary to-transparent animate-scan opacity-50" />
-    </div>
-  );
-};
 
 export default function Landing() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -82,453 +36,431 @@ export default function Landing() {
     offset: ["start start", "end start"]
   });
 
-  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
-  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
 
   const features = [
     {
       icon: Brain,
-      title: 'Neural Prediction Engine',
-      description: 'Quantum-enhanced AI algorithms process 10TB+ of satellite data per second',
-      stats: '99.7% Accuracy',
-      color: 'text-primary',
-      delay: 0.1
+      title: 'AI-Powered Predictions',
+      description: 'Advanced machine learning algorithms analyze millions of data points to predict disasters with 94.2% accuracy',
+      benefits: ['Real-time analysis', 'Pattern recognition', 'Predictive modeling']
     },
     {
-      icon: Satellite,
-      title: 'Global Sensor Network',
-      description: 'Real-time monitoring through 847 satellites and 50,000+ ground sensors',
-      stats: '24/7 Coverage',
-      color: 'text-secondary',
-      delay: 0.2
+      icon: Globe,
+      title: 'Global Monitoring Network',
+      description: 'Comprehensive coverage across 195 countries with 24/7 satellite surveillance and ground sensors',
+      benefits: ['Worldwide coverage', '24/7 monitoring', 'Multi-source data']
     },
     {
       icon: Zap,
       title: 'Instant Alert System',
-      description: 'Sub-second threat detection with automated emergency response protocols',
-      stats: '0.3s Response',
-      color: 'text-warning',
-      delay: 0.3
+      description: 'Sub-second threat detection with automated notifications to emergency services and affected communities',
+      benefits: ['Instant notifications', 'Multi-channel alerts', 'Emergency integration']
     },
     {
       icon: Shield,
-      title: 'Risk Mitigation AI',
-      description: 'Predictive modeling for disaster impact assessment and evacuation planning',
-      stats: '10M+ Protected',
-      color: 'text-success',
-      delay: 0.4
+      title: 'Risk Assessment',
+      description: 'Comprehensive vulnerability analysis and impact assessment for informed decision-making',
+      benefits: ['Risk modeling', 'Impact analysis', 'Decision support']
     }
   ];
 
-  const techStack = [
-    { name: 'Quantum Computing', icon: Cpu, progress: 94 },
-    { name: 'Satellite Networks', icon: Globe, progress: 98 },
-    { name: 'AI/ML Models', icon: Brain, progress: 96 },
-    { name: 'Edge Computing', icon: Cloud, progress: 92 },
-    { name: 'IoT Sensors', icon: Activity, progress: 89 },
-    { name: 'Blockchain Security', icon: Shield, progress: 95 }
+  const solutions = [
+    {
+      icon: Database,
+      title: 'Data Integration Platform',
+      description: 'Seamlessly integrate multiple data sources including satellite imagery, weather stations, and IoT sensors'
+    },
+    {
+      icon: BarChart,
+      title: 'Analytics Dashboard',
+      description: 'Comprehensive visualization tools for monitoring trends, analyzing patterns, and generating reports'
+    },
+    {
+      icon: Bell,
+      title: 'Alert Management',
+      description: 'Customizable notification system with multi-level alerts and automated response protocols'
+    },
+    {
+      icon: Users,
+      title: 'Collaboration Tools',
+      description: 'Multi-agency coordination platform for emergency responders, government, and relief organizations'
+    }
   ];
 
-  const disasterTypes = [
-    { name: 'Earthquakes', count: '1,247', trend: '+12%', icon: Zap, color: 'text-warning' },
-    { name: 'Wildfires', count: '893', trend: '-8%', icon: Bell, color: 'text-destructive' },
-    { name: 'Floods', count: '2,156', trend: '+15%', icon: Database, color: 'text-primary' },
-    { name: 'Landslides', count: '567', trend: '+3%', icon: Target, color: 'text-secondary' }
+  const stats = [
+    { number: '99.2%', label: 'Prediction Accuracy', icon: Target },
+    { number: '195', label: 'Countries Covered', icon: Globe },
+    { number: '10M+', label: 'Lives Protected', icon: Users },
+    { number: '0.3s', label: 'Response Time', icon: Zap }
+  ];
+
+  const testimonials = [
+    {
+      name: 'Dr. Sarah Chen',
+      role: 'Director of Emergency Management',
+      organization: 'FEMA',
+      content: 'DisastroScope has revolutionized our disaster response capabilities. The AI-powered predictions have helped us save thousands of lives.',
+      rating: 5
+    },
+    {
+      name: 'Prof. Michael Rodriguez',
+      role: 'Climate Research Lead',
+      organization: 'NOAA',
+      content: 'The accuracy and speed of DisastroScope\'s predictions are unmatched. It\'s become an essential tool in our disaster preparedness strategy.',
+      rating: 5
+    },
+    {
+      name: 'Amanda Foster',
+      role: 'Emergency Response Coordinator',
+      organization: 'Red Cross International',
+      content: 'The platform\'s real-time monitoring and alert system have dramatically improved our response times and coordination efforts.',
+      rating: 5
+    }
   ];
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-gradient-hero relative overflow-hidden">
-      {/* Background Effects */}
-      <FloatingParticles />
-      <MatrixRain />
-      
-      {/* Interactive cursor glow */}
-      <div
-        className="fixed w-64 h-64 rounded-full bg-primary/5 blur-3xl pointer-events-none z-0"
-        style={{
-          left: mousePosition.x - 128,
-          top: mousePosition.y - 128,
-          transition: 'all 0.3s ease-out'
-        }}
-      />
-
+    <div ref={containerRef} className="min-h-screen bg-background">
       {/* Hero Section */}
       <motion.section 
-        style={{ y: textY }}
-        className="relative pt-32 pb-20 px-4 overflow-hidden z-10"
+        style={{ y: backgroundY }}
+        className="relative pt-24 pb-16 px-4 overflow-hidden"
       >
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5"></div>
+        <div className="max-w-7xl mx-auto relative">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
             <motion.div
-              initial={{ opacity: 0, x: -100 }}
+              initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="space-y-8 relative"
+              transition={{ duration: 0.8 }}
+              className="space-y-8"
             >
               <div className="space-y-6">
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2, duration: 0.8 }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
                 >
-                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 font-orbitron text-sm px-4 py-2">
-                    🚀 NEXT-GEN DISASTER INTELLIGENCE
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 px-4 py-2">
+                    🌍 Advanced Disaster Intelligence Platform
                   </Badge>
                 </motion.div>
                 
                 <motion.h1 
-                  initial={{ opacity: 0, y: 50 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.8 }}
-                  className="text-6xl lg:text-8xl font-orbitron font-black text-foreground leading-none tracking-tight"
+                  className="text-5xl lg:text-6xl font-bold text-foreground leading-tight font-poppins"
                 >
-                  DISASTRO
-                  <br />
-                  <span className="bg-gradient-primary bg-clip-text text-transparent animate-glow-pulse">
-                    SCOPE
+                  Predict. Monitor.{' '}
+                  <span className="bg-gradient-primary bg-clip-text text-transparent">
+                    Protect.
                   </span>
                 </motion.h1>
                 
                 <motion.p 
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6, duration: 0.8 }}
-                  className="text-xl lg:text-2xl text-muted-foreground font-exo leading-relaxed max-w-2xl"
+                  className="text-xl text-muted-foreground leading-relaxed font-inter"
                 >
-                  Revolutionary <span className="text-primary font-semibold">AI-powered platform</span> for 
-                  real-time disaster prediction, monitoring, and response coordination. 
-                  Protecting humanity through <span className="text-secondary font-semibold">quantum intelligence</span>.
+                  DisastroScope is the world's most advanced disaster prediction and monitoring platform. 
+                  Using cutting-edge AI and global satellite networks, we help governments and organizations 
+                  protect communities from natural disasters.
                 </motion.p>
               </div>
 
               <motion.div 
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8, duration: 0.8 }}
-                className="flex flex-col sm:flex-row gap-6"
+                className="flex flex-col sm:flex-row gap-4"
               >
-                <Button asChild size="lg" className="bg-gradient-primary hover:shadow-glow group font-orbitron text-lg px-8 py-4 h-auto">
+                <Button asChild size="lg" className="bg-gradient-primary hover:shadow-glow group font-medium">
                   <Link to="/dashboard">
-                    <Rocket className="mr-3 h-6 w-6 group-hover:animate-bounce" />
-                    LAUNCH MISSION CONTROL
-                    <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform" />
+                    Get Started
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
-                <Button variant="outline" size="lg" className="border-primary/30 hover:bg-primary/10 font-orbitron text-lg px-8 py-4 h-auto">
-                  <Eye className="mr-3 h-6 w-6" />
-                  WATCH SIMULATION
+                <Button variant="outline" size="lg" className="border-primary/20 hover:bg-primary/5 font-medium">
+                  <Play className="mr-2 h-5 w-5" />
+                  Watch Demo
+                </Button>
+                <Button variant="ghost" size="lg" className="hover:bg-muted/50 font-medium">
+                  <Download className="mr-2 h-5 w-5" />
+                  Download Brochure
                 </Button>
               </motion.div>
 
-              {/* Live Stats */}
+              {/* Stats */}
               <motion.div 
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.0, duration: 0.8 }}
-                className="grid grid-cols-3 gap-6 pt-8"
+                className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-8"
               >
-                {[
-                  { label: 'Prediction Accuracy', value: '99.7%', icon: Target },
-                  { label: 'Global Coverage', value: '195 Countries', icon: Globe },
-                  { label: 'Response Time', value: '0.3 Seconds', icon: Zap }
-                ].map((stat, index) => (
+                {stats.map((stat, index) => (
                   <motion.div
                     key={stat.label}
-                    initial={{ opacity: 0, scale: 0.8 }}
+                    initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 1.2 + index * 0.1, duration: 0.6 }}
-                    className="text-center relative group"
+                    className="text-center"
                   >
-                    <div className="relative">
-                      <ScanningLine />
-                      <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:animate-pulse-glow">
-                        <stat.icon className="h-6 w-6 text-primary-foreground" />
-                      </div>
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-3">
+                      <stat.icon className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="text-xl font-bold text-primary font-orbitron">{stat.value}</div>
-                    <div className="text-sm text-muted-foreground font-exo">{stat.label}</div>
+                    <div className="text-2xl font-bold text-foreground font-poppins">{stat.number}</div>
+                    <div className="text-sm text-muted-foreground font-inter">{stat.label}</div>
                   </motion.div>
                 ))}
               </motion.div>
             </motion.div>
 
-            {/* Right Content - Enhanced Hero Image */}
+            {/* Right Content - Hero Image */}
             <motion.div
-              initial={{ opacity: 0, x: 100 }}
+              initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
+              transition={{ duration: 0.8, delay: 0.2 }}
               className="relative"
             >
-              <div className="relative">
+              <div className="relative overflow-hidden rounded-2xl shadow-elevation">
+                <img
+                  src={heroImage}
+                  alt="DisastroScope Control Center"
+                  className="w-full h-auto"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent" />
+                
+                {/* Status Indicators */}
                 <motion.div
-                  style={{ y: backgroundY }}
-                  className="relative overflow-hidden rounded-2xl shadow-elevation group"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 1.0 }}
+                  className="absolute top-6 right-6 bg-card/95 backdrop-blur-sm p-4 rounded-lg shadow-card border border-border/50"
                 >
-                  <img
-                    src={heroImage}
-                    alt="DisastroScope Command Center"
-                    className="w-full h-auto transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/30 to-transparent" />
-                  
-                  {/* Animated overlays */}
-                  <div className="absolute inset-0">
-                    <ScanningLine />
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">System Online</p>
+                      <p className="text-xs text-success">All Services Operational</p>
+                    </div>
                   </div>
-                  
-                  {/* Floating status cards */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 30, rotate: -5 }}
-                    animate={{ opacity: 1, y: 0, rotate: 0 }}
-                    transition={{ delay: 1.5, duration: 0.8 }}
-                    className="absolute top-6 right-6 bg-card/90 backdrop-blur-lg p-4 rounded-xl shadow-elevation border border-border/50"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground font-orbitron">SYSTEM STATUS</p>
-                        <p className="text-xs text-success font-exo">ALL SYSTEMS OPERATIONAL</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                  
-                  <motion.div
-                    initial={{ opacity: 0, y: 30, rotate: 5 }}
-                    animate={{ opacity: 1, y: 0, rotate: 0 }}
-                    transition={{ delay: 1.7, duration: 0.8 }}
-                    className="absolute bottom-6 left-6 bg-card/90 backdrop-blur-lg p-4 rounded-xl shadow-elevation border border-border/50"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <AlertTriangle className="h-5 w-5 text-warning animate-pulse" />
-                      <div>
-                        <p className="text-sm font-semibold text-foreground font-orbitron">ACTIVE THREATS</p>
-                        <p className="text-xs text-warning font-exo">3 HIGH PRIORITY ALERTS</p>
-                      </div>
-                    </div>
-                  </motion.div>
                 </motion.div>
-
-                {/* Holographic elements */}
-                <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-xl animate-pulse-glow"></div>
-                <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-secondary/20 rounded-full blur-xl animate-pulse-glow" style={{ animationDelay: '1s' }}></div>
+                
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 1.2 }}
+                  className="absolute bottom-6 left-6 bg-card/95 backdrop-blur-sm p-4 rounded-lg shadow-card border border-border/50"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Activity className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Live Monitoring</p>
+                      <p className="text-xs text-primary">3,247 Active Sensors</p>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
             </motion.div>
           </div>
         </div>
       </motion.section>
 
-      {/* Technology Stack Section */}
-      <motion.section 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        className="py-20 px-4 relative z-10"
-      >
+      {/* Features Section */}
+      <section className="py-20 px-4 bg-muted/30">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl lg:text-5xl font-orbitron font-bold text-foreground mb-6">
-              QUANTUM-POWERED TECHNOLOGY
+            <h2 className="text-4xl font-bold text-foreground mb-4 font-poppins">
+              Why Choose DisastroScope?
             </h2>
-            <p className="text-xl text-muted-foreground font-exo max-w-3xl mx-auto">
-              Leveraging cutting-edge quantum computing, AI, and satellite networks for unparalleled disaster prediction capabilities.
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto font-inter">
+              Our comprehensive platform combines advanced technology with proven expertise 
+              to deliver unmatched disaster prediction and response capabilities.
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-3 gap-8 mb-16">
-            {techStack.map((tech, index) => (
-              <motion.div
-                key={tech.name}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1, duration: 0.6 }}
-                className="group"
-              >
-                <Card className="p-6 bg-gradient-card border-border/50 hover:shadow-elevation transition-all duration-500 hover:scale-105 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-4">
-                      <tech.icon className="h-8 w-8 text-primary group-hover:animate-pulse" />
-                      <span className="text-2xl font-bold text-primary font-orbitron">{tech.progress}%</span>
-                    </div>
-                    <h3 className="text-lg font-semibold text-foreground font-orbitron mb-2">{tech.name}</h3>
-                    <div className="w-full bg-muted/30 rounded-full h-2">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${tech.progress}%` }}
-                        transition={{ delay: 0.5 + index * 0.1, duration: 1 }}
-                        className="bg-gradient-primary h-2 rounded-full"
-                      />
-                    </div>
-                  </div>
-                  <ScanningLine />
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </motion.section>
-
-      {/* Advanced Features Section */}
-      <motion.section 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        className="py-20 px-4 relative z-10"
-      >
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl lg:text-5xl font-orbitron font-bold text-foreground mb-6">
-              MISSION-CRITICAL CAPABILITIES
-            </h2>
-          </motion.div>
-
-          <div className="grid lg:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-8">
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                initial={{ opacity: 0, x: index % 2 === 0 ? -100 : 100 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ delay: feature.delay, duration: 0.8 }}
-                className="group"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.6 }}
               >
-                <Card className="p-8 bg-gradient-card border-border/50 hover:shadow-elevation transition-all duration-500 h-full relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <div className="relative z-10">
-                    <div className="flex items-start space-x-6">
-                      <div className="w-16 h-16 bg-gradient-primary rounded-xl flex items-center justify-center flex-shrink-0 group-hover:animate-pulse-glow">
-                        <feature.icon className="h-8 w-8 text-primary-foreground" />
+                <Card className="p-8 bg-card border-border/50 hover:shadow-elevation transition-all duration-300 h-full">
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center">
+                        <feature.icon className="h-6 w-6 text-primary-foreground" />
                       </div>
-                      <div className="space-y-4 flex-1">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-2xl font-bold text-foreground font-orbitron">{feature.title}</h3>
-                          <Badge variant="outline" className={`${feature.color} bg-current/10 border-current/30 font-orbitron`}>
-                            {feature.stats}
-                          </Badge>
+                      <h3 className="text-2xl font-semibold text-foreground font-poppins">{feature.title}</h3>
+                    </div>
+                    <p className="text-muted-foreground leading-relaxed font-inter">{feature.description}</p>
+                    <div className="space-y-2">
+                      {feature.benefits.map((benefit, idx) => (
+                        <div key={idx} className="flex items-center space-x-2">
+                          <CheckCircle className="h-4 w-4 text-success" />
+                          <span className="text-sm text-foreground font-inter">{benefit}</span>
                         </div>
-                        <p className="text-muted-foreground font-exo leading-relaxed text-lg">{feature.description}</p>
-                      </div>
+                      ))}
                     </div>
                   </div>
-                  <ScanningLine />
                 </Card>
               </motion.div>
             ))}
           </div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* Live Disaster Monitoring */}
-      <motion.section 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        className="py-20 px-4 relative z-10"
-      >
+      {/* Solutions Section */}
+      <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl lg:text-5xl font-orbitron font-bold text-foreground mb-6">
-              REAL-TIME THREAT ANALYSIS
+            <h2 className="text-4xl font-bold text-foreground mb-4 font-poppins">
+              Comprehensive Solutions
             </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto font-inter">
+              Our integrated platform provides everything you need for effective disaster management.
+            </p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {disasterTypes.map((disaster, index) => (
+            {solutions.map((solution, index) => (
               <motion.div
-                key={disaster.name}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                key={solution.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
-                className="group"
               >
-                <Card className="p-6 bg-gradient-card border-border/50 hover:shadow-elevation transition-all duration-300 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="relative z-10 text-center space-y-4">
-                    <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto group-hover:animate-pulse-glow">
-                      <disaster.icon className="h-6 w-6 text-primary-foreground" />
+                <Card className="p-6 bg-card border-border/50 hover:shadow-card transition-all duration-300 text-center h-full">
+                  <div className="space-y-4">
+                    <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
+                      <solution.icon className="h-8 w-8 text-primary" />
                     </div>
-                    <h3 className="text-lg font-semibold text-foreground font-orbitron">{disaster.name}</h3>
-                    <div className="space-y-2">
-                      <div className="text-3xl font-bold text-primary font-orbitron">{disaster.count}</div>
-                      <div className={`text-sm font-medium ${disaster.trend.startsWith('+') ? 'text-warning' : 'text-success'} font-exo`}>
-                        {disaster.trend} this month
-                      </div>
-                    </div>
+                    <h3 className="text-xl font-semibold text-foreground font-poppins">{solution.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed font-inter">{solution.description}</p>
                   </div>
-                  <ScanningLine />
                 </Card>
               </motion.div>
             ))}
           </div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* Final CTA Section */}
-      <motion.section 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        className="py-20 px-4 relative z-10"
-      >
-        <div className="max-w-5xl mx-auto text-center">
+      {/* Testimonials Section */}
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="max-w-7xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="bg-gradient-card p-12 lg:p-16 rounded-3xl shadow-elevation border border-border/50 relative overflow-hidden"
+            className="text-center mb-16"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10"></div>
-            <div className="relative z-10">
-              <h2 className="text-4xl lg:text-5xl font-orbitron font-bold text-foreground mb-6">
-                JOIN THE MISSION
-              </h2>
-              <p className="text-xl lg:text-2xl text-muted-foreground font-exo mb-10 leading-relaxed">
-                Be part of the next generation of disaster prevention technology. 
-                Help us build a <span className="text-primary font-semibold">safer tomorrow</span> for humanity.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                <Button asChild size="lg" className="bg-gradient-primary hover:shadow-glow font-orbitron text-lg px-8 py-4 h-auto group">
+            <h2 className="text-4xl font-bold text-foreground mb-4 font-poppins">
+              Trusted by Leaders Worldwide
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto font-inter">
+              Emergency management professionals and researchers rely on DisastroScope for critical decisions.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <motion.div
+                key={testimonial.name}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.6 }}
+              >
+                <Card className="p-8 bg-card border-border/50 hover:shadow-elevation transition-all duration-300 h-full">
+                  <div className="space-y-6">
+                    <div className="flex space-x-1">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} className="h-5 w-5 text-warning fill-current" />
+                      ))}
+                    </div>
+                    <p className="text-foreground leading-relaxed italic font-inter">"{testimonial.content}"</p>
+                    <div className="space-y-1">
+                      <p className="font-semibold text-foreground font-poppins">{testimonial.name}</p>
+                      <p className="text-sm text-primary">{testimonial.role}</p>
+                      <p className="text-sm text-muted-foreground">{testimonial.organization}</p>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-5xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="bg-gradient-card p-12 lg:p-16 rounded-2xl shadow-elevation border border-border/50"
+          >
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <h2 className="text-4xl lg:text-5xl font-bold text-foreground font-poppins">
+                  Ready to Protect Your Community?
+                </h2>
+                <p className="text-xl text-muted-foreground max-w-3xl mx-auto font-inter">
+                  Join thousands of emergency management professionals using DisastroScope 
+                  to predict, monitor, and respond to natural disasters more effectively.
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button asChild size="lg" className="bg-gradient-primary hover:shadow-glow font-medium">
                   <Link to="/dashboard">
-                    <Rocket className="mr-3 h-6 w-6 group-hover:animate-bounce" />
-                    ACCESS COMMAND CENTER
+                    Start Free Trial
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button variant="outline" size="lg" className="border-primary/30 hover:bg-primary/10 font-orbitron text-lg px-8 py-4 h-auto">
-                  <Brain className="mr-3 h-6 w-6" />
-                  AI RESEARCH PARTNERSHIP
+                <Button variant="outline" size="lg" className="border-primary/20 hover:bg-primary/5 font-medium">
+                  <Calendar className="mr-2 h-5 w-5" />
+                  Schedule Demo
+                </Button>
+                <Button variant="ghost" size="lg" className="hover:bg-muted/50 font-medium">
+                  <Phone className="mr-2 h-5 w-5" />
+                  Contact Sales
                 </Button>
               </div>
+
+              <div className="flex items-center justify-center space-x-8 pt-8 border-t border-border/20">
+                <div className="flex items-center space-x-2">
+                  <Award className="h-5 w-5 text-warning" />
+                  <span className="text-sm text-muted-foreground font-inter">Award-Winning Platform</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Shield className="h-5 w-5 text-success" />
+                  <span className="text-sm text-muted-foreground font-inter">Enterprise Security</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  <span className="text-sm text-muted-foreground font-inter">24/7 Support</span>
+                </div>
+              </div>
             </div>
-            <ScanningLine />
-            <MatrixRain />
           </motion.div>
         </div>
-      </motion.section>
+      </section>
     </div>
   );
 }

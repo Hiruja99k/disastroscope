@@ -73,8 +73,9 @@ export default {
 				}
 			},
 			fontFamily: {
-				'orbitron': ['Orbitron', 'monospace'],
-				'exo': ['Exo 2', 'sans-serif'],
+				'inter': ['Inter', 'sans-serif'],
+				'poppins': ['Poppins', 'sans-serif'],
+				'sans': ['Inter', 'system-ui', 'sans-serif'],
 			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
