@@ -23,7 +23,9 @@ import {
   Download,
   Calendar,
   Phone,
-  Mail
+  Mail,
+  Satellite,
+  AlertTriangle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useRef } from 'react';
@@ -143,7 +145,8 @@ export default function Landing() {
                   transition={{ delay: 0.2, duration: 0.6 }}
                 >
                   <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 px-4 py-2">
-                    🌍 Advanced Disaster Intelligence Platform
+                    <Globe className="mr-2 h-4 w-4" />
+                    Advanced Disaster Intelligence Platform
                   </Badge>
                 </motion.div>
                 
