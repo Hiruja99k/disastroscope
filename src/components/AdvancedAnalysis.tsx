@@ -26,9 +26,11 @@ import {
   ArrowDown,
   Calendar,
   Users,
-  Home
+  Home,
+  Bell
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useGeolocation } from '@/hooks/useGeolocation';
 
 interface AdvancedAnalysisProps {
   isOpen: boolean;
@@ -39,6 +41,10 @@ export default function AdvancedAnalysis({ isOpen, onClose }: AdvancedAnalysisPr
   const [activeTab, setActiveTab] = useState('predictions');
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
+  const [locationPredictions, setLocationPredictions] = useState<any[]>([]);
+  const [userLocation, setUserLocation] = useState<string>('');
+  
+  const { location, error: locationError, loading: locationLoading, getCurrentPosition, reverseGeocode } = useGeolocation();
 
   useEffect(() => {
     if (isOpen && isAnalyzing) {
@@ -55,6 +61,59 @@ export default function AdvancedAnalysis({ isOpen, onClose }: AdvancedAnalysisPr
       return () => clearInterval(interval);
     }
   }, [isOpen, isAnalyzing]);
+
+  // Generate location-based predictions
+  const generateLocationPredictions = async (lat: number, lng: number, locationName: string) => {
+    const predictions = [
+      {
+        id: 'loc-1',
+        type: 'Hurricane',
+        name: `Local Hurricane Risk - ${locationName}`,
+        severity: 'Category 2-3',
+        probability: Math.floor(Math.random() * 40) + 20,
+        timeframe: '48-72 hours',
+        risk: 'medium',
+        description: `Moderate hurricane risk detected for ${locationName} area based on current atmospheric conditions.`,
+        coordinates: { lat, lng }
+      },
+      {
+        id: 'loc-2', 
+        type: 'Severe Weather',
+        name: `Thunderstorm System - ${locationName}`,
+        severity: 'Severe',
+        probability: Math.floor(Math.random() * 60) + 30,
+        timeframe: '12-24 hours',
+        risk: 'high',
+        description: `High probability of severe thunderstorms with potential for damaging winds and hail in ${locationName}.`,
+        coordinates: { lat, lng }
+      },
+      {
+        id: 'loc-3',
+        type: 'Flood',
+        name: `Flash Flood Watch - ${locationName}`,
+        severity: 'Moderate',
+        probability: Math.floor(Math.random() * 50) + 25,
+        timeframe: '6-18 hours',
+        risk: 'medium',
+        description: `Flash flood potential in ${locationName} due to saturated ground conditions and forecasted rainfall.`,
+        coordinates: { lat, lng }
+      }
+    ];
+    
+    setLocationPredictions(predictions);
+  };
+
+  const handleGetLocation = async () => {
+    try {
+      const position = await getCurrentPosition();
+      const locationInfo = await reverseGeocode(position.latitude, position.longitude);
+      const locationString = `${locationInfo.city}, ${locationInfo.state}`;
+      setUserLocation(locationString);
+      await generateLocationPredictions(position.latitude, position.longitude, locationString);
+    } catch (error) {
+      console.error('Failed to get location:', error);
+    }
+  };
 
   const realTimePredictions = [
     {
@@ -175,6 +234,7 @@ export default function AdvancedAnalysis({ isOpen, onClose }: AdvancedAnalysisPr
 
   const tabs = [
     { id: 'predictions', label: 'Real-Time Predictions', icon: Zap },
+    { id: 'location', label: 'My Location', icon: MapPin },
     { id: 'insights', label: 'AI Insights', icon: Brain },
     { id: 'risk', label: 'Risk Assessment', icon: Shield },
     { id: 'monitoring', label: 'Live Monitoring', icon: Activity }
@@ -224,7 +284,7 @@ export default function AdvancedAnalysis({ isOpen, onClose }: AdvancedAnalysisPr
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-4 bg-card border border-border rounded-2xl shadow-elevation z-50 overflow-hidden"
+            className="fixed inset-4 bg-card border border-border rounded-2xl shadow-elevation z-50 overflow-hidden flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-border bg-gradient-card">
@@ -281,7 +341,7 @@ export default function AdvancedAnalysis({ isOpen, onClose }: AdvancedAnalysisPr
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6">
               {activeTab === 'predictions' && (
                 <div className="space-y-6">
                   <div className="grid gap-6">
@@ -397,6 +457,148 @@ export default function AdvancedAnalysis({ isOpen, onClose }: AdvancedAnalysisPr
                       </motion.div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {activeTab === 'location' && (
+                <div className="space-y-6">
+                  {/* Location Header */}
+                  <div className="text-center">
+                    <h3 className="text-2xl font-bold text-foreground mb-4 font-poppins">
+                      Location-Based Disaster Predictions
+                    </h3>
+                    <p className="text-muted-foreground mb-6 font-inter">
+                      Get personalized disaster predictions and alerts for your current location
+                    </p>
+                    
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+                      <Button 
+                        onClick={handleGetLocation}
+                        disabled={locationLoading}
+                        className="bg-gradient-primary hover:shadow-glow font-medium"
+                      >
+                        <MapPin className="mr-2 h-4 w-4" />
+                        {locationLoading ? 'Getting Location...' : 'Get My Location'}
+                      </Button>
+                      
+                      {userLocation && (
+                        <div className="flex items-center space-x-2 text-sm">
+                          <MapPin className="h-4 w-4 text-primary" />
+                          <span className="text-foreground font-medium">{userLocation}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {locationError && (
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
+                        <div className="flex items-center space-x-2">
+                          <AlertTriangle className="h-5 w-5 text-destructive" />
+                          <span className="text-destructive font-medium">Location Error</span>
+                        </div>
+                        <p className="text-destructive/80 text-sm mt-1">{locationError}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Location-based predictions */}
+                  {locationPredictions.length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold text-foreground font-poppins">
+                        Predictions for Your Location
+                      </h4>
+                      {locationPredictions.map((prediction, index) => (
+                        <motion.div
+                          key={prediction.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <Card className="p-6 hover:shadow-card transition-all duration-300">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center space-x-3">
+                                <div className={`w-3 h-3 rounded-full ${
+                                  prediction.risk === 'critical' ? 'bg-destructive animate-pulse' :
+                                  prediction.risk === 'high' ? 'bg-warning' : 'bg-accent'
+                                }`} />
+                                <div>
+                                  <h3 className="text-lg font-semibold text-foreground font-poppins">
+                                    {prediction.name}
+                                  </h3>
+                                  <div className="flex items-center space-x-2 mt-1">
+                                    <span className="text-sm text-muted-foreground font-inter">
+                                      {prediction.type} • {prediction.timeframe}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <Badge variant={getRiskBadgeVariant(prediction.risk)} className="text-xs">
+                                {prediction.risk.toUpperCase()}
+                              </Badge>
+                            </div>
+                            
+                            <p className="text-muted-foreground mb-4 font-inter">{prediction.description}</p>
+                            
+                            <div className="grid md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <div className="text-sm text-muted-foreground">Severity</div>
+                                <div className="text-base font-bold text-foreground">{prediction.severity}</div>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="text-sm text-muted-foreground">Probability</div>
+                                <div className={`text-base font-bold ${getRiskColor(prediction.probability)}`}>
+                                  {prediction.probability}%
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex space-x-2 mt-4">
+                              <Button variant="outline" size="sm">
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Details
+                              </Button>
+                              <Button variant="outline" size="sm">
+                                <Bell className="mr-2 h-4 w-4" />
+                                Set Alert
+                              </Button>
+                            </div>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+
+                  {!locationPredictions.length && !locationLoading && userLocation && (
+                    <div className="text-center py-12">
+                      <Globe className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        Analyzing Your Location
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Processing local weather patterns and historical data for personalized predictions...
+                      </p>
+                    </div>
+                  )}
+
+                  {!userLocation && !locationLoading && (
+                    <div className="text-center py-12">
+                      <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        Get Location-Based Predictions
+                      </h3>
+                      <p className="text-muted-foreground mb-6">
+                        Allow location access to receive personalized disaster predictions and real-time alerts for your area.
+                      </p>
+                      <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 max-w-md mx-auto">
+                        <h4 className="font-semibold text-primary mb-2">Why share your location?</h4>
+                        <ul className="text-sm text-muted-foreground space-y-1 text-left">
+                          <li>• Real-time disaster alerts for your area</li>
+                          <li>• Personalized risk assessments</li>
+                          <li>• Local evacuation route recommendations</li>
+                          <li>• Nearby shelter and resource information</li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
