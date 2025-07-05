@@ -9,6 +9,7 @@ export default function Navigation() {
 
   const navigation = [
     { name: 'Home', href: '/' },
+    { name: 'Predictions', href: '/predictions' },
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'Insights', href: '/insights' },
     { name: 'About', href: '/about' },
@@ -22,9 +23,7 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow">
-              <Satellite className="h-6 w-6 text-primary-foreground" />
-            </div>
+            <Satellite className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold text-foreground font-poppins">DisastroScope</span>
           </Link>
 
