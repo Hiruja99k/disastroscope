@@ -150,7 +150,7 @@ export default function Landing() {
                 delay: 0.2,
                 duration: 0.6
               }}>
-                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 px-4 py-2">
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 px-4 py-2 mx-[240px]">
                     <Globe className="mr-2 h-4 w-4" />
                     Advanced Disaster Intelligence Platform
                   </Badge>
