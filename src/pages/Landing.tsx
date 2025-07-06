@@ -2,10 +2,14 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Shield, Brain, Globe, Zap, BarChart, Users, Target, CheckCircle, Star, Award, TrendingUp, Database, Activity, Bell, Eye, Play, Download, Calendar, Phone, Mail, Satellite, AlertTriangle } from 'lucide-react';
+import { ArrowRight, Shield, Brain, Globe, Zap, BarChart, Users, Target, CheckCircle, Star, Award, TrendingUp, Database, Activity, Bell, Eye, Play, Download, Calendar, Phone, Mail, Satellite, AlertTriangle, Cpu, Network, Layers, Radar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useRef } from 'react';
 import heroImage from '@/assets/hero-image.jpg';
+import aiDashboard from '@/assets/ai-dashboard.jpg';
+import satelliteMonitoring from '@/assets/satellite-monitoring.jpg';
+import neuralNetwork from '@/assets/neural-network.jpg';
+import commandCenter from '@/assets/command-center.jpg';
 export default function Landing() {
   const containerRef = useRef<HTMLDivElement>(null);
   const {
@@ -19,22 +23,26 @@ export default function Landing() {
     icon: Brain,
     title: 'AI-Powered Predictions',
     description: 'Advanced machine learning algorithms analyze millions of data points to predict disasters with 94.2% accuracy',
-    benefits: ['Real-time analysis', 'Pattern recognition', 'Predictive modeling']
+    benefits: ['Real-time analysis', 'Pattern recognition', 'Predictive modeling'],
+    image: neuralNetwork
   }, {
     icon: Globe,
     title: 'Global Monitoring Network',
     description: 'Comprehensive coverage across 195 countries with 24/7 satellite surveillance and ground sensors',
-    benefits: ['Worldwide coverage', '24/7 monitoring', 'Multi-source data']
+    benefits: ['Worldwide coverage', '24/7 monitoring', 'Multi-source data'],
+    image: satelliteMonitoring
   }, {
     icon: Zap,
     title: 'Instant Alert System',
     description: 'Sub-second threat detection with automated notifications to emergency services and affected communities',
-    benefits: ['Instant notifications', 'Multi-channel alerts', 'Emergency integration']
+    benefits: ['Instant notifications', 'Multi-channel alerts', 'Emergency integration'],
+    image: commandCenter
   }, {
     icon: Shield,
     title: 'Risk Assessment',
     description: 'Comprehensive vulnerability analysis and impact assessment for informed decision-making',
-    benefits: ['Risk modeling', 'Impact analysis', 'Decision support']
+    benefits: ['Risk modeling', 'Impact analysis', 'Decision support'],
+    image: aiDashboard
   }];
   const solutions = [{
     icon: Database,
@@ -52,6 +60,28 @@ export default function Landing() {
     icon: Users,
     title: 'Collaboration Tools',
     description: 'Multi-agency coordination platform for emergency responders, government, and relief organizations'
+  }];
+
+  const aiAgents = [{
+    icon: Cpu,
+    title: 'Climate Intelligence Agent',
+    description: 'Analyzes weather patterns, temperature fluctuations, and atmospheric conditions using deep learning models',
+    capabilities: ['Weather prediction', 'Climate modeling', 'Atmospheric analysis']
+  }, {
+    icon: Network,
+    title: 'Seismic Analysis Agent',
+    description: 'Monitors tectonic activity and predicts earthquake probabilities using neural network algorithms',
+    capabilities: ['Earthquake prediction', 'Tectonic monitoring', 'Fault line analysis']
+  }, {
+    icon: Layers,
+    title: 'Flood Risk Agent',
+    description: 'Processes hydrological data and rainfall patterns to forecast flood risks in real-time',
+    capabilities: ['Flood forecasting', 'Water level monitoring', 'Drainage analysis']
+  }, {
+    icon: Radar,
+    title: 'Multi-Hazard Agent',
+    description: 'Integrates all disaster types for comprehensive risk assessment and coordinated response planning',
+    capabilities: ['Multi-risk analysis', 'Response coordination', 'Impact assessment']
   }];
   const stats = [{
     number: '99.2%',
@@ -90,36 +120,41 @@ export default function Landing() {
     rating: 5
   }];
   return <div ref={containerRef} className="min-h-screen bg-background relative overflow-hidden">
-      {/* Background Animation */}
+      {/* Professional Background Animation */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-secondary/3"></div>
-        {[...Array(30)].map((_, i) => <motion.div key={i} className="absolute w-px h-px bg-primary/30 rounded-full" style={{
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/2 via-background to-secondary/2"></div>
+        
+        {/* Minimalistic floating dots */}
+        {[...Array(12)].map((_, i) => <motion.div key={i} className="absolute w-1 h-1 bg-primary/20 rounded-full" style={{
         left: `${Math.random() * 100}%`,
         top: `${Math.random() * 100}%`
       }} animate={{
-        y: [0, -30, 0],
-        opacity: [0.1, 0.6, 0.1],
-        scale: [1, 1.5, 1]
+        y: [0, -20, 0],
+        opacity: [0.1, 0.4, 0.1]
       }} transition={{
-        duration: 4 + Math.random() * 3,
+        duration: 8 + Math.random() * 4,
         repeat: Infinity,
-        delay: Math.random() * 3,
+        delay: Math.random() * 5,
         ease: "easeInOut"
       }} />)}
-        {/* Floating particles */}
-        {[...Array(15)].map((_, i) => <motion.div key={`particle-${i}`} className="absolute w-1 h-1 bg-secondary/20 rounded-full" style={{
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`
-      }} animate={{
-        x: [0, 20, -20, 0],
-        y: [0, -40, 0],
-        opacity: [0.2, 0.8, 0.2]
-      }} transition={{
-        duration: 6 + Math.random() * 4,
-        repeat: Infinity,
-        delay: Math.random() * 4,
-        ease: "linear"
-      }} />)}
+        
+        {/* Subtle grid lines */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="w-full h-full bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+        </div>
+        
+        {/* Gentle wave animation */}
+        <motion.div 
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent"
+          animate={{
+            x: ["-100%", "100%"]
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
       </div>
 
       {/* Hero Section */}
@@ -140,21 +175,23 @@ export default function Landing() {
             duration: 0.8
           }} className="space-y-8">
               <div className="space-y-6">
-                <motion.div initial={{
-                opacity: 0,
-                scale: 0.9
-              }} animate={{
-                opacity: 1,
-                scale: 1
-              }} transition={{
-                delay: 0.2,
-                duration: 0.6
-              }}>
-                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 px-4 py-2 mx-[240px]">
-                    <Globe className="mr-2 h-4 w-4" />
-                    Advanced Disaster Intelligence Platform
-                  </Badge>
-                </motion.div>
+                <div className="flex justify-center">
+                  <motion.div initial={{
+                  opacity: 0,
+                  scale: 0.9
+                }} animate={{
+                  opacity: 1,
+                  scale: 1
+                }} transition={{
+                  delay: 0.2,
+                  duration: 0.6
+                }}>
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 px-4 py-2">
+                      <Globe className="mr-2 h-4 w-4" />
+                      Advanced Disaster Intelligence Platform
+                    </Badge>
+                  </motion.div>
+                </div>
                 
                 <motion.h1 initial={{
                 opacity: 0,
@@ -181,7 +218,7 @@ export default function Landing() {
               }} transition={{
                 delay: 0.6,
                 duration: 0.8
-              }} className="text-xl text-muted-foreground leading-relaxed font-inter">
+              }} className="text-xl text-muted-foreground leading-relaxed font-inter text-center max-w-4xl mx-auto">
                   DisastroScope is the world's most advanced disaster prediction and monitoring platform. 
                   Using cutting-edge AI and global satellite networks, we help governments and organizations 
                   protect communities from natural disasters.
@@ -197,7 +234,7 @@ export default function Landing() {
             }} transition={{
               delay: 0.8,
               duration: 0.8
-            }} className="flex flex-col sm:flex-row gap-4">
+            }} className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="bg-gradient-primary hover:shadow-glow group font-medium">
                   <Link to="/dashboard">
                     Get Started
@@ -335,7 +372,7 @@ export default function Landing() {
             delay: index * 0.1,
             duration: 0.6
           }}>
-                <Card className="p-8 bg-card border-border/50 hover:shadow-elevation transition-all duration-300 h-full">
+                <Card className="p-8 bg-card border-border/50 hover:shadow-elevation transition-all duration-300 h-full overflow-hidden">
                   <div className="space-y-6">
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center">
@@ -343,6 +380,13 @@ export default function Landing() {
                       </div>
                       <h3 className="text-2xl font-semibold text-foreground font-poppins">{feature.title}</h3>
                     </div>
+                    
+                    {/* Feature Image */}
+                    <div className="relative overflow-hidden rounded-lg">
+                      <img src={feature.image} alt={feature.title} className="w-full h-48 object-cover transition-transform duration-300 hover:scale-105" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+                    </div>
+                    
                     <p className="text-muted-foreground leading-relaxed font-inter">{feature.description}</p>
                     <div className="space-y-2">
                       {feature.benefits.map((benefit, idx) => <div key={idx} className="flex items-center space-x-2">
@@ -395,6 +439,63 @@ export default function Landing() {
                     </div>
                     <h3 className="text-xl font-semibold text-foreground font-poppins">{solution.title}</h3>
                     <p className="text-muted-foreground leading-relaxed font-inter">{solution.description}</p>
+                  </div>
+                </Card>
+              </motion.div>)}
+          </div>
+        </div>
+      </section>
+
+      {/* AI Agents Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <motion.div initial={{
+          opacity: 0,
+          y: 30
+        }} whileInView={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.8
+        }} className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-foreground mb-4 font-poppins">
+              AI & ML Intelligent Agents
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto font-inter">
+              Our specialized AI agents work together to provide comprehensive disaster prediction and analysis across multiple hazard types.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {aiAgents.map((agent, index) => <motion.div key={agent.title} initial={{
+            opacity: 0,
+            y: 30
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            delay: index * 0.1,
+            duration: 0.6
+          }}>
+                <Card className="p-8 bg-gradient-card border-border/50 hover:shadow-elevation transition-all duration-300 h-full">
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-14 h-14 bg-gradient-primary rounded-xl flex items-center justify-center">
+                        <agent.icon className="h-7 w-7 text-primary-foreground" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-semibold text-foreground font-poppins">{agent.title}</h3>
+                        <div className="w-12 h-1 bg-gradient-primary rounded-full mt-1"></div>
+                      </div>
+                    </div>
+                    <p className="text-muted-foreground leading-relaxed font-inter">{agent.description}</p>
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-foreground font-poppins">Key Capabilities:</p>
+                      {agent.capabilities.map((capability, idx) => <div key={idx} className="flex items-center space-x-3">
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                          <span className="text-sm text-foreground font-inter">{capability}</span>
+                        </div>)}
+                    </div>
                   </div>
                 </Card>
               </motion.div>)}
