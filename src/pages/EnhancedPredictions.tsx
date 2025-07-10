@@ -187,7 +187,7 @@ export default function EnhancedPredictions() {
     {
       id: 'tsunami',
       name: 'Tsunami Wave Modeling',
-      icon: Waves,
+      icon: CloudRain,
       accuracy: '96.1%',
       lastUpdate: '15 minutes ago',
       status: 'active',

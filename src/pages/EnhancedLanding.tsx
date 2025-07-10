@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, Shield, Brain, Globe, Zap, BarChart, Users, Target, CheckCircle, Star, Award, TrendingUp, Database, Activity, Bell, Eye, Play, Download, Calendar, Phone, Mail, Satellite, AlertTriangle, Cpu, Network, Layers, Radar, Clock, Filter, Search, Settings, Lock, Wifi, Monitor, Smartphone, Tablet, Server, Cloud, MessageSquare, FileText, BarChart3, PieChart, LineChart, MapPin, Thermometer, Wind, Droplets, Mountain, Waves, Flame, MousePointer, RefreshCw, MoreHorizontal, ExternalLink, ChevronRight, ChevronDown, Menu, X, Home, Dashboard, BookOpen, HelpCircle, UserCheck, Briefcase, Building, Headphones, Mic, VideoIcon, Share2, Copy, Link2 } from 'lucide-react';
+import { ArrowRight, Shield, Brain, Globe, Zap, BarChart, Users, Target, CheckCircle, Star, Award, TrendingUp, Database, Activity, Bell, Eye, Play, Download, Calendar, Phone, Mail, Satellite, AlertTriangle, Cpu, Network, Layers, Radar, Clock, Filter, Search, Settings, Lock, Wifi, Monitor, Smartphone, Tablet, Server, Cloud, MessageSquare, FileText, BarChart3, PieChart, LineChart, MapPin, Thermometer, Wind, Droplets, Mountain, Waves, Flame, MousePointer, RefreshCw, MoreHorizontal, ExternalLink, ChevronRight, ChevronDown, Menu, X, Home, BookOpen, HelpCircle, UserCheck, Briefcase, Building, Headphones, Mic, VideoIcon, Share2, Copy, Link2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useRef, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';

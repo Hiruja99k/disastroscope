@@ -341,7 +341,7 @@ export default function EnhancedDashboard() {
                   </div>
                 </Card>
               </motion.div>
-            ))
+            ))}
           </div>
         </motion.div>
 
