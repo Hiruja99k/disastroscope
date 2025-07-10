@@ -2,9 +2,12 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Shield, Brain, Globe, Zap, BarChart, Users, Target, CheckCircle, Star, Award, TrendingUp, Database, Activity, Bell, Eye, Play, Download, Calendar, Phone, Mail, Satellite, AlertTriangle, Cpu, Network, Layers, Radar } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { ArrowRight, Shield, Brain, Globe, Zap, BarChart, Users, Target, CheckCircle, Star, Award, TrendingUp, Database, Activity, Bell, Eye, Play, Download, Calendar, Phone, Mail, Satellite, AlertTriangle, Cpu, Network, Layers, Radar, Clock, Filter, Search, Settings, Lock, Wifi, Monitor, Smartphone, Tablet, Server, Cloud, MessageSquare, FileText, BarChart3, PieChart, LineChart, MapPin, Thermometer, Wind, Droplets, Mountain, Waves, Flame, MousePointer, RefreshCw, MoreHorizontal, ExternalLink, ChevronRight, ChevronDown, Menu, X, Home, Dashboard, BookOpen, HelpCircle, UserCheck, Briefcase, Building, Headphones, Mic, VideoIcon, Share2, Copy, Link2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import heroImage from '@/assets/hero-image.jpg';
 import aiDashboard from '@/assets/ai-dashboard.jpg';
 import satelliteMonitoring from '@/assets/satellite-monitoring.jpg';
@@ -12,6 +15,12 @@ import neuralNetwork from '@/assets/neural-network.jpg';
 import commandCenter from '@/assets/command-center.jpg';
 export default function Landing() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [scrolled, setScrolled] = useState(false);
+  
   const {
     scrollYProgress
   } = useScroll({
@@ -19,6 +28,24 @@ export default function Landing() {
     offset: ["start start", "end start"]
   });
   const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleSubscribe = () => {
+    if (email) {
+      toast({
+        title: "Successfully subscribed!",
+        description: "You'll receive updates about our latest features and insights.",
+      });
+      setEmail('');
+    }
+  };
   const features = [{
     icon: Brain,
     title: 'AI-Powered Predictions',
@@ -47,20 +74,149 @@ export default function Landing() {
   const solutions = [{
     icon: Database,
     title: 'Data Integration Platform',
-    description: 'Seamlessly integrate multiple data sources including satellite imagery, weather stations, and IoT sensors'
+    description: 'Seamlessly integrate multiple data sources including satellite imagery, weather stations, and IoT sensors',
+    features: ['Multi-source data fusion', 'Real-time processing', 'API integrations', 'Data quality assurance']
   }, {
     icon: BarChart,
     title: 'Analytics Dashboard',
-    description: 'Comprehensive visualization tools for monitoring trends, analyzing patterns, and generating reports'
+    description: 'Comprehensive visualization tools for monitoring trends, analyzing patterns, and generating reports',
+    features: ['Interactive visualizations', 'Custom reports', 'Trend analysis', 'Export capabilities']
   }, {
     icon: Bell,
     title: 'Alert Management',
-    description: 'Customizable notification system with multi-level alerts and automated response protocols'
+    description: 'Customizable notification system with multi-level alerts and automated response protocols',
+    features: ['Multi-channel alerts', 'Smart filtering', 'Response tracking', 'Escalation rules']
   }, {
     icon: Users,
     title: 'Collaboration Tools',
-    description: 'Multi-agency coordination platform for emergency responders, government, and relief organizations'
+    description: 'Multi-agency coordination platform for emergency responders, government, and relief organizations',
+    features: ['Team coordination', 'Resource sharing', 'Communication tools', 'Access controls']
   }];
+
+  const platformFeatures = [
+    {
+      category: 'Monitoring',
+      icon: Monitor,
+      items: [
+        { name: 'Real-time Surveillance', description: 'Continuous monitoring across all regions' },
+        { name: 'Multi-sensor Networks', description: 'Integrated sensor ecosystem' },
+        { name: 'Satellite Integration', description: 'Global satellite coverage' },
+        { name: 'Weather Stations', description: '50,000+ connected stations' }
+      ]
+    },
+    {
+      category: 'Analysis',
+      icon: Brain,
+      items: [
+        { name: 'AI Prediction Models', description: 'Advanced machine learning algorithms' },
+        { name: 'Pattern Recognition', description: 'Historical data analysis' },
+        { name: 'Risk Assessment', description: 'Comprehensive threat evaluation' },
+        { name: 'Impact Modeling', description: 'Damage and casualty predictions' }
+      ]
+    },
+    {
+      category: 'Response',
+      icon: Zap,
+      items: [
+        { name: 'Instant Alerts', description: 'Sub-second notification system' },
+        { name: 'Emergency Protocols', description: 'Automated response triggers' },
+        { name: 'Resource Deployment', description: 'Optimized resource allocation' },
+        { name: 'Coordination Hub', description: 'Multi-agency collaboration' }
+      ]
+    }
+  ];
+
+  const integrations = [
+    { name: 'NOAA', logo: '🌊', type: 'Weather Data' },
+    { name: 'USGS', logo: '🌍', type: 'Geological Data' },
+    { name: 'NASA', logo: '🛰️', type: 'Satellite Imagery' },
+    { name: 'WHO', logo: '🏥', type: 'Health Data' },
+    { name: 'FEMA', logo: '🚨', type: 'Emergency Response' },
+    { name: 'Red Cross', logo: '➕', type: 'Humanitarian Aid' }
+  ];
+
+  const pricingPlans = [
+    {
+      name: 'Starter',
+      price: '$99',
+      period: '/month',
+      description: 'Perfect for small organizations and local governments',
+      features: [
+        'Regional monitoring (up to 3 states)',
+        'Basic AI predictions',
+        'Email alerts',
+        'Standard dashboard',
+        'API access (1000 calls/month)',
+        'Community support'
+      ],
+      popular: false
+    },
+    {
+      name: 'Professional',
+      price: '$499',
+      period: '/month',
+      description: 'Ideal for federal agencies and large organizations',
+      features: [
+        'National monitoring coverage',
+        'Advanced AI predictions',
+        'Multi-channel alerts (SMS, Email, Push)',
+        'Custom dashboards',
+        'Unlimited API access',
+        'Priority support',
+        'Custom integrations',
+        'Advanced analytics'
+      ],
+      popular: true
+    },
+    {
+      name: 'Enterprise',
+      price: 'Custom',
+      period: '',
+      description: 'Tailored solution for international operations',
+      features: [
+        'Global monitoring coverage',
+        'Custom AI model training',
+        'White-label solution',
+        'Dedicated infrastructure',
+        'On-premise deployment',
+        '24/7 dedicated support',
+        'Custom development',
+        'SLA guarantees'
+      ],
+      popular: false
+    }
+  ];
+
+  const useCases = [
+    {
+      title: 'Government Agencies',
+      icon: Building,
+      description: 'Federal and local governments use DisastroScope for national disaster preparedness',
+      metrics: ['95% faster response times', '60% reduction in casualties', '$2.3B in damages prevented'],
+      image: commandCenter
+    },
+    {
+      title: 'Emergency Services',
+      icon: AlertTriangle,
+      description: 'First responders rely on our real-time alerts and coordination tools',
+      metrics: ['10x improved coordination', '40% faster deployment', '85% accuracy in predictions'],
+      image: satelliteMonitoring
+    },
+    {
+      title: 'Insurance Companies',
+      icon: Shield,
+      description: 'Insurance providers use our risk models for accurate premium calculations',
+      metrics: ['30% better risk assessment', '$500M in prevented claims', '99.2% model accuracy'],
+      image: aiDashboard
+    },
+    {
+      title: 'Research Institutions',
+      icon: BookOpen,
+      description: 'Academic researchers access comprehensive historical and real-time data',
+      metrics: ['150+ research partnerships', '1000+ published papers', '50TB+ data processed'],
+      image: neuralNetwork
+    }
+  ];
 
   const aiAgents = [{
     icon: Cpu,
