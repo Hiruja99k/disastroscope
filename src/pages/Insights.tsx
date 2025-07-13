@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import DisasterChart from '@/components/charts/DisasterChart';
 import { 
   BarChart,
   LineChart,
@@ -166,12 +167,12 @@ export default function Insights() {
                   </Badge>
                 </div>
                 
-                {/* Chart Placeholder */}
-                <div className="h-48 bg-muted/20 rounded-lg flex items-center justify-center mb-4">
-                  <div className="text-center space-y-2">
-                    <chart.icon className="h-12 w-12 text-primary mx-auto animate-pulse-glow" />
-                    <p className="text-sm text-muted-foreground">Chart.js Integration</p>
-                  </div>
+                {/* Real Chart */}
+                <div className="h-48 mb-4">
+                  <DisasterChart 
+                    type={chart.icon === LineChart ? 'line' : chart.icon === BarChart ? 'bar' : 'pie'}
+                    title={chart.subtitle}
+                  />
                 </div>
                 
                 <p className="text-sm text-muted-foreground">{chart.description}</p>
@@ -247,21 +248,21 @@ export default function Insights() {
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="p-6 bg-gradient-card border-border/50">
               <h3 className="text-xl font-semibold text-foreground mb-4">Global Disaster Frequency</h3>
-              <div className="h-64 bg-muted/20 rounded-lg flex items-center justify-center">
-                <div className="text-center space-y-2">
-                  <BarChart className="h-12 w-12 text-primary mx-auto animate-pulse-glow" />
-                  <p className="text-sm text-muted-foreground">Historical trend analysis</p>
-                </div>
+              <div className="h-64">
+                <DisasterChart 
+                  type="bar"
+                  title="Historical trend analysis"
+                />
               </div>
             </Card>
 
             <Card className="p-6 bg-gradient-card border-border/50">
               <h3 className="text-xl font-semibold text-foreground mb-4">Risk Assessment Timeline</h3>
-              <div className="h-64 bg-muted/20 rounded-lg flex items-center justify-center">
-                <div className="text-center space-y-2">
-                  <LineChart className="h-12 w-12 text-secondary mx-auto animate-pulse-glow" />
-                  <p className="text-sm text-muted-foreground">Predictive modeling results</p>
-                </div>
+              <div className="h-64">
+                <DisasterChart 
+                  type="line"
+                  title="Predictive modeling results"
+                />
               </div>
             </Card>
           </div>

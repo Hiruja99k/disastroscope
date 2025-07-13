@@ -34,34 +34,20 @@ const getEventTypeIcon = (type: string) => {
   }
 };
 
-// Simplified map component for now - can be enhanced with actual Leaflet later
-const SimpleMapPlaceholder = ({ markers }: { markers: any[] }) => {
+// Import the actual InteractiveMap component
+import InteractiveMap from './InteractiveMap';
+
+// Real map component using InteractiveMap
+const RealMapComponent = ({ markers }: { markers: any[] }) => {
   return (
-    <div className="relative h-full bg-gradient-to-br from-primary/5 to-secondary/5 rounded-lg overflow-hidden">
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djFoLTJjMC0uNTUuNDUtMSAxLTFzMSAuNDUgMSAxem0tMiAwaDJ2MWgtMnYtMXptMi0xaDJjMCAuNTUtLjQ1IDEtMSAxcy0xLS40NS0xLTF6bTItMWgtMXYtMWgxdjF6bS0xLTFoLTF2LTFoMXYxem0tMS0xaC0xdi0xaDJjMCAuNTUtLjQ1IDEtMSAxem0tMS0xaC0xdi0xaDJ2MWgtMXoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-10"></div>
+    <div className="relative h-full">
+      <InteractiveMap 
+        height="100%" 
+        showControls={false} 
+        enableDrawing={false}
+      />
       
-      {/* Simulated World Map Outline */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <Globe className="h-16 w-16 text-primary/20" />
-      </div>
-      
-      {/* Disaster Markers */}
-      {markers.slice(0, 8).map((marker, index) => (
-        <div
-          key={`marker-${index}`}
-          className={`absolute w-4 h-4 rounded-full animate-pulse cursor-pointer ${getDisasterColor(
-            marker.event_type || marker.prediction_type,
-            marker.severity || marker.severity_level || 'medium'
-          )}`}
-          style={{
-            left: `${20 + (index * 8) % 60}%`,
-            top: `${20 + (index * 12) % 60}%`,
-          }}
-          title={marker.name || `${marker.prediction_type} Prediction`}
-        />
-      ))}
-      
-      <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm p-3 rounded-lg border border-border/50">
+      <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm p-3 rounded-lg border border-border/50 z-10">
         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
           <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
           <span>Live Data - {markers.length} active threats</span>
@@ -121,7 +107,7 @@ export default function RealTimeMap({ height = '400px', showControls = true }: R
       )}
 
       <div style={{ height }} className="rounded-lg overflow-hidden border border-border">
-        <SimpleMapPlaceholder markers={allMarkers} />
+        <RealMapComponent markers={allMarkers} />
       </div>
 
       {/* Interactive Event List */}
