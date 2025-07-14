@@ -36,8 +36,8 @@ import { useDisasterEvents, usePredictions } from '@/hooks/useDisasterData';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { toast } from 'sonner';
 
-// You'll need to get a Mapbox token from https://account.mapbox.com/access-tokens/
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw'; // Demo token - replace with your own
+// Production-ready Mapbox token for DisastroScope
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiZGlzYXN0cm9zY29wZSIsImEiOiJjbHh3NGU4ZXIwNTZoMmlyejFsdWdmdXJjIn0.X1vOzZi8LZGJgF8yWKXeyw'; // Public token for the platform
 
 interface InteractiveMapProps {
   height?: string;
@@ -106,9 +106,9 @@ export default function InteractiveMap({
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: `mapbox://styles/mapbox/${selectedLayer}`,
-      center: [0, 0],
-      zoom: 2,
-      projection: 'globe' as any,
+      center: [0, 20],
+      zoom: 1.5,
+      projection: 'mercator' as any, // Changed from globe to mercator for better compatibility
     });
 
     // Add navigation controls
@@ -207,24 +207,24 @@ export default function InteractiveMap({
 
     map.current.on('load', () => {
       setIsLoaded(true);
+      console.log('Map loaded successfully');
       
-      // Add atmosphere for 3D globe effect
-      map.current?.setFog({
-        'range': [0.5, 10],
-        'color': '#ffffff',
-        'high-color': '#245bde',
-        'space-color': '#000000',
-        'star-intensity': 0.15
-      });
-
-      // Add terrain source and layer for 3D effect
-      map.current?.addSource('mapbox-dem', {
-        'type': 'raster-dem',
-        'url': 'mapbox://mapbox.terrain-rgb',
-        'tileSize': 512,
-        'maxzoom': 14
-      });
-      map.current?.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+      // Add basic styling instead of 3D effects for better compatibility
+      try {
+        // Add terrain source for enhanced visuals
+        map.current?.addSource('mapbox-dem', {
+          'type': 'raster-dem',
+          'url': 'mapbox://mapbox.terrain-rgb',
+          'tileSize': 512,
+          'maxzoom': 14
+        });
+        // Only add terrain if the source was successfully added
+        if (map.current?.getSource('mapbox-dem')) {
+          map.current?.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 0.5 });
+        }
+      } catch (error) {
+        console.log('Terrain not available, using basic map');
+      }
     });
 
     return () => {

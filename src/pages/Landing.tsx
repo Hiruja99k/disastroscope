@@ -13,6 +13,7 @@ import aiDashboard from '@/assets/ai-dashboard.jpg';
 import satelliteMonitoring from '@/assets/satellite-monitoring.jpg';
 import neuralNetwork from '@/assets/neural-network.jpg';
 import commandCenter from '@/assets/command-center.jpg';
+import techBackground from '@/assets/tech-background.jpg';
 export default function Landing() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -276,39 +277,105 @@ export default function Landing() {
     rating: 5
   }];
   return <div ref={containerRef} className="min-h-screen bg-background relative overflow-hidden">
-      {/* Professional Background Animation */}
+      {/* Advanced Background with Video-like Animation */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/2 via-background to-secondary/2"></div>
-        
-        {/* Minimalistic floating dots */}
-        {[...Array(12)].map((_, i) => <motion.div key={i} className="absolute w-1 h-1 bg-primary/20 rounded-full" style={{
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`
-      }} animate={{
-        y: [0, -20, 0],
-        opacity: [0.1, 0.4, 0.1]
-      }} transition={{
-        duration: 8 + Math.random() * 4,
-        repeat: Infinity,
-        delay: Math.random() * 5,
-        ease: "easeInOut"
-      }} />)}
-        
-        {/* Subtle grid lines */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="w-full h-full bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-        </div>
-        
-        {/* Gentle wave animation */}
+        {/* Animated background image with overlay */}
         <motion.div 
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ 
+            backgroundImage: `url(${techBackground})`,
+            backgroundAttachment: 'fixed'
+          }}
           animate={{
-            x: ["-100%", "100%"]
+            scale: [1, 1.05, 1],
           }}
           transition={{
             duration: 20,
             repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        {/* Gradient overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/85 to-background/95"></div>
+        
+        {/* Dynamic floating particles */}
+        {[...Array(20)].map((_, i) => (
+          <motion.div 
+            key={i} 
+            className="absolute w-2 h-2 bg-primary/30 rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`
+            }} 
+            animate={{
+              y: [0, -100, 0],
+              x: [0, Math.random() * 50 - 25, 0],
+              opacity: [0, 0.6, 0],
+              scale: [0.5, 1.2, 0.5]
+            }} 
+            transition={{
+              duration: 8 + Math.random() * 6,
+              repeat: Infinity,
+              delay: Math.random() * 8,
+              ease: "easeInOut"
+            }} 
+          />
+        ))}
+        
+        {/* Animated grid pattern */}
+        <motion.div 
+          className="absolute inset-0 opacity-10"
+          animate={{
+            backgroundPosition: ['0px 0px', '50px 50px', '0px 0px']
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
             ease: "linear"
+          }}
+        >
+          <div className="w-full h-full bg-[linear-gradient(rgba(59,130,246,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.3)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+        </motion.div>
+        
+        {/* Flowing light waves */}
+        <motion.div 
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent"
+          animate={{
+            x: ["-100%", "200%"]
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        {/* Pulsing glow effects */}
+        <motion.div 
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.3, 0.6, 0.3]
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        <motion.div 
+          className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-secondary/5 rounded-full blur-3xl"
+          animate={{
+            scale: [1.2, 0.8, 1.2],
+            opacity: [0.2, 0.5, 0.2]
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2
           }}
         />
       </div>
