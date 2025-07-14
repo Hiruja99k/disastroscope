@@ -35,20 +35,19 @@ const getEventTypeIcon = (type: string) => {
   }
 };
 
-// Import the actual InteractiveMap component
-import InteractiveMap from './InteractiveMap';
+// Import the fallback map component
+import FallbackMap from './FallbackMap';
 
-// Real map component using InteractiveMap
+// Real map component using FallbackMap
 const RealMapComponent = ({ markers }: { markers: any[] }) => {
   return (
     <div className="relative h-full">
-      <InteractiveMap 
+      <FallbackMap 
         height="100%" 
         showControls={false} 
-        enableDrawing={false}
       />
       
-      <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm p-3 rounded-lg border border-border/50 z-10">
+      <div className="absolute bottom-4 right-4 bg-card/90 backdrop-blur-sm p-3 rounded-lg border border-border/50 z-10">
         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
           <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
           <span>Real-Time Data - {markers.length} active threats</span>

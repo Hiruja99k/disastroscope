@@ -14,6 +14,7 @@ import aiDashboard from '@/assets/ai-dashboard.jpg';
 import satelliteMonitoring from '@/assets/satellite-monitoring.jpg';
 import neuralNetwork from '@/assets/neural-network.jpg';
 import commandCenter from '@/assets/command-center.jpg';
+import AdvancedFeatureShowcase from '@/components/AdvancedFeatureShowcase';
 
 export default function EnhancedLanding() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -269,50 +270,161 @@ export default function EnhancedLanding() {
 
   return (
     <div ref={containerRef} className="min-h-screen bg-background relative overflow-hidden">
-      {/* Enhanced Background Animation */}
+      {/* Ultra Advanced Background Animation */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/2 via-background to-secondary/2"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-background to-secondary/3"></div>
         
-        {/* Dynamic particles */}
-        {[...Array(25)].map((_, i) => (
+        {/* Neural network visualization */}
+        <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 1200 800">
+          {[...Array(15)].map((_, i) => (
+            <g key={i}>
+              <motion.circle
+                cx={100 + (i % 5) * 250}
+                cy={150 + Math.floor(i / 5) * 200}
+                r="4"
+                fill="hsl(var(--primary))"
+                animate={{
+                  scale: [1, 1.5, 1],
+                  opacity: [0.3, 0.8, 0.3],
+                }}
+                transition={{
+                  duration: 3 + Math.random() * 2,
+                  repeat: Infinity,
+                  delay: Math.random() * 3,
+                }}
+              />
+              {i < 14 && (
+                <motion.line
+                  x1={100 + (i % 5) * 250}
+                  y1={150 + Math.floor(i / 5) * 200}
+                  x2={100 + ((i + 1) % 5) * 250}
+                  y2={150 + Math.floor((i + 1) / 5) * 200}
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="1"
+                  animate={{
+                    strokeOpacity: [0.1, 0.4, 0.1],
+                  }}
+                  transition={{
+                    duration: 4 + Math.random() * 2,
+                    repeat: Infinity,
+                    delay: Math.random() * 2,
+                  }}
+                />
+              )}
+            </g>
+          ))}
+        </svg>
+        
+        {/* Floating data streams */}
+        {[...Array(8)].map((_, i) => (
           <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-primary/20 rounded-full"
+            key={`stream-${i}`}
+            className="absolute w-0.5 h-32 bg-gradient-to-b from-transparent via-primary/30 to-transparent"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${20 + i * 12}%`,
+              top: `${10 + (i % 3) * 30}%`,
             }}
             animate={{
-              y: [0, -30, 0],
-              opacity: [0.1, 0.6, 0.1],
-              scale: [1, 1.5, 1],
+              y: [-100, window.innerHeight + 100],
+              opacity: [0, 1, 0],
             }}
             transition={{
-              duration: 6 + Math.random() * 4,
+              duration: 8 + Math.random() * 4,
               repeat: Infinity,
               delay: Math.random() * 5,
-              ease: "easeInOut"
+              ease: "linear"
             }}
           />
         ))}
         
-        {/* Animated grid */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="w-full h-full bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:60px_60px]"></div>
+        {/* Advanced particles with trails */}
+        {[...Array(40)].map((_, i) => (
+          <motion.div
+            key={`particle-${i}`}
+            className="absolute"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+          >
+            <motion.div
+              className="w-2 h-2 bg-primary/30 rounded-full"
+              animate={{
+                scale: [0, 1, 0],
+                opacity: [0, 0.8, 0],
+              }}
+              transition={{
+                duration: 4 + Math.random() * 3,
+                repeat: Infinity,
+                delay: Math.random() * 6,
+              }}
+            />
+            <motion.div
+              className="absolute inset-0 w-8 h-8 border border-primary/20 rounded-full -translate-x-3 -translate-y-3"
+              animate={{
+                scale: [0, 2, 0],
+                opacity: [0.5, 0, 0],
+              }}
+              transition={{
+                duration: 4 + Math.random() * 3,
+                repeat: Infinity,
+                delay: Math.random() * 6,
+              }}
+            />
+          </motion.div>
+        ))}
+        
+        {/* Animated grid with perspective */}
+        <div className="absolute inset-0 opacity-5 perspective-1000">
+          <div className="w-full h-full bg-[linear-gradient(rgba(59,130,246,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.2)_1px,transparent_1px)] bg-[size:80px_80px] transform-gpu rotate-x-12"></div>
         </div>
         
-        {/* Flowing wave */}
+        {/* Multiple flowing waves with different speeds */}
         <motion.div 
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/3 to-transparent"
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/2 to-transparent"
           animate={{
             x: ["-100%", "100%"]
           }}
           transition={{
-            duration: 25,
+            duration: 20,
             repeat: Infinity,
             ease: "linear"
           }}
         />
+        <motion.div 
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-secondary/2 to-transparent"
+          animate={{
+            x: ["100%", "-100%"]
+          }}
+          transition={{
+            duration: 30,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        
+        {/* Orbital elements */}
+        {[...Array(3)].map((_, i) => (
+          <motion.div
+            key={`orbital-${i}`}
+            className="absolute w-2 h-2 bg-primary/40 rounded-full"
+            style={{
+              left: '50%',
+              top: '30%',
+            }}
+            animate={{
+              rotate: 360,
+            }}
+            transition={{
+              duration: 20 + i * 10,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+            transformTemplate={({ rotate }) => 
+              `translate(-50%, -50%) rotate(${rotate}) translateX(${100 + i * 50}px) rotate(-${rotate})`
+            }
+          />
+        ))}
       </div>
 
       {/* Enhanced Hero Section */}
@@ -407,20 +519,126 @@ export default function EnhancedLanding() {
               ))}
             </motion.div>
 
-            {/* Hero Image with Advanced Overlay */}
+            {/* Interactive Hero Dashboard Preview */}
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.2, duration: 1 }}
               className="relative mt-16"
             >
-              <div className="relative overflow-hidden rounded-3xl shadow-2xl">
+              <div className="relative overflow-hidden rounded-3xl shadow-2xl bg-gradient-card border border-border/20">
                 <img 
                   src={heroImage} 
                   alt="DisastroScope Control Center" 
-                  className="w-full h-auto max-w-6xl mx-auto" 
+                  className="w-full h-auto max-w-6xl mx-auto opacity-90" 
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-background/20" />
+                
+                {/* Interactive overlays */}
+                <div className="absolute inset-0 p-8">
+                  {/* Real-time stats overlay */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 2, duration: 0.8 }}
+                    className="absolute top-8 left-8 bg-card/90 backdrop-blur-sm border border-border/50 rounded-lg p-4"
+                  >
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-foreground">Live Monitoring</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Active Threats</span>
+                        <span className="text-sm font-bold text-destructive">17</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Predictions</span>
+                        <span className="text-sm font-bold text-primary">142</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Coverage</span>
+                        <span className="text-sm font-bold text-success">195 countries</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                  
+                  {/* AI prediction notification */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 2.5, duration: 0.8 }}
+                    className="absolute top-8 right-8 bg-card/90 backdrop-blur-sm border border-border/50 rounded-lg p-4 max-w-xs"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-warning/10 rounded-lg flex items-center justify-center">
+                        <AlertTriangle className="h-4 w-4 text-warning" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-foreground">AI Alert</h4>
+                        <p className="text-xs text-muted-foreground">Cyclone detected forming in Pacific. 72% probability, landfall predicted in 96 hours.</p>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <Badge variant="outline" className="text-xs">94% confidence</Badge>
+                          <span className="text-xs text-muted-foreground">2 min ago</span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                  
+                  {/* Global status indicators */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 3, duration: 0.8 }}
+                    className="absolute bottom-8 left-8 right-8 bg-card/90 backdrop-blur-sm border border-border/50 rounded-lg p-4"
+                  >
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[
+                        { label: 'Satellites', value: '25', status: 'operational', icon: Satellite },
+                        { label: 'Sensors', value: '50K+', status: 'active', icon: Network },
+                        { label: 'Uptime', value: '99.9%', status: 'excellent', icon: Activity },
+                        { label: 'Response Time', value: '0.3s', status: 'optimal', icon: Zap }
+                      ].map((item, index) => (
+                        <motion.div
+                          key={item.label}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 3.2 + index * 0.1, duration: 0.5 }}
+                          className="text-center"
+                        >
+                          <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-2">
+                            <item.icon className="h-5 w-5 text-primary-foreground" />
+                          </div>
+                          <div className="text-lg font-bold text-foreground">{item.value}</div>
+                          <div className="text-xs text-muted-foreground">{item.label}</div>
+                          <div className="text-xs text-success mt-1">{item.status}</div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                  
+                  {/* Floating action elements */}
+                  {[...Array(6)].map((_, i) => (
+                    <motion.div
+                      key={`floating-${i}`}
+                      className="absolute w-2 h-2 bg-primary/60 rounded-full"
+                      style={{
+                        left: `${20 + i * 15}%`,
+                        top: `${30 + (i % 2) * 40}%`,
+                      }}
+                      animate={{
+                        y: [0, -10, 0],
+                        opacity: [0.3, 1, 0.3],
+                        scale: [1, 1.2, 1],
+                      }}
+                      transition={{
+                        duration: 2 + Math.random(),
+                        repeat: Infinity,
+                        delay: i * 0.3,
+                      }}
+                    />
+                  ))}
+                </div>
                 
                 {/* Multiple Status Overlays */}
                 <motion.div
@@ -612,6 +830,9 @@ export default function EnhancedLanding() {
           </div>
         </div>
       </section>
+
+      {/* Advanced Feature Showcase */}
+      <AdvancedFeatureShowcase />
 
       {/* Use Cases Section */}
       <section className="py-24 px-4 bg-muted/30">

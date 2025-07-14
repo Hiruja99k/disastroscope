@@ -36,8 +36,8 @@ import { useDisasterEvents, usePredictions } from '@/hooks/useDisasterData';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { toast } from 'sonner';
 
-// Production-ready Mapbox token for DisastroScope
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiZGlzYXN0cm9zY29wZSIsImEiOiJjbHh3NGU4ZXIwNTZoMmlyejFsdWdmdXJjIn0.X1vOzZi8LZGJgF8yWKXeyw'; // Public token for the platform
+// Fallback map solution - will show a simplified map interface
+const MAPBOX_TOKEN = null; // Using null to trigger fallback mode
 
 interface InteractiveMapProps {
   height?: string;
@@ -97,19 +97,31 @@ export default function InteractiveMap({
   const { predictions } = usePredictions();
   const { getCurrentPosition, location } = useGeolocation();
 
-  // Initialize map
+  // Initialize map with fallback
   useEffect(() => {
     if (!mapContainer.current) return;
 
+    // If no valid token, show fallback interface
+    if (!MAPBOX_TOKEN) {
+      setIsLoaded(true);
+      return;
+    }
+
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: `mapbox://styles/mapbox/${selectedLayer}`,
-      center: [0, 20],
-      zoom: 1.5,
-      projection: 'mercator' as any, // Changed from globe to mercator for better compatibility
-    });
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: `mapbox://styles/mapbox/${selectedLayer}`,
+        center: [0, 20],
+        zoom: 1.5,
+        projection: 'mercator' as any,
+      });
+    } catch (error) {
+      console.error('Map initialization failed:', error);
+      setIsLoaded(true);
+      return;
+    }
 
     // Add navigation controls
     const nav = new mapboxgl.NavigationControl({
