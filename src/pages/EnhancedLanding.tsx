@@ -539,7 +539,7 @@ export default function EnhancedLanding() {
               }} transition={{
                 duration: 0.6,
                 delay: 1.5
-              }} className="absolute top-8 left-8 bg-card/95 backdrop-blur-sm p-4 rounded-xl shadow-card border border-border/50">
+              }} className="absolute top-8 left-8 bg-card/95 backdrop-blur-sm p-4 rounded-xl shadow-card border border-border/50 mx-[47px]">
                   <div className="flex items-center space-x-3">
                     <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
                     <div>
@@ -558,7 +558,7 @@ export default function EnhancedLanding() {
               }} transition={{
                 duration: 0.6,
                 delay: 1.7
-              }} className="absolute top-8 right-8 bg-card/95 backdrop-blur-sm p-4 rounded-xl shadow-card border border-border/50">
+              }} className="absolute top-8 right-8 bg-card/95 backdrop-blur-sm p-4 rounded-xl shadow-card border border-border/50 mx-[47px]">
                   <div className="flex items-center space-x-3">
                     <Activity className="h-5 w-5 text-primary" />
                     <div>
@@ -577,7 +577,7 @@ export default function EnhancedLanding() {
               }} transition={{
                 duration: 0.6,
                 delay: 1.9
-              }} className="absolute bottom-8 left-8 bg-card/95 backdrop-blur-sm p-4 rounded-xl shadow-card border border-border/50">
+              }} className="absolute bottom-8 left-8 bg-card/95 backdrop-blur-sm p-4 rounded-xl shadow-card border border-border/50 mx-[47px]">
                   <div className="flex items-center space-x-3">
                     <Brain className="h-5 w-5 text-purple-500" />
                     <div>
