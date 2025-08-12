@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navigation from "./components/Navigation";
 import Landing from "./pages/EnhancedLanding";
 import Predictions from "./pages/EnhancedPredictions";
-import Dashboard from "./pages/EnhancedDashboard";
+import Dashboard from "./pages/Dashboard";
 import Insights from "./pages/Insights";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";

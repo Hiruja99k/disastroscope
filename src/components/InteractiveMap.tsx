@@ -35,9 +35,11 @@ import {
 import { useDisasterEvents, usePredictions } from '@/hooks/useDisasterData';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { toast } from 'sonner';
+import MapboxInput from './MapboxInput';
+import FallbackMap from './FallbackMap';
 
 // Fallback map solution - will show a simplified map interface
-const MAPBOX_TOKEN = null; // Using null to trigger fallback mode
+const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN || null; // Using null to trigger fallback mode
 
 interface InteractiveMapProps {
   height?: string;
@@ -103,6 +105,7 @@ export default function InteractiveMap({
 
     // If no valid token, show fallback interface
     if (!MAPBOX_TOKEN) {
+      console.log('No Mapbox token found, showing fallback interface');
       setIsLoaded(true);
       return;
     }
@@ -475,6 +478,11 @@ export default function InteractiveMap({
       toast.error('Export failed');
     }
   }, []);
+
+  // If no token and loaded, show fallback
+  if (!MAPBOX_TOKEN && isLoaded) {
+    return <FallbackMap height={height} showControls={showControls} />;
+  }
 
   return (
     <div className="relative w-full" style={{ height }}>

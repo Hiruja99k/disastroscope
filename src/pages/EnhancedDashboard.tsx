@@ -140,10 +140,10 @@ export default function EnhancedDashboard() {
   ];
 
   const alertsByType = [
-    { type: 'Hurricane', count: 12, severity: 'high', color: 'text-blue-500' },
-    { type: 'Earthquake', count: 8, severity: 'medium', color: 'text-yellow-500' },
-    { type: 'Wildfire', count: 15, severity: 'high', color: 'text-red-500' },
-    { type: 'Flood', count: 6, severity: 'low', color: 'text-green-500' }
+    { type: 'Hurricane', count: 12, severity: 'high', color: 'text-primary' },
+    { type: 'Earthquake', count: 8, severity: 'medium', color: 'text-warning' },
+    { type: 'Wildfire', count: 15, severity: 'high', color: 'text-destructive' },
+    { type: 'Flood', count: 6, severity: 'low', color: 'text-success' }
   ];
 
   const recentActivities = [

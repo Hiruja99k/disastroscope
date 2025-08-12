@@ -759,12 +759,22 @@ export default function AdvancedAnalysis({ isOpen, onClose }: AdvancedAnalysisPr
                       ].map((system, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
                           <div className="flex items-center space-x-3">
-                            <div className={`w-3 h-3 rounded-full bg-${system.color} animate-pulse`} />
+                            <div className={`w-3 h-3 rounded-full animate-pulse ${
+                              system.color === 'success' ? 'bg-success' :
+                              system.color === 'warning' ? 'bg-warning' :
+                              system.color === 'accent' ? 'bg-accent' :
+                              'bg-primary'
+                            }`} />
                             <span className="font-medium text-foreground">{system.system}</span>
                           </div>
                           <div className="flex items-center space-x-4 text-sm">
                             <span className="text-muted-foreground">Uptime: {system.uptime}</span>
-                            <Badge variant="outline" className={`bg-${system.color}/10 text-${system.color} border-${system.color}/20`}>
+                            <Badge variant="outline" className={`${
+                              system.color === 'success' ? 'bg-success/10 text-success border-success/20' :
+                              system.color === 'warning' ? 'bg-warning/10 text-warning border-warning/20' :
+                              system.color === 'accent' ? 'bg-accent/10 text-accent border-accent/20' :
+                              'bg-primary/10 text-primary border-primary/20'
+                            }`}>
                               {system.status}
                             </Badge>
                           </div>

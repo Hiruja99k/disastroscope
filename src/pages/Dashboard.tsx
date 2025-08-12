@@ -364,7 +364,12 @@ export default function Dashboard() {
                   { time: '18 min ago', event: 'Landslide monitoring activated in Nepal', type: 'secondary' }
                 ].map((activity, index) => (
                   <div key={index} className="flex items-center space-x-3 p-2 rounded hover:bg-muted/30">
-                    <div className={`w-2 h-2 rounded-full bg-${activity.type}`}></div>
+                    <div className={`w-2 h-2 rounded-full ${
+                      activity.type === 'warning' ? 'bg-warning' :
+                      activity.type === 'destructive' ? 'bg-destructive' :
+                      activity.type === 'primary' ? 'bg-primary' :
+                      'bg-secondary'
+                    }`}></div>
                     <div className="flex-1">
                       <p className="text-sm text-foreground">{activity.event}</p>
                       <p className="text-xs text-muted-foreground">{activity.time}</p>
