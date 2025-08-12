@@ -22,7 +22,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import RealTimeMap from '@/components/RealTimeMap';
-import { useDisasterEvents, usePredictions, useSensorData } from '@/hooks/useDisasterData';
+import { useDisasterEvents, usePredictions, useSensorData } from '@/hooks/useMockData';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 

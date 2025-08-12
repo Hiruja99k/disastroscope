@@ -14,7 +14,7 @@ import {
   Navigation,
   Activity
 } from 'lucide-react';
-import { useDisasterEvents, usePredictions } from '@/hooks/useDisasterData';
+import { useDisasterEvents, usePredictions } from '@/hooks/useMockData';
 
 interface FallbackMapProps {
   height?: string;

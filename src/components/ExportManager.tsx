@@ -24,7 +24,7 @@ import {
   Clock,
   X
 } from 'lucide-react';
-import { useDisasterEvents, usePredictions, useSensorData } from '@/hooks/useDisasterData';
+import { useDisasterEvents, usePredictions, useSensorData } from '@/hooks/useMockData';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';

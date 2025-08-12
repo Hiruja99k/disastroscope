@@ -3,8 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Zap, Flame, Waves, Wind, Mountain, Globe, RefreshCw } from 'lucide-react';
-import { useDisasterEvents, usePredictions } from '@/hooks/useDisasterData';
-import { useRealTimeDisasters } from '@/hooks/useRealTimeDisasters';
+import { useDisasterEvents, usePredictions, useMockRealTime } from '@/hooks/useMockData';
 
 const getDisasterColor = (type: string, severity: string) => {
   if (severity === 'critical' || severity.includes('Category 4') || severity.includes('Extreme')) {
@@ -68,7 +67,7 @@ interface RealTimeMapProps {
 export default function RealTimeMap({ height = '400px', showControls = true }: RealTimeMapProps) {
   const { events } = useDisasterEvents();
   const { predictions } = usePredictions();
-  const { isUpdating, lastUpdate, fetchRealDisasters } = useRealTimeDisasters();
+  const { isUpdating, lastUpdate, fetchRealDisasters } = useMockRealTime();
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [showPredictions, setShowPredictions] = useState(true);
   const [showEvents, setShowEvents] = useState(true);

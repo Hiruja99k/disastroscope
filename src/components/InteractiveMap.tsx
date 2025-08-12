@@ -32,7 +32,7 @@ import {
   Camera,
   Share2
 } from 'lucide-react';
-import { useDisasterEvents, usePredictions } from '@/hooks/useDisasterData';
+import { useDisasterEvents, usePredictions } from '@/hooks/useMockData';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { toast } from 'sonner';
 import MapboxInput from './MapboxInput';
