@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import GSAPEnhancedCard from '@/components/GSAPEnhancedCard';
+import { useGSAPStagger } from '@/hooks/useGSAPAnimations';
 import { 
   Globe, 
   Flame, 
@@ -32,6 +34,10 @@ export default function Dashboard() {
   const { sensorData, loading: sensorLoading } = useSensorData();
   const { toast } = useToast();
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  
+  // GSAP animations
+  const statsRef = useGSAPStagger('.dashboard-stat', 0.1);
+  const metricsRef = useGSAPStagger('.metric-card', 0.15);
 
   // Real-time stats calculation
   const activeEvents = events.filter(e => e.status === 'active' || e.status === 'monitoring');
@@ -160,41 +166,34 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Enhanced Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Enhanced Stats Grid with GSAP */}
+          <div ref={statsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="p-6 bg-gradient-card border-border/50 hover:shadow-elevation transition-all duration-300">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center">
-                      <stat.icon className="h-6 w-6 text-primary-foreground" />
-                    </div>
-                    <Badge variant="outline" className={`${
-                      stat.change.includes('high') ? 'border-destructive/20 text-destructive bg-destructive/10' :
-                      stat.change.startsWith('+') ? 'border-success/20 text-success bg-success/10' : 
-                      'border-muted text-muted-foreground'
-                    }`}>
-                      {stat.change}
-                    </Badge>
+              <GSAPEnhancedCard key={stat.label} className="dashboard-stat p-6 bg-gradient-card" delay={index * 100}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center">
+                    <stat.icon className="h-6 w-6 text-primary-foreground" />
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground font-inter">{stat.label}</p>
-                    <p className="text-3xl font-bold text-foreground font-poppins mb-1">{stat.value}</p>
-                    <p className="text-xs text-muted-foreground">{stat.description}</p>
-                  </div>
-                </Card>
-              </motion.div>
+                  <Badge variant="outline" className={`${
+                    stat.change.includes('high') ? 'border-destructive/20 text-destructive bg-destructive/10' :
+                    stat.change.startsWith('+') ? 'border-success/20 text-success bg-success/10' : 
+                    'border-muted text-muted-foreground'
+                  }`}>
+                    {stat.change}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground font-inter">{stat.label}</p>
+                  <p className="text-3xl font-bold text-foreground font-poppins mb-1">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.description}</p>
+                </div>
+              </GSAPEnhancedCard>
             ))}
           </div>
 
-          {/* Key Metrics Summary */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <Card className="p-6 bg-gradient-card border-border/50">
+          {/* Key Metrics Summary with GSAP */}
+          <div ref={metricsRef} className="grid md:grid-cols-3 gap-6 mb-8">
+            <GSAPEnhancedCard className="metric-card p-6 bg-gradient-card" delay={0}>
               <div className="flex items-center space-x-3 mb-3">
                 <Users className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold text-foreground">Population Impact</h3>
@@ -203,9 +202,9 @@ export default function Dashboard() {
                 {(totalAffectedPopulation / 1000000).toFixed(1)}M
               </p>
               <p className="text-sm text-muted-foreground">People in affected areas</p>
-            </Card>
+            </GSAPEnhancedCard>
             
-            <Card className="p-6 bg-gradient-card border-border/50">
+            <GSAPEnhancedCard className="metric-card p-6 bg-gradient-card" delay={150}>
               <div className="flex items-center space-x-3 mb-3">
                 <DollarSign className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold text-foreground">Economic Impact</h3>
@@ -214,16 +213,16 @@ export default function Dashboard() {
                 ${(totalEconomicImpact / 1000000000).toFixed(1)}B
               </p>
               <p className="text-sm text-muted-foreground">Estimated economic losses</p>
-            </Card>
+            </GSAPEnhancedCard>
             
-            <Card className="p-6 bg-gradient-card border-border/50">
+            <GSAPEnhancedCard className="metric-card p-6 bg-gradient-card" delay={300}>
               <div className="flex items-center space-x-3 mb-3">
                 <BarChart3 className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold text-foreground">System Performance</h3>
               </div>
               <p className="text-2xl font-bold text-success font-poppins">99.7%</p>
               <p className="text-sm text-muted-foreground">Uptime & accuracy rate</p>
-            </Card>
+            </GSAPEnhancedCard>
           </div>
         </motion.div>
 
