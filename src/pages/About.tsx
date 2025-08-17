@@ -46,21 +46,21 @@ export default function About() {
 
   const team = [
     {
-      name: 'Dr. Sarah Chen',
-      role: 'Chief Data Scientist',
-      expertise: 'Seismology & AI',
+      name: 'Hiruja Kulasiriwardana',
+      role: 'Student',
+      expertise: 'Bandaranayake College, Gampaha',
       image: '/api/placeholder/150/150'
     },
     {
-      name: 'Dr. Marcus Rodriguez',
-      role: 'Climate Systems Lead',
-      expertise: 'Meteorology & Prediction Models',
+      name: 'Thisaru Nirmala Samarathunge',
+      role: 'Student',
+      expertise: 'Bandaranayake College, Gampaha',
       image: '/api/placeholder/150/150'
     },
     {
-      name: 'Prof. Aisha Patel',
-      role: 'Emergency Response Director',
-      expertise: 'Disaster Management',
+      name: 'Minila Prakarsha Yalage',
+      role: 'Student',
+      expertise: 'Bandaranayake College, Gampaha',
       image: '/api/placeholder/150/150'
     }
   ];
@@ -183,7 +183,7 @@ export default function About() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-foreground mb-4">Expert Team</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Leading scientists and researchers dedicated to advancing disaster prediction technology.
+              College researchers dedicated to advancing disaster prediction technology.
             </p>
           </div>
 

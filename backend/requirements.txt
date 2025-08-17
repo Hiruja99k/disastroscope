@@ -1,0 +1,26 @@
+Flask==3.0.0
+Flask-CORS==4.0.0
+Flask-SocketIO==5.3.6
+python-socketio==5.10.0
+python-engineio==4.8.0
+Werkzeug==3.0.1
+requests==2.31.0
+python-dotenv==1.0.0
+gunicorn==21.2.0
+eventlet==0.35.2
+gevent==23.9.1
+gevent-websocket==0.10.1
+# AI/ML Libraries
+torch==2.3.2
+torchvision==0.17.0
+numpy==2.3.2
+pandas==2.3.1
+scikit-learn==1.7.1
+scipy==1.16.1
+Pillow==11.3.0
+# Weather and Data Processing
+aiohttp==3.12.15
+asyncio==3.4.3
+# Additional utilities
+python-dateutil==2.8.2
+google-generativeai==0.7.2

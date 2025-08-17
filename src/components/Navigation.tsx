@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Globe, Satellite } from 'lucide-react';
+import { Menu, X, Globe, Shield } from 'lucide-react';
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,6 +9,7 @@ export default function Navigation() {
 
   const navigation = [
     { name: 'Home', href: '/' },
+    { name: 'Weather', href: '/weather' },
     { name: 'Predictions', href: '/predictions' },
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'Insights', href: '/insights' },
@@ -23,7 +24,7 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <Satellite className="h-8 w-8 text-primary" />
+            <Shield className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold text-foreground font-poppins">DisastroScope</span>
           </Link>
 
@@ -42,7 +43,12 @@ export default function Navigation() {
                 {item.name}
               </Link>
             ))}
-            <Button variant="default" size="sm" className="bg-gradient-primary hover:shadow-glow">
+            <Button 
+              onClick={() => window.location.href = '/dashboard'} 
+              variant="default" 
+              size="sm" 
+              className="bg-gradient-primary hover:shadow-glow"
+            >
               Launch App
             </Button>
           </div>
@@ -78,7 +84,12 @@ export default function Navigation() {
                   {item.name}
                 </Link>
               ))}
-              <Button variant="default" size="sm" className="w-full mt-4 bg-gradient-primary">
+              <Button 
+                onClick={() => window.location.href = '/dashboard'} 
+                variant="default" 
+                size="sm" 
+                className="w-full mt-4 bg-gradient-primary"
+              >
                 Launch App
               </Button>
             </div>

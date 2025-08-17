@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+
 import { 
   Brain,
   Zap,
@@ -22,10 +23,13 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import AdvancedAnalysis from '@/components/AdvancedAnalysis';
+import { useFemaDisasters, useEonetEvents } from '@/hooks/useFlaskData';
 
 export default function Predictions() {
   const [selectedModel, setSelectedModel] = useState('hurricane');
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
+  const { items: femaDisasters } = useFemaDisasters();
+  const { events: eonetEvents } = useEonetEvents();
 
   const models = [
     {
@@ -147,6 +151,71 @@ export default function Predictions() {
               with unprecedented accuracy using real-time data and historical patterns.
             </p>
           </div>
+        </motion.div>
+
+        {/* Ongoing Disasters (Live Context) */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.8 }}
+          className="grid md:grid-cols-2 gap-6 mb-12"
+        >
+          <Card className="p-6 bg-card border-border/50 hover:shadow-elevation transition-all duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-foreground font-poppins">Ongoing Disasters (FEMA)</h3>
+              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Live</Badge>
+            </div>
+            <div className="space-y-3 max-h-[360px] overflow-auto pr-1">
+              {femaDisasters && femaDisasters.length > 0 ? (
+                femaDisasters.slice(0, 10).map((d: any, idx: number) => {
+                  const title = d.title || d.incidentType || 'Disaster';
+                  const state = d.state || d.place || d.declaredCountyArea || '';
+                  const date = d.declarationDate || d.incidentBeginDate || d.declarationDateTime || d.date || null;
+                  return (
+                    <div key={(d.id ?? d.disasterNumber ?? idx).toString()} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate text-foreground font-inter">{title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{state}</p>
+                      </div>
+                      {date && (
+                        <span className="text-xs text-muted-foreground ml-3 whitespace-nowrap">{new Date(date).toLocaleDateString()}</span>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-muted-foreground">No ongoing FEMA disasters detected.</p>
+              )}
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-card border-border/50 hover:shadow-elevation transition-all duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-foreground font-poppins">Ongoing Disasters (EONET)</h3>
+              <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200">Open</Badge>
+            </div>
+            <div className="space-y-3 max-h-[360px] overflow-auto pr-1">
+              {eonetEvents && eonetEvents.length > 0 ? (
+                eonetEvents.slice(0, 10).map((ev: any) => {
+                  const cat = (ev.categories && ev.categories[0]?.title) || 'Event';
+                  const lastDate = Array.isArray(ev.geometry) && ev.geometry.length > 0 ? ev.geometry[ev.geometry.length - 1]?.date : null;
+                  return (
+                    <div key={ev.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate text-foreground font-inter">{ev.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{cat}</p>
+                      </div>
+                      {lastDate && (
+                        <span className="text-xs text-muted-foreground ml-3 whitespace-nowrap">{new Date(lastDate).toLocaleDateString()}</span>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-muted-foreground">No open EONET events.</p>
+              )}
+            </div>
+          </Card>
         </motion.div>
 
         {/* Data Metrics */}

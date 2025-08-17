@@ -48,6 +48,50 @@ export default function EnhancedLanding() {
       setEmail('');
     }
   };
+
+  const handleStartTrial = () => {
+    toast({
+      title: "Free Trial Started!",
+      description: "Welcome to DisastroScope! Your 14-day free trial is now active."
+    });
+  };
+
+  const handleWatchDemo = () => {
+    toast({
+      title: "Demo Video",
+      description: "Opening DisastroScope platform demonstration video..."
+    });
+    // In a real app, this would open a video modal or redirect to demo page
+  };
+
+  const handleScheduleConsultation = () => {
+    toast({
+      title: "Consultation Scheduled",
+      description: "We'll contact you within 24 hours to schedule your consultation."
+    });
+  };
+
+  const handleScheduleDemo = () => {
+    toast({
+      title: "Demo Scheduled",
+      description: "We'll contact you to schedule a personalized demo of DisastroScope."
+    });
+  };
+
+  const handleContactSales = () => {
+    toast({
+      title: "Contact Sales",
+      description: "Our sales team will reach out to you within 2 hours."
+    });
+  };
+
+  const handlePricingAction = (planName: string) => {
+    if (planName === 'Enterprise') {
+      handleContactSales();
+    } else {
+      handleStartTrial();
+    }
+  };
   const features = [{
     icon: Brain,
     title: 'AI-Powered Predictions',
@@ -143,32 +187,32 @@ export default function EnhancedLanding() {
   }];
   const integrations = [{
     name: 'NOAA',
-    logo: '🌊',
+    logo: '/logos/noaa-logo.svg',
     type: 'Weather Data',
     status: 'Connected'
   }, {
     name: 'USGS',
-    logo: '🌍',
+    logo: '/logos/usgs-logo.svg',
     type: 'Geological Data',
     status: 'Connected'
   }, {
     name: 'NASA',
-    logo: '🛰️',
+    logo: '/logos/nasa-logo.svg',
     type: 'Satellite Imagery',
     status: 'Connected'
   }, {
     name: 'WHO',
-    logo: '🏥',
+    logo: '/logos/who-logo.svg',
     type: 'Health Data',
     status: 'Connected'
   }, {
     name: 'FEMA',
-    logo: '🚨',
+    logo: '/logos/fema-logo.svg',
     type: 'Emergency Response',
     status: 'Connected'
   }, {
     name: 'Red Cross',
-    logo: '➕',
+    logo: '/logos/redcross-logo.svg',
     type: 'Humanitarian Aid',
     status: 'Connected'
   }];
@@ -442,17 +486,15 @@ export default function EnhancedLanding() {
             delay: 0.8,
             duration: 0.8
           }} className="flex flex-col lg:flex-row gap-6 justify-center items-center">
-              <Button asChild size="lg" className="bg-gradient-primary hover:shadow-glow group font-medium text-lg px-8 py-4">
-                <Link to="/dashboard">
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
-                </Link>
+              <Button onClick={handleStartTrial} size="lg" className="bg-gradient-primary hover:shadow-glow group font-medium text-lg px-8 py-4">
+                Start Free Trial
+                <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button variant="outline" size="lg" className="border-primary/20 hover:bg-primary/5 font-medium text-lg px-8 py-4">
+              <Button onClick={handleWatchDemo} variant="outline" size="lg" className="border-primary/20 hover:bg-primary/5 font-medium text-lg px-8 py-4">
                 <Play className="mr-2 h-6 w-6" />
                 Watch Live Demo
               </Button>
-              <Button variant="ghost" size="lg" className="hover:bg-muted/50 font-medium text-lg px-8 py-4">
+              <Button onClick={handleScheduleConsultation} variant="ghost" size="lg" className="hover:bg-muted/50 font-medium text-lg px-8 py-4">
                 <Calendar className="mr-2 h-6 w-6" />
                 Schedule Consultation
               </Button>
@@ -857,7 +899,22 @@ export default function EnhancedLanding() {
             duration: 0.6
           }}>
                 <Card className="p-6 bg-card border-border/50 hover:shadow-card transition-all duration-300 text-center group">
-                  <div className="text-4xl mb-3">{integration.logo}</div>
+                  <div className="w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                    <img 
+                      src={integration.logo} 
+                      alt={`${integration.name} logo`}
+                      className="max-w-full max-h-full object-contain"
+                      onError={(e) => {
+                        // Fallback to text if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = document.createElement('div');
+                        fallback.className = 'text-2xl';
+                        fallback.textContent = integration.name.charAt(0);
+                        target.parentNode?.appendChild(fallback);
+                      }}
+                    />
+                  </div>
                   <h3 className="font-semibold text-foreground font-poppins">{integration.name}</h3>
                   <p className="text-xs text-muted-foreground mb-2">{integration.type}</p>
                   <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-xs">
@@ -924,7 +981,11 @@ export default function EnhancedLanding() {
                         </li>)}
                     </ul>
                     
-                    <Button className={`w-full ${plan.popular ? 'bg-gradient-primary' : 'variant-outline'}`} size="lg">
+                    <Button 
+                      onClick={() => handlePricingAction(plan.name)} 
+                      className={`w-full ${plan.popular ? 'bg-gradient-primary' : 'variant-outline'}`} 
+                      size="lg"
+                    >
                       {plan.name === 'Enterprise' ? 'Contact Sales' : 'Start Free Trial'}
                     </Button>
                   </div>
@@ -1018,15 +1079,15 @@ export default function EnhancedLanding() {
               </p>
               
               <div className="flex flex-col lg:flex-row gap-6 justify-center items-center">
-                <Button size="lg" className="bg-gradient-primary hover:shadow-glow font-medium text-lg px-8 py-4">
+                <Button onClick={handleStartTrial} size="lg" className="bg-gradient-primary hover:shadow-glow font-medium text-lg px-8 py-4">
                   <Zap className="mr-2 h-6 w-6" />
                   Start Free Trial
                 </Button>
-                <Button variant="outline" size="lg" className="border-primary/20 hover:bg-primary/5 font-medium text-lg px-8 py-4">
+                <Button onClick={handleScheduleDemo} variant="outline" size="lg" className="border-primary/20 hover:bg-primary/5 font-medium text-lg px-8 py-4">
                   <Calendar className="mr-2 h-6 w-6" />
                   Schedule Demo
                 </Button>
-                <Button variant="ghost" size="lg" className="hover:bg-muted/50 font-medium text-lg px-8 py-4">
+                <Button onClick={handleContactSales} variant="ghost" size="lg" className="hover:bg-muted/50 font-medium text-lg px-8 py-4">
                   <Phone className="mr-2 h-6 w-6" />
                   Contact Sales
                 </Button>

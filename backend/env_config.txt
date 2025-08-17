@@ -1,0 +1,13 @@
+# DisastroScope Environment Configuration
+# Rename this file to .env to enable real weather data
+
+# OpenWeatherMap API Key (Required for real weather data)
+OPENWEATHER_API_KEY=074ac01e6f3f5892c09dffcb01cdd1d4
+
+# Flask Configuration
+FLASK_ENV=development
+FLASK_DEBUG=true
+SECRET_KEY=disastroscope-secret-key-2024
+
+# Logging Level
+LOG_LEVEL=INFO

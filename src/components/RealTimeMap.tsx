@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Zap, Flame, Waves, Wind, Mountain, Globe, RefreshCw } from 'lucide-react';
-import { useDisasterEvents, usePredictions, useMockRealTime } from '@/hooks/useMockData';
+import { DisasterEvent, Prediction } from '@/services/api';
 
 const getDisasterColor = (type: string, severity: string) => {
   if (severity === 'critical' || severity.includes('Category 4') || severity.includes('Extreme')) {
@@ -38,23 +38,15 @@ const getEventTypeIcon = (type: string) => {
 import FallbackMap from './FallbackMap';
 
 // Real map component using FallbackMap
-const RealMapComponent = ({ markers }: { markers: any[] }) => {
+const RealMapComponent = ({ events, predictions }: { events: DisasterEvent[], predictions: Prediction[] }) => {
   return (
     <div className="relative h-full">
       <FallbackMap 
         height="100%" 
-        showControls={false} 
+        showControls={false}
+        events={events}
+        predictions={predictions}
       />
-      
-      <div className="absolute bottom-4 right-4 bg-card/90 backdrop-blur-sm p-3 rounded-lg border border-border/50 z-10">
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-          <span>Real-Time Data - {markers.length} active threats</span>
-          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
-            LIVE
-          </Badge>
-        </div>
-      </div>
     </div>
   );
 };
@@ -62,12 +54,11 @@ const RealMapComponent = ({ markers }: { markers: any[] }) => {
 interface RealTimeMapProps {
   height?: string;
   showControls?: boolean;
+  events?: DisasterEvent[];
+  predictions?: Prediction[];
 }
 
-export default function RealTimeMap({ height = '400px', showControls = true }: RealTimeMapProps) {
-  const { events } = useDisasterEvents();
-  const { predictions } = usePredictions();
-  const { isUpdating, lastUpdate, fetchRealDisasters } = useMockRealTime();
+export default function RealTimeMap({ height = '400px', showControls = true, events = [], predictions = [] }: RealTimeMapProps) {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [showPredictions, setShowPredictions] = useState(true);
   const [showEvents, setShowEvents] = useState(true);
@@ -89,21 +80,11 @@ export default function RealTimeMap({ height = '400px', showControls = true }: R
             <span className="text-sm text-muted-foreground">
               {allMarkers.length} active threats
             </span>
-            {lastUpdate && (
-              <span className="text-xs text-muted-foreground">
-                Updated: {lastUpdate.toLocaleTimeString()}
-              </span>
-            )}
+            <span className="text-xs text-muted-foreground">
+              Updated: {new Date().toLocaleTimeString()}
+            </span>
           </div>
           <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={fetchRealDisasters}
-              disabled={isUpdating}
-            >
-              <RefreshCw className={`h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
-            </Button>
             <Button
               variant={showEvents ? "default" : "outline"}
               size="sm"
@@ -123,7 +104,7 @@ export default function RealTimeMap({ height = '400px', showControls = true }: R
       )}
 
       <div style={{ height }} className="rounded-lg overflow-hidden border border-border">
-        <RealMapComponent markers={allMarkers} />
+        <RealMapComponent events={events} predictions={predictions} />
       </div>
 
       {/* Interactive Event List */}

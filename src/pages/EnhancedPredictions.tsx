@@ -55,18 +55,83 @@ import {
   Info
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import AdvancedAnalysis from '@/components/AdvancedAnalysis';
+
 import { useToast } from '@/hooks/use-toast';
 
 export default function EnhancedPredictions() {
   const [selectedModel, setSelectedModel] = useState('hurricane');
-  const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('models');
   const [confidenceThreshold, setConfidenceThreshold] = useState([75]);
   const [timeRange, setTimeRange] = useState('7d');
   const [selectedRegion, setSelectedRegion] = useState('global');
   const [isSimulating, setIsSimulating] = useState(false);
   const { toast } = useToast();
+
+  const handleConfigureModels = () => {
+    toast({
+      title: "Model Configuration",
+      description: "Opening advanced model configuration panel..."
+    });
+  };
+
+  const handleViewDetails = (modelName: string) => {
+    toast({
+      title: "Model Details",
+      description: `Opening detailed view for ${modelName} model...`
+    });
+  };
+
+  const handleConfigureModel = (modelName: string) => {
+    toast({
+      title: "Configure Model",
+      description: `Opening configuration panel for ${modelName}...`
+    });
+  };
+
+  const handleRefreshPredictions = () => {
+    toast({
+      title: "Refreshing Predictions",
+      description: "Fetching latest prediction data..."
+    });
+  };
+
+  const handleExportPredictions = () => {
+    toast({
+      title: "Export Predictions",
+      description: "Downloading prediction data as CSV..."
+    });
+  };
+
+  const handleViewMap = (location: string) => {
+    toast({
+      title: "View Map",
+      description: `Opening interactive map for ${location}...`
+    });
+  };
+
+  const handleSendAlert = (prediction: any) => {
+    toast({
+      title: "Alert Sent",
+      description: `Emergency alert sent for ${prediction.type} in ${prediction.location}`
+    });
+  };
+
+  const handleRunSimulation = () => {
+    setIsSimulating(true);
+    toast({
+      title: "Running Simulation",
+      description: "Executing disaster prediction simulation..."
+    });
+    
+    // Simulate processing time
+    setTimeout(() => {
+      setIsSimulating(false);
+      toast({
+        title: "Simulation Complete",
+        description: "Prediction simulation completed successfully!"
+      });
+    }, 3000);
+  };
 
   const advancedModels = [
     {
@@ -495,7 +560,7 @@ export default function EnhancedPredictions() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input placeholder="Search models..." className="pl-10 w-64" />
                   </div>
-                  <Button variant="outline">
+                  <Button onClick={handleConfigureModels} variant="outline">
                     <Settings className="h-4 w-4 mr-2" />
                     Configure
                   </Button>
@@ -597,11 +662,11 @@ export default function EnhancedPredictions() {
                             <span>Updated {model.lastUpdate}</span>
                           </div>
                           <div className="flex space-x-2">
-                            <Button variant="ghost" size="sm">
+                            <Button onClick={() => handleViewDetails(model.name)} variant="ghost" size="sm">
                               <Eye className="h-4 w-4 mr-2" />
                               Details
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button onClick={() => handleConfigureModel(model.name)} variant="ghost" size="sm">
                               <Settings className="h-4 w-4 mr-2" />
                               Configure
                             </Button>
@@ -626,11 +691,11 @@ export default function EnhancedPredictions() {
               <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold text-foreground font-poppins">Active Predictions</h2>
                 <div className="flex space-x-2">
-                  <Button variant="outline">
+                  <Button onClick={handleRefreshPredictions} variant="outline">
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Refresh
                   </Button>
-                  <Button variant="outline">
+                  <Button onClick={handleExportPredictions} variant="outline">
                     <Download className="h-4 w-4 mr-2" />
                     Export
                   </Button>
@@ -681,11 +746,11 @@ export default function EnhancedPredictions() {
                             </div>
                           </div>
                           <div className="flex flex-col space-y-2">
-                            <Button variant="outline" size="sm">
+                            <Button onClick={() => handleViewMap(prediction.location)} variant="outline" size="sm">
                               <MapPin className="mr-2 h-4 w-4" />
                               View Map
                             </Button>
-                            <Button variant="outline" size="sm">
+                            <Button onClick={() => handleSendAlert(prediction)} variant="outline" size="sm">
                               <Bell className="mr-2 h-4 w-4" />
                               Alert
                             </Button>
@@ -829,48 +894,349 @@ export default function EnhancedPredictions() {
           </TabsContent>
         </Tabs>
 
-        {/* Enhanced CTA Section */}
+        {/* Advanced Features Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.8 }}
-          className="bg-gradient-card p-12 rounded-3xl shadow-elevation border border-border/50 text-center mt-16"
+          className="mt-16 space-y-12"
         >
-          <div className="space-y-8">
+          <div className="text-center space-y-4">
             <h2 className="text-4xl lg:text-5xl font-bold text-foreground font-poppins">
-              Ready to Harness AI for Disaster Prediction?
+              Advanced AI-Powered Features
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto font-inter">
-              Get access to our advanced prediction models, real-time analytics, and comprehensive risk assessments. 
-              Join leading organizations in protecting communities with cutting-edge AI technology.
+              Explore cutting-edge capabilities that go beyond traditional prediction models
             </p>
-            <div className="flex flex-col lg:flex-row gap-6 justify-center">
-              <Button 
-                size="lg" 
-                className="bg-gradient-primary hover:shadow-glow font-medium text-lg px-8 py-4"
-                onClick={() => setIsAnalysisOpen(true)}
-              >
-                <BarChart3 className="mr-2 h-6 w-6" />
-                Start Advanced Analysis
-              </Button>
-              <Button variant="outline" size="lg" className="border-primary/20 hover:bg-primary/5 font-medium text-lg px-8 py-4">
-                <Calendar className="mr-2 h-6 w-6" />
-                Schedule Demo
-              </Button>
-              <Button variant="ghost" size="lg" className="hover:bg-muted/50 font-medium text-lg px-8 py-4">
-                <Download className="mr-2 h-6 w-6" />
-                Download Whitepaper
-              </Button>
-            </div>
           </div>
+
+          <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-8">
+            {/* Real-time AI Model Training */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9, duration: 0.6 }}
+            >
+              <Card className="p-6 bg-gradient-card border-border/50 hover:shadow-elevation transition-all duration-300 h-full">
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-primary/10 rounded-lg">
+                      <Cpu className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground">Real-time AI Training</h3>
+                  </div>
+                  <p className="text-muted-foreground">
+                    Continuously improve prediction accuracy with live model training using real-time data streams
+                  </p>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span>Training Status</span>
+                      <Badge variant="secondary" className="bg-green-500/20 text-green-600">Active</Badge>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Model Version</span>
+                      <span className="font-medium">v2.4.7</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Last Update</span>
+                      <span className="font-medium">2 min ago</span>
+                    </div>
+                  </div>
+                  <Button className="w-full" variant="outline">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Configure Training
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Predictive Analytics Dashboard */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.0, duration: 0.6 }}
+            >
+              <Card className="p-6 bg-gradient-card border-border/50 hover:shadow-elevation transition-all duration-300 h-full">
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-blue-500/10 rounded-lg">
+                      <LineChart className="h-6 w-6 text-blue-500" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground">Predictive Analytics</h3>
+                  </div>
+                  <p className="text-muted-foreground">
+                    Advanced statistical analysis and trend prediction with interactive visualizations
+                  </p>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span>Prediction Horizon</span>
+                      <span className="font-medium">72 hours</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Confidence Level</span>
+                      <span className="font-medium">94.2%</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Data Sources</span>
+                      <span className="font-medium">12 active</span>
+                    </div>
+                  </div>
+                  <Button className="w-full" variant="outline">
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    View Analytics
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Multi-Model Ensemble */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.1, duration: 0.6 }}
+            >
+              <Card className="p-6 bg-gradient-card border-border/50 hover:shadow-elevation transition-all duration-300 h-full">
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-purple-500/10 rounded-lg">
+                      <Network className="h-6 w-6 text-purple-500" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground">Ensemble Analysis</h3>
+                  </div>
+                  <p className="text-muted-foreground">
+                    Combine multiple AI models for enhanced accuracy and reduced uncertainty
+                  </p>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span>Active Models</span>
+                      <span className="font-medium">8 models</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Ensemble Weight</span>
+                      <span className="font-medium">Optimized</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Variance Reduction</span>
+                      <span className="font-medium">23%</span>
+                    </div>
+                  </div>
+                  <Button className="w-full" variant="outline">
+                    <Layers className="mr-2 h-4 w-4" />
+                    Manage Models
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Risk Assessment Matrix */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.2, duration: 0.6 }}
+            >
+              <Card className="p-6 bg-gradient-card border-border/50 hover:shadow-elevation transition-all duration-300 h-full">
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-red-500/10 rounded-lg">
+                      <Target className="h-6 w-6 text-red-500" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground">Risk Matrix</h3>
+                  </div>
+                  <p className="text-muted-foreground">
+                    Comprehensive risk assessment with probability-impact analysis and mitigation strategies
+                  </p>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span>Risk Categories</span>
+                      <span className="font-medium">15 types</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>High Risk Areas</span>
+                      <span className="font-medium">3 detected</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Mitigation Plans</span>
+                      <span className="font-medium">12 active</span>
+                    </div>
+                  </div>
+                  <Button className="w-full" variant="outline">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Assess Risks
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Climate Pattern Analysis */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.3, duration: 0.6 }}
+            >
+              <Card className="p-6 bg-gradient-card border-border/50 hover:shadow-elevation transition-all duration-300 h-full">
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-cyan-500/10 rounded-lg">
+                      <Globe className="h-6 w-6 text-cyan-500" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground">Climate Patterns</h3>
+                  </div>
+                  <p className="text-muted-foreground">
+                    Advanced climate pattern recognition and long-term trend analysis
+                  </p>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span>Pattern Types</span>
+                      <span className="font-medium">8 detected</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Trend Confidence</span>
+                      <span className="font-medium">89.7%</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Historical Data</span>
+                      <span className="font-medium">50+ years</span>
+                    </div>
+                  </div>
+                  <Button className="w-full" variant="outline">
+                    <TrendingUp className="mr-2 h-4 w-4" />
+                    Analyze Patterns
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Emergency Response Planning */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.4, duration: 0.6 }}
+            >
+              <Card className="p-6 bg-gradient-card border-border/50 hover:shadow-elevation transition-all duration-300 h-full">
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-orange-500/10 rounded-lg">
+                      <AlertTriangle className="h-6 w-6 text-orange-500" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground">Response Planning</h3>
+                  </div>
+                  <p className="text-muted-foreground">
+                    AI-powered emergency response planning with resource optimization
+                  </p>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span>Response Plans</span>
+                      <span className="font-medium">25 templates</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Resource Allocation</span>
+                      <span className="font-medium">Optimized</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Response Time</span>
+                      <span className="font-medium">5 min</span>
+                    </div>
+                  </div>
+                  <Button className="w-full" variant="outline">
+                    <Bell className="mr-2 h-4 w-4" />
+                    Plan Response
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+          </div>
+
+          {/* Advanced Controls Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.5, duration: 0.8 }}
+            className="bg-gradient-card p-8 rounded-2xl shadow-elevation border border-border/50"
+          >
+            <div className="grid lg:grid-cols-3 gap-8">
+              <div className="space-y-4">
+                <h3 className="text-2xl font-bold text-foreground">Model Configuration</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Confidence Threshold</label>
+                    <Slider
+                      value={confidenceThreshold}
+                      onValueChange={setConfidenceThreshold}
+                      max={100}
+                      min={50}
+                      step={5}
+                      className="mt-2"
+                    />
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {confidenceThreshold[0]}% confidence required
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Time Range</label>
+                    <Select value={timeRange} onValueChange={setTimeRange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="24h">24 Hours</SelectItem>
+                        <SelectItem value="7d">7 Days</SelectItem>
+                        <SelectItem value="30d">30 Days</SelectItem>
+                        <SelectItem value="90d">90 Days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-2xl font-bold text-foreground">Data Sources</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Satellite className="h-4 w-4 text-primary" />
+                      <span className="text-sm">Satellite Data</span>
+                    </div>
+                    <Badge variant="secondary" className="bg-green-500/20 text-green-600">Active</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Activity className="h-4 w-4 text-primary" />
+                      <span className="text-sm">Seismic Sensors</span>
+                    </div>
+                    <Badge variant="secondary" className="bg-green-500/20 text-green-600">Active</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Thermometer className="h-4 w-4 text-primary" />
+                      <span className="text-sm">Weather Stations</span>
+                    </div>
+                    <Badge variant="secondary" className="bg-green-500/20 text-green-600">Active</Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-2xl font-bold text-foreground">Quick Actions</h3>
+                <div className="space-y-3">
+                  <Button className="w-full" variant="outline">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Refresh Models
+                  </Button>
+                  <Button className="w-full" variant="outline">
+                    <Download className="mr-2 h-4 w-4" />
+                    Export Data
+                  </Button>
+                  <Button className="w-full" variant="outline">
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share Report
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </motion.div>
       </div>
 
-      {/* Advanced Analysis Modal */}
-      <AdvancedAnalysis 
-        isOpen={isAnalysisOpen} 
-        onClose={() => setIsAnalysisOpen(false)} 
-      />
     </div>
   );
 }

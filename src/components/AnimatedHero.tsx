@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-// @ts-ignore
-import anime from 'animejs';
+// Use require for Anime.js to avoid TypeScript issues
+const anime = require('animejs');
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Globe, Shield, Brain, Zap, Play } from 'lucide-react';
+import { ArrowRight, Globe, Shield, Brain, Zap, Play, Satellite, AlertTriangle, Cpu, Network } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import heroImage from '@/assets/hero-image.jpg';
 
@@ -15,8 +15,11 @@ export default function AnimatedHero() {
   const buttonsRef = useRef<HTMLDivElement>(null);
   const floatingElementsRef = useRef<HTMLDivElement>(null);
   const orbsRef = useRef<HTMLDivElement>(null);
+  const particlesRef = useRef<HTMLDivElement>(null);
+  const morphingShapesRef = useRef<HTMLDivElement>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const [animationsStarted, setAnimationsStarted] = useState(false);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -37,134 +40,217 @@ export default function AnimatedHero() {
   }, []);
 
   useEffect(() => {
-    // Initial entrance animations
+    // Wait a bit for elements to be rendered
+    const timer = setTimeout(() => {
+      if (!animationsStarted) {
+        startEntranceAnimations();
+        setAnimationsStarted(true);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [animationsStarted]);
+
+  const startEntranceAnimations = () => {
+    // Enhanced entrance animations with more sophisticated timing
     const timeline = anime.timeline({
       easing: 'easeOutExpo',
       complete: () => {
-        // Start continuous animations after entrance
         startContinuousAnimations();
+        startParticleSystem();
+        startMorphingShapes();
       }
     });
 
-    // Badge entrance
-    timeline.add({
-      targets: badgeRef.current,
-      translateY: [-50, 0],
-      opacity: [0, 1],
-      scale: [0.8, 1],
-      duration: 800,
-      delay: 200
-    });
+    // Badge entrance with bounce effect
+    if (badgeRef.current) {
+      timeline.add({
+        targets: badgeRef.current,
+        translateY: [-100, 0],
+        opacity: [0, 1],
+        scale: [0.5, 1],
+        rotateX: [-90, 0],
+        duration: 1200,
+        delay: 300,
+        easing: 'easeOutBack'
+      });
+    }
 
-    // Title entrance with stagger effect
-    timeline.add({
-      targets: titleRef.current?.children,
-      translateY: [100, 0],
-      opacity: [0, 1],
-      rotateX: [90, 0],
-      scale: [0.9, 1],
-      duration: 1000,
-      delay: anime.stagger(150),
-      offset: '-=600'
-    });
+    // Title entrance with advanced stagger and morphing effect
+    if (titleRef.current && titleRef.current.children) {
+      timeline.add({
+        targets: titleRef.current.children,
+        translateY: [150, 0],
+        opacity: [0, 1],
+        rotateX: [90, 0],
+        scale: [0.7, 1],
+        duration: 1400,
+        delay: anime.stagger(200, { start: 600 }),
+        easing: 'easeOutQuart'
+      });
+    }
 
-    // Subtitle entrance
-    timeline.add({
-      targets: subtitleRef.current,
-      translateY: [50, 0],
-      opacity: [0, 1],
-      duration: 800,
-      offset: '-=400'
-    });
+    // Subtitle entrance with wave effect
+    if (subtitleRef.current) {
+      timeline.add({
+        targets: subtitleRef.current,
+        translateY: [80, 0],
+        opacity: [0, 1],
+        scale: [0.9, 1],
+        duration: 1000,
+        offset: '-=800',
+        easing: 'easeOutCubic'
+      });
+    }
 
-    // Buttons entrance
-    timeline.add({
-      targets: buttonsRef.current?.children,
-      translateY: [50, 0],
-      opacity: [0, 1],
-      scale: [0.9, 1],
-      duration: 600,
-      delay: anime.stagger(100),
-      offset: '-=400'
-    });
+    // Buttons entrance with elastic effect
+    if (buttonsRef.current && buttonsRef.current.children) {
+      timeline.add({
+        targets: buttonsRef.current.children,
+        translateY: [60, 0],
+        opacity: [0, 1],
+        scale: [0.8, 1],
+        duration: 800,
+        delay: anime.stagger(150, { start: 1200 }),
+        easing: 'easeOutBack'
+      });
+    }
 
-    // Floating elements entrance
-    timeline.add({
-      targets: floatingElementsRef.current?.children,
-      translateY: anime.stagger([100, -100]),
-      translateX: anime.stagger([-100, 100]),
-      opacity: [0, 1],
-      scale: [0, 1],
-      rotate: anime.stagger([0, 180]),
-      duration: 1200,
-      delay: anime.stagger(200),
-      offset: '-=800'
-    });
-
-  }, []);
+    // Floating elements entrance with spiral effect
+    if (floatingElementsRef.current && floatingElementsRef.current.children) {
+      timeline.add({
+        targets: floatingElementsRef.current.children,
+        translateY: anime.stagger([-150, 150]),
+        translateX: anime.stagger([-150, 150]),
+        opacity: [0, 1],
+        scale: [0, 1],
+        rotate: anime.stagger([-180, 180]),
+        duration: 1600,
+        delay: anime.stagger(300, { start: 1000 }),
+        easing: 'easeOutQuart'
+      });
+    }
+  };
 
   const startContinuousAnimations = () => {
-    // Floating animations for decorative elements
-    anime({
-      targets: '.floating-element',
-      translateY: [-20, 20],
-      rotate: ['0deg', '10deg'],
-      scale: [1, 1.1],
-      duration: 4000,
-      direction: 'alternate',
-      loop: true,
-      easing: 'easeInOutSine',
-      delay: anime.stagger(1000)
-    });
+    // Enhanced floating animations with more complex paths
+    if (floatingElementsRef.current) {
+      anime({
+        targets: '.floating-element',
+        translateY: anime.stagger([-30, 30, -20, 20]),
+        translateX: anime.stagger([-20, 20, -15, 15]),
+        rotate: anime.stagger([0, 360, -180, 180]),
+        scale: [1, 1.15, 0.9, 1.1],
+        duration: 6000,
+        direction: 'alternate',
+        loop: true,
+        easing: 'easeInOutSine',
+        delay: anime.stagger(1500)
+      });
+    }
 
-    // Orb animations
-    anime({
-      targets: '.floating-orb',
-      translateY: [-30, 30],
-      translateX: [-15, 15],
-      scale: [0.8, 1.2],
-      opacity: [0.3, 0.8],
-      duration: 6000,
-      direction: 'alternate',
-      loop: true,
-      easing: 'easeInOutSine',
-      delay: anime.stagger(2000)
-    });
+    // Advanced orb animations with morphing
+    if (orbsRef.current) {
+      anime({
+        targets: '.floating-orb',
+        translateY: anime.stagger([-40, 40, -30, 30]),
+        translateX: anime.stagger([-25, 25, -20, 20]),
+        scale: [0.7, 1.3, 0.8, 1.2],
+        opacity: [0.2, 0.9, 0.3, 0.8],
+        duration: 8000,
+        direction: 'alternate',
+        loop: true,
+        easing: 'easeInOutQuart',
+        delay: anime.stagger(2000)
+      });
+    }
 
-    // Pulse animation for primary button
+    // Enhanced pulse animation for primary button
     anime({
       targets: '.hero-cta-button',
-      scale: [1, 1.02],
+      scale: [1, 1.03],
       boxShadow: [
         '0 4px 20px rgba(59, 130, 246, 0.3)',
-        '0 8px 40px rgba(59, 130, 246, 0.5)'
+        '0 12px 50px rgba(59, 130, 246, 0.6)'
       ],
-      duration: 2000,
+      duration: 2500,
       direction: 'alternate',
+      loop: true,
+      easing: 'easeInOutSine'
+    });
+
+    // Background grid animation
+    anime({
+      targets: '.background-grid',
+      translateX: [0, 50],
+      translateY: [0, 50],
+      duration: 20000,
+      direction: 'alternate',
+      loop: true,
+      easing: 'linear'
+    });
+  };
+
+  const startParticleSystem = () => {
+    // Create dynamic particle system
+    anime({
+      targets: '.particle',
+      translateX: anime.stagger([-100, 100]),
+      translateY: anime.stagger([-100, 100]),
+      scale: [0, 1, 0],
+      opacity: [0, 0.8, 0],
+      duration: 4000,
+      delay: anime.stagger(100),
       loop: true,
       easing: 'easeInOutSine'
     });
   };
 
+  const startMorphingShapes = () => {
+    // Morphing geometric shapes
+    anime({
+      targets: '.morphing-shape',
+      scale: [1, 1.5, 0.8, 1.2],
+      rotate: [0, 180, 360, 90],
+      borderRadius: ['0%', '50%', '0%', '25%'],
+      duration: 6000,
+      direction: 'alternate',
+      loop: true,
+      easing: 'easeInOutQuart',
+      delay: anime.stagger(1000)
+    });
+  };
+
   useEffect(() => {
-    // Mouse-responsive animations
+    // Enhanced mouse-responsive animations
     if (isHovered) {
       anime({
         targets: '.mouse-responsive',
-        translateX: (mousePosition.x - 0.5) * 50,
-        translateY: (mousePosition.y - 0.5) * 30,
-        rotateY: (mousePosition.x - 0.5) * 20,
-        rotateX: (mousePosition.y - 0.5) * -10,
-        duration: 800,
+        translateX: (mousePosition.x - 0.5) * 60,
+        translateY: (mousePosition.y - 0.5) * 40,
+        rotateY: (mousePosition.x - 0.5) * 25,
+        rotateX: (mousePosition.y - 0.5) * -15,
+        scale: 1 + Math.abs(mousePosition.x - 0.5) * 0.1,
+        duration: 1000,
         easing: 'easeOutQuart'
       });
 
       anime({
         targets: '.orb-responsive',
-        translateX: (mousePosition.x - 0.5) * 80,
-        translateY: (mousePosition.y - 0.5) * 80,
-        scale: 1 + (mousePosition.x * 0.2),
-        duration: 1000,
+        translateX: (mousePosition.x - 0.5) * 100,
+        translateY: (mousePosition.y - 0.5) * 100,
+        scale: 1 + (mousePosition.x * 0.3),
+        duration: 1200,
+        easing: 'easeOutQuart'
+      });
+
+      // Particle attraction effect
+      anime({
+        targets: '.particle',
+        translateX: (mousePosition.x - 0.5) * 200,
+        translateY: (mousePosition.y - 0.5) * 200,
+        scale: 1 + Math.abs(mousePosition.x - 0.5) * 0.5,
+        duration: 800,
         easing: 'easeOutQuart'
       });
     }
@@ -173,20 +259,45 @@ export default function AnimatedHero() {
   const handleCtaHover = () => {
     anime({
       targets: '.hero-cta-button .lucide-arrow-right',
-      translateX: [0, 10],
-      scale: [1, 1.2],
-      duration: 300,
+      translateX: [0, 15],
+      scale: [1, 1.3],
+      rotate: [0, 15],
+      duration: 400,
       easing: 'easeOutBack'
+    });
+
+    // Ripple effect on button
+    anime({
+      targets: '.hero-cta-button',
+      scale: [1, 1.05],
+      boxShadow: [
+        '0 4px 20px rgba(59, 130, 246, 0.3)',
+        '0 8px 40px rgba(59, 130, 246, 0.7)'
+      ],
+      duration: 300,
+      easing: 'easeOutQuart'
     });
   };
 
   const handleCtaLeave = () => {
     anime({
       targets: '.hero-cta-button .lucide-arrow-right',
-      translateX: [10, 0],
-      scale: [1.2, 1],
-      duration: 300,
+      translateX: [15, 0],
+      scale: [1.3, 1],
+      rotate: [15, 0],
+      duration: 400,
       easing: 'easeOutBack'
+    });
+
+    anime({
+      targets: '.hero-cta-button',
+      scale: [1.05, 1],
+      boxShadow: [
+        '0 8px 40px rgba(59, 130, 246, 0.7)',
+        '0 4px 20px rgba(59, 130, 246, 0.3)'
+      ],
+      duration: 300,
+      easing: 'easeOutQuart'
     });
   };
 
@@ -197,84 +308,118 @@ export default function AnimatedHero() {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Background with parallax effect */}
+      {/* Enhanced background with parallax effect */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ 
           backgroundImage: `url(${heroImage})`,
-          transform: `translate3d(${mousePosition.x * 20}px, ${mousePosition.y * 20}px, 0) scale(1.1)`
+          transform: `translate3d(${mousePosition.x * 30}px, ${mousePosition.y * 30}px, 0) scale(1.15)`
         }}
       />
       
-      {/* Dynamic gradient overlay */}
+      {/* Dynamic gradient overlay with enhanced effects */}
       <div 
-        className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/85 to-background/95"
+        className="absolute inset-0"
         style={{
           background: `radial-gradient(circle at ${mousePosition.x * 100}% ${mousePosition.y * 100}%, 
-            rgba(59, 130, 246, 0.1) 0%, 
-            rgba(0, 0, 0, 0.8) 50%, 
+            rgba(59, 130, 246, 0.15) 0%, 
+            rgba(0, 0, 0, 0.7) 40%, 
             rgba(0, 0, 0, 0.9) 100%)`
         }}
       />
 
-      {/* Floating orbs */}
+      {/* Enhanced floating orbs with glow effects */}
       <div ref={orbsRef} className="absolute inset-0 pointer-events-none">
-        <div className="floating-orb orb-responsive absolute top-1/4 left-1/4 w-32 h-32 bg-primary/20 rounded-full blur-xl"></div>
-        <div className="floating-orb orb-responsive absolute top-3/4 right-1/4 w-24 h-24 bg-secondary/20 rounded-full blur-xl"></div>
-        <div className="floating-orb orb-responsive absolute bottom-1/4 left-1/3 w-40 h-40 bg-accent/15 rounded-full blur-2xl"></div>
+        <div className="floating-orb orb-responsive absolute top-1/4 left-1/4 w-40 h-40 bg-primary/25 rounded-full blur-2xl shadow-2xl"></div>
+        <div className="floating-orb orb-responsive absolute top-3/4 right-1/4 w-32 h-32 bg-secondary/30 rounded-full blur-xl shadow-2xl"></div>
+        <div className="floating-orb orb-responsive absolute bottom-1/4 left-1/3 w-48 h-48 bg-accent/20 rounded-full blur-3xl shadow-2xl"></div>
+        <div className="floating-orb orb-responsive absolute top-1/2 right-1/3 w-24 h-24 bg-primary/15 rounded-full blur-lg shadow-xl"></div>
       </div>
 
-      {/* Floating decorative elements */}
+      {/* Particle system */}
+      <div ref={particlesRef} className="absolute inset-0 pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="particle absolute w-1 h-1 bg-primary/40 rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Morphing shapes */}
+      <div ref={morphingShapesRef} className="absolute inset-0 pointer-events-none">
+        <div className="morphing-shape absolute top-1/4 right-1/4 w-16 h-16 bg-primary/10 border border-primary/20"></div>
+        <div className="morphing-shape absolute bottom-1/3 left-1/4 w-12 h-12 bg-secondary/10 border border-secondary/20"></div>
+        <div className="morphing-shape absolute top-2/3 right-1/3 w-20 h-20 bg-accent/10 border border-accent/20"></div>
+      </div>
+
+      {/* Enhanced floating decorative elements */}
       <div ref={floatingElementsRef} className="absolute inset-0 pointer-events-none">
         <div className="floating-element mouse-responsive absolute top-20 left-20">
-          <Shield className="w-8 h-8 text-primary/30" />
+          <Shield className="w-10 h-10 text-primary/40 drop-shadow-lg" />
         </div>
         <div className="floating-element mouse-responsive absolute top-40 right-32">
-          <Brain className="w-10 h-10 text-secondary/40" />
+          <Brain className="w-12 h-12 text-secondary/50 drop-shadow-lg" />
         </div>
         <div className="floating-element mouse-responsive absolute bottom-40 left-40">
-          <Zap className="w-6 h-6 text-accent/50" />
+          <Zap className="w-8 h-8 text-accent/60 drop-shadow-lg" />
         </div>
         <div className="floating-element mouse-responsive absolute bottom-20 right-20">
-          <Globe className="w-12 h-12 text-primary/25" />
+          <Globe className="w-14 h-14 text-primary/35 drop-shadow-lg" />
+        </div>
+        <div className="floating-element mouse-responsive absolute top-1/2 left-1/4">
+          <Satellite className="w-9 h-9 text-secondary/45 drop-shadow-lg" />
+        </div>
+        <div className="floating-element mouse-responsive absolute bottom-1/3 right-1/4">
+          <Cpu className="w-7 h-7 text-accent/55 drop-shadow-lg" />
+        </div>
+        <div className="floating-element mouse-responsive absolute top-1/3 right-1/5">
+          <Network className="w-11 h-11 text-primary/30 drop-shadow-lg" />
+        </div>
+        <div className="floating-element mouse-responsive absolute bottom-1/4 left-1/5">
+          <AlertTriangle className="w-6 h-6 text-secondary/40 drop-shadow-lg" />
         </div>
       </div>
 
       {/* Main content */}
       <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
-        {/* Badge */}
+        {/* Enhanced Badge */}
         <div ref={badgeRef} className="mb-8 opacity-0">
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 px-6 py-3 text-lg">
-            <Globe className="mr-3 h-5 w-5" />
+          <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30 px-8 py-4 text-lg backdrop-blur-sm shadow-lg">
+            <Globe className="mr-3 h-6 w-6" />
             Advanced Disaster Intelligence Platform
           </Badge>
         </div>
 
-        {/* Title */}
+        {/* Enhanced Title with gradient text effect */}
         <h1 ref={titleRef} className="text-6xl lg:text-8xl font-bold mb-8 font-poppins leading-tight">
-          <span className="inline-block mouse-responsive">Predict.</span>{' '}
-          <span className="inline-block mouse-responsive">Monitor.</span>{' '}
-          <span className="inline-block bg-gradient-primary bg-clip-text text-transparent mouse-responsive">
+          <span className="inline-block mouse-responsive bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Predict.</span>{' '}
+          <span className="inline-block mouse-responsive bg-gradient-to-r from-foreground/90 to-foreground/70 bg-clip-text text-transparent">Monitor.</span>{' '}
+          <span className="inline-block bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent mouse-responsive">
             Protect.
           </span>
         </h1>
 
-        {/* Subtitle */}
+        {/* Enhanced Subtitle */}
         <p 
           ref={subtitleRef} 
-          className="text-xl lg:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto leading-relaxed font-inter opacity-0"
+          className="text-xl lg:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto leading-relaxed font-inter opacity-0 backdrop-blur-sm"
         >
           DisastroScope is the world's most advanced disaster prediction and monitoring platform. 
           Using cutting-edge AI and global satellite networks, we help governments and organizations 
           protect communities from natural disasters.
         </p>
 
-        {/* Buttons */}
+        {/* Enhanced Buttons */}
         <div ref={buttonsRef} className="flex flex-col sm:flex-row gap-6 justify-center items-center">
           <Button 
             asChild 
             size="lg" 
-            className="hero-cta-button bg-gradient-primary hover:shadow-glow text-lg px-8 py-4 opacity-0"
+            className="hero-cta-button bg-gradient-to-r from-primary via-primary/90 to-primary hover:from-primary/90 hover:via-primary hover:to-primary/90 text-lg px-10 py-5 opacity-0 shadow-2xl hover:shadow-primary/25 transition-all duration-300"
             onMouseEnter={handleCtaHover}
             onMouseLeave={handleCtaLeave}
           >
@@ -287,7 +432,7 @@ export default function AnimatedHero() {
           <Button 
             variant="outline" 
             size="lg" 
-            className="bg-background/10 backdrop-blur-sm border-primary/30 hover:bg-primary/10 text-lg px-8 py-4 opacity-0"
+            className="bg-background/20 backdrop-blur-md border-primary/40 hover:bg-primary/20 text-lg px-10 py-5 opacity-0 shadow-lg hover:shadow-primary/10 transition-all duration-300"
           >
             <Play className="mr-3 h-5 w-5" />
             Watch Demo
@@ -295,12 +440,12 @@ export default function AnimatedHero() {
         </div>
       </div>
 
-      {/* Animated background grid */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none">
+      {/* Enhanced animated background grid */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none">
         <div 
-          className="w-full h-full bg-[linear-gradient(rgba(59,130,246,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.3)_1px,transparent_1px)] bg-[size:50px_50px]"
+          className="background-grid w-full h-full bg-[linear-gradient(rgba(59,130,246,0.4)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.4)_1px,transparent_1px)] bg-[size:60px_60px]"
           style={{
-            transform: `translate(${mousePosition.x * 10}px, ${mousePosition.y * 10}px)`
+            transform: `translate(${mousePosition.x * 15}px, ${mousePosition.y * 15}px)`
           }}
         />
       </div>

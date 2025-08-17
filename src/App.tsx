@@ -6,10 +6,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navigation from "./components/Navigation";
 import Landing from "./pages/EnhancedLanding";
 import Predictions from "./pages/EnhancedPredictions";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/EnhancedDashboard";
 import Insights from "./pages/Insights";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
+import RealTimeBridge from "./components/RealTimeBridge";
+import WeatherExplorer from "./pages/WeatherExplorer";
+
 
 const queryClient = new QueryClient();
 
@@ -19,10 +22,13 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <RealTimeBridge />
         <Navigation />
+
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/predictions" element={<Predictions />} />
+          <Route path="/weather" element={<WeatherExplorer />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/about" element={<About />} />

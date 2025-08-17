@@ -21,19 +21,25 @@ import {
   Clock,
   Users,
   DollarSign,
-  BarChart3
+  BarChart3,
+  Cloud
 } from 'lucide-react';
 import RealTimeMap from '@/components/RealTimeMap';
-import { useDisasterEvents, usePredictions, useSensorData } from '@/hooks/useMockData';
+import WeatherDashboard from '@/components/WeatherDashboard';
+import { useDisasterEvents, usePredictions, useSensorData, useStats, useApiHealth, useRealTimeUpdates, useFemaDisasters, useEonetEvents } from '@/hooks/useFlaskData';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 
 export default function Dashboard() {
-  const { events, loading: eventsLoading } = useDisasterEvents();
-  const { predictions, loading: predictionsLoading } = usePredictions();
-  const { sensorData, loading: sensorLoading } = useSensorData();
+  const { events, loading: eventsLoading, refetch: refetchEvents } = useDisasterEvents();
+  const { predictions, loading: predictionsLoading, refetch: refetchPredictions } = usePredictions();
+  const { sensorData, loading: sensorLoading, refetch: refetchSensors } = useSensorData();
+  const { stats, loading: statsLoading } = useStats();
+  const { isHealthy, loading: healthLoading } = useApiHealth();
+  const { isConnected, lastUpdate } = useRealTimeUpdates();
+  const { items: femaDisasters, loading: femaLoading } = useFemaDisasters();
+  const { events: eonetEvents, loading: eonetLoading } = useEonetEvents();
   const { toast } = useToast();
-  const [lastUpdate, setLastUpdate] = useState(new Date());
   
   // GSAP animations
   const statsRef = useGSAPStagger('.dashboard-stat', 0.1);
@@ -54,361 +60,322 @@ export default function Dashboard() {
     sum + (event.economic_impact || 0), 0
   );
 
-  const stats = [
+  const statsData = [
     { 
-      label: 'Active Events', 
-      value: activeEvents.length.toString(), 
-      change: `+${Math.floor(Math.random() * 20)}%`, 
+      label: 'Active Events',
+      value: activeEvents.length,
       icon: Activity,
-      description: 'Currently active disasters'
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-50',
+      change: '+2.5%',
+      changeType: 'positive'
     },
     { 
-      label: 'Critical Alerts', 
-      value: criticalEvents.length.toString(), 
-      change: criticalEvents.length > 2 ? '+high' : 'normal', 
+      label: 'Critical Events',
+      value: criticalEvents.length,
       icon: AlertTriangle,
-      description: 'Severe and critical events'
+      color: 'text-red-500',
+      bgColor: 'bg-red-50',
+      change: '+1.2%',
+      changeType: 'negative'
     },
     { 
-      label: 'AI Predictions', 
-      value: predictions.length.toString(), 
-      change: `+${Math.floor(Math.random() * 15)}%`, 
+      label: 'Total Predictions',
+      value: predictions.length,
       icon: TrendingUp,
-      description: 'Active ML predictions'
+      color: 'text-green-500',
+      bgColor: 'bg-green-50',
+      change: '+5.8%',
+      changeType: 'positive'
     },
     { 
-      label: 'Sensor Network', 
-      value: sensorData.length.toString(), 
-      change: '+99.7%', 
-      icon: Globe,
-      description: 'Live monitoring stations'
+      label: 'Active Sensors',
+      value: sensorData.length,
+      icon: Zap,
+      color: 'text-purple-500',
+      bgColor: 'bg-purple-50',
+      change: '+0.3%',
+      changeType: 'positive'
     }
   ];
 
-  const getEventIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'earthquake': return Zap;
-      case 'hurricane': return Waves;
-      case 'wildfire': return Flame;
-      case 'flood': return Waves;
-      case 'tornado': return Mountain;
-      case 'landslide': return Mountain;
-      default: return AlertTriangle;
+  const handleRefresh = async () => {
+    try {
+      await Promise.all([
+        refetchEvents(),
+        refetchPredictions(),
+        refetchSensors()
+      ]);
+      toast({
+        title: "Data refreshed",
+        description: "All data has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh failed",
+        description: "Failed to refresh data. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active': return 'text-destructive';
-      case 'critical': return 'text-destructive';
-      case 'monitoring': return 'text-warning';
-      case 'predicted': return 'text-primary';
-      default: return 'text-muted-foreground';
-    }
-  };
-
-  const refreshData = () => {
-    setLastUpdate(new Date());
-    toast({
-      title: "Data refreshed",
-      description: "Latest information loaded successfully",
-    });
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLastUpdate(new Date());
-    }, 30000); // Update every 30 seconds
-
-    return () => clearInterval(interval);
-  }, []);
+  const isLoading = eventsLoading || predictionsLoading || sensorLoading || statsLoading || healthLoading || femaLoading || eonetLoading;
 
   return (
-    <div className="min-h-screen bg-background pt-16">
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Enhanced Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground font-poppins">Global Monitoring Dashboard</h1>
-              <p className="text-muted-foreground font-inter">Real-time disaster tracking and AI-powered prediction system</p>
-              <div className="flex items-center space-x-4 mt-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-                  <span className="text-sm text-success font-medium">Live Data</span>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Last updated: {lastUpdate.toLocaleTimeString()}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Button variant="outline" size="sm" onClick={refreshData}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
-              <Button size="sm" className="bg-gradient-primary">
-                <Bell className="h-4 w-4 mr-2" />
-                Alerts ({criticalEvents.length})
-              </Button>
-            </div>
+    <div className="min-h-screen bg-background p-6">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground font-poppins">Disaster Intelligence Dashboard</h1>
+            <p className="text-muted-foreground font-inter">
+              Real-time monitoring and analysis of global disaster events with AI-powered weather predictions
+            </p>
           </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span className="text-sm text-muted-foreground">
+                {isConnected ? 'Connected' : 'Disconnected'}
+              </span>
+            </div>
+            <Button onClick={handleRefresh} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+        </div>
+        
+        {/* API Health Status */}
+        <div className="flex items-center space-x-4 mb-4">
+          <Badge variant={isHealthy ? "default" : "destructive"} className="text-xs">
+            {isHealthy ? "API Healthy" : "API Unhealthy"}
+          </Badge>
+          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+            <Cloud className="w-3 h-3 mr-1" />
+            Real Weather Data
+          </Badge>
+          <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+            AI Predictions
+          </Badge>
+          {lastUpdate && (
+            <span className="text-xs text-muted-foreground">
+              Last update: {new Date(lastUpdate).toLocaleTimeString()}
+            </span>
+          )}
+        </div>
+      </div>
 
-          {/* Enhanced Stats Grid with GSAP */}
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading disaster data...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      {!isLoading && (
+        <>
+          {/* Statistics Cards */}
           <div ref={statsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {stats.map((stat, index) => (
-              <GSAPEnhancedCard key={stat.label} className="dashboard-stat p-6 bg-gradient-card" delay={index * 100}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center">
-                    <stat.icon className="h-6 w-6 text-primary-foreground" />
+            {statsData.map((stat, index) => (
+              <GSAPEnhancedCard key={stat.label} className="dashboard-stat p-6" delay={index * 100}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground font-inter">{stat.label}</p>
+                    <p className="text-3xl font-bold text-foreground font-poppins">{stat.value}</p>
+                    <div className="flex items-center mt-2">
+                      <span className={`text-xs font-medium ${
+                        stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {stat.change}
+                      </span>
+                      <span className="text-xs text-muted-foreground ml-1">from last hour</span>
+                    </div>
                   </div>
-                  <Badge variant="outline" className={`${
-                    stat.change.includes('high') ? 'border-destructive/20 text-destructive bg-destructive/10' :
-                    stat.change.startsWith('+') ? 'border-success/20 text-success bg-success/10' : 
-                    'border-muted text-muted-foreground'
-                  }`}>
-                    {stat.change}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground font-inter">{stat.label}</p>
-                  <p className="text-3xl font-bold text-foreground font-poppins mb-1">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground">{stat.description}</p>
+                  <div className={`p-3 rounded-lg ${stat.bgColor}`}>
+                    <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                  </div>
                 </div>
               </GSAPEnhancedCard>
             ))}
           </div>
 
-          {/* Key Metrics Summary with GSAP */}
-          <div ref={metricsRef} className="grid md:grid-cols-3 gap-6 mb-8">
-            <GSAPEnhancedCard className="metric-card p-6 bg-gradient-card" delay={0}>
-              <div className="flex items-center space-x-3 mb-3">
-                <Users className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-foreground">Population Impact</h3>
-              </div>
-              <p className="text-2xl font-bold text-foreground font-poppins">
-                {(totalAffectedPopulation / 1000000).toFixed(1)}M
-              </p>
-              <p className="text-sm text-muted-foreground">People in affected areas</p>
-            </GSAPEnhancedCard>
-            
-            <GSAPEnhancedCard className="metric-card p-6 bg-gradient-card" delay={150}>
-              <div className="flex items-center space-x-3 mb-3">
-                <DollarSign className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-foreground">Economic Impact</h3>
-              </div>
-              <p className="text-2xl font-bold text-foreground font-poppins">
-                ${(totalEconomicImpact / 1000000000).toFixed(1)}B
-              </p>
-              <p className="text-sm text-muted-foreground">Estimated economic losses</p>
-            </GSAPEnhancedCard>
-            
-            <GSAPEnhancedCard className="metric-card p-6 bg-gradient-card" delay={300}>
-              <div className="flex items-center space-x-3 mb-3">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-foreground">System Performance</h3>
-              </div>
-              <p className="text-2xl font-bold text-success font-poppins">99.7%</p>
-              <p className="text-sm text-muted-foreground">Uptime & accuracy rate</p>
-            </GSAPEnhancedCard>
+          {/* Weather Dashboard */}
+          <div className="mb-8">
+            <WeatherDashboard />
           </div>
-        </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Real-Time Map */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-2"
-          >
-            <Card className="p-6 bg-gradient-card border-border/50">
+          {/* Real-time Map */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-foreground font-poppins">Global Disaster Map</h2>
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                Real-time
+              </Badge>
+            </div>
+            <Card className="p-4">
+              <RealTimeMap height="500px" />
+            </Card>
+          </div>
+
+          {/* Metrics Grid */}
+          <div ref={metricsRef} className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* Recent Events */}
+            <GSAPEnhancedCard className="metric-card p-6" delay={200}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-foreground font-poppins">Global Threat Map</h2>
-                <div className="flex items-center space-x-2">
-                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    Interactive
-                  </Badge>
-                  <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-                    <Clock className="h-3 w-3 mr-1" />
-                    Real-time
-                  </Badge>
-                </div>
+                <h3 className="text-xl font-semibold text-foreground font-poppins">Recent Events</h3>
+                <Button variant="ghost" size="sm">
+                  <Settings className="h-4 w-4" />
+                </Button>
               </div>
-              
-              {eventsLoading ? (
-                <div className="h-96 bg-muted/20 rounded-lg flex items-center justify-center">
-                  <div className="text-center space-y-2">
-                    <RefreshCw className="h-8 w-8 text-primary mx-auto animate-spin" />
-                    <p className="text-sm text-muted-foreground">Loading real-time data...</p>
-                  </div>
-                </div>
-              ) : (
-                <RealTimeMap height="400px" />
-              )}
-            </Card>
-          </motion.div>
-
-          {/* Live Threats Sidebar */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Card className="p-6 bg-gradient-card border-border/50">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-foreground font-poppins">Active Threats</h2>
-                <Badge variant="destructive" className="animate-pulse">
-                  {activeEvents.length} Active
-                </Badge>
-              </div>
-              
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {eventsLoading ? (
-                  <div className="flex items-center justify-center p-8">
-                    <RefreshCw className="h-6 w-6 animate-spin text-primary" />
-                  </div>
-                ) : activeEvents.length === 0 ? (
-                  <div className="text-center p-8">
-                    <AlertTriangle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">No active threats detected</p>
-                  </div>
-                ) : (
-                  activeEvents.slice(0, 6).map((event, index) => {
-                    const IconComponent = getEventIcon(event.event_type);
-                    return (
-                      <motion.div
-                        key={event.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 + index * 0.1 }}
-                        className="border border-border/50 rounded-lg p-4 hover:shadow-card transition-all cursor-pointer"
-                      >
-                        <div className="flex items-start space-x-3">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            event.severity?.toLowerCase().includes('critical') || event.severity?.toLowerCase().includes('extreme')
-                              ? 'bg-destructive/10'
-                              : event.severity?.toLowerCase().includes('major') || event.severity?.toLowerCase().includes('category 4')
-                              ? 'bg-warning/10'
-                              : 'bg-primary/10'
-                          }`}>
-                            <IconComponent className={`h-5 w-5 ${getStatusColor(event.status)}`} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h3 className="text-sm font-medium text-foreground truncate font-poppins">
-                                {event.name}
-                              </h3>
-                              <Badge 
-                                variant={event.status === 'active' ? 'destructive' : 'secondary'}
-                                className="text-xs"
-                              >
-                                {event.status}
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-muted-foreground mb-2 font-inter">{event.location}</p>
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-medium text-foreground">
-                                {event.magnitude || event.severity}
-                              </span>
-                              {event.affected_population && (
-                                <span className="text-xs text-muted-foreground">
-                                  {(event.affected_population / 1000000).toFixed(1)}M affected
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })
-                )}
-              </div>
-              
-              <Button variant="outline" className="w-full mt-4 border-primary/20 hover:bg-primary/10">
-                View All Events ({events.length})
-              </Button>
-            </Card>
-          </motion.div>
-        </div>
-
-        {/* Additional Dashboard Sections */}
-        <div className="grid md:grid-cols-2 gap-6 mt-6">
-          {/* Recent Activity */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <Card className="p-6 bg-gradient-card border-border/50">
-              <h2 className="text-xl font-semibold text-foreground mb-4">Recent Activity</h2>
-              <div className="space-y-3">
-                {[
-                  { time: '2 min ago', event: 'Seismic activity detected in Japan', type: 'warning' },
-                  { time: '5 min ago', event: 'Wildfire risk updated for California', type: 'destructive' },
-                  { time: '12 min ago', event: 'Flood warning issued for Bangladesh', type: 'primary' },
-                  { time: '18 min ago', event: 'Landslide monitoring activated in Nepal', type: 'secondary' }
-                ].map((activity, index) => (
-                  <div key={index} className="flex items-center space-x-3 p-2 rounded hover:bg-muted/30">
-                    <div className={`w-2 h-2 rounded-full ${
-                      activity.type === 'warning' ? 'bg-warning' :
-                      activity.type === 'destructive' ? 'bg-destructive' :
-                      activity.type === 'primary' ? 'bg-primary' :
-                      'bg-secondary'
-                    }`}></div>
-                    <div className="flex-1">
-                      <p className="text-sm text-foreground">{activity.event}</p>
-                      <p className="text-xs text-muted-foreground">{activity.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </motion.div>
-
-          {/* System Status */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <Card className="p-6 bg-gradient-card border-border/50">
-              <h2 className="text-xl font-semibold text-foreground mb-4">System Status</h2>
               <div className="space-y-4">
-                {[
-                  { system: 'Satellite Network', status: 'Operational', uptime: '99.9%' },
-                  { system: 'AI Prediction Engine', status: 'Operational', uptime: '99.7%' },
-                  { system: 'Data Processing', status: 'Operational', uptime: '99.8%' },
-                  { system: 'Alert System', status: 'Operational', uptime: '100%' }
-                ].map((system, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 rounded">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{system.system}</p>
-                      <p className="text-xs text-muted-foreground">Uptime: {system.uptime}</p>
+                {activeEvents.slice(0, 5).map((event) => (
+                  <div key={event.id} className="flex items-center space-x-3 p-3 rounded-lg bg-muted/30">
+                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground font-inter">{event.name}</p>
+                      <p className="text-sm text-muted-foreground">{event.location}</p>
                     </div>
-                    <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-                      {system.status}
+                    <Badge variant="outline" className="text-xs">
+                      {event.severity}
                     </Badge>
                   </div>
                 ))}
               </div>
-            </Card>
-          </motion.div>
-        </div>
-      </div>
+            </GSAPEnhancedCard>
+
+            {/* Ongoing Disasters (OpenFEMA) */}
+            <GSAPEnhancedCard className="metric-card p-6" delay={250}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-foreground font-poppins">Ongoing Disasters (FEMA)</h3>
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Live</Badge>
+              </div>
+              <div className="space-y-3 max-h-[360px] overflow-auto pr-1">
+                {femaDisasters && femaDisasters.length > 0 ? (
+                  femaDisasters.slice(0, 12).map((d: any, idx: number) => {
+                    const title = d.title || d.incidentType || 'Disaster';
+                    const state = d.state || d.place || d.declaredCountyArea || '';
+                    const date = d.declarationDate || d.incidentBeginDate || d.declarationDateTime || d.date || null;
+                    return (
+                      <div key={(d.id ?? d.disasterNumber ?? idx).toString()} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                        <div className="min-w-0">
+                          <p className="font-medium truncate text-foreground font-inter">{title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{state}</p>
+                        </div>
+                        {date && (
+                          <span className="text-xs text-muted-foreground ml-3 whitespace-nowrap">{new Date(date).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-muted-foreground">No ongoing FEMA disasters detected.</p>
+                )}
+              </div>
+            </GSAPEnhancedCard>
+
+            {/* Ongoing Disasters (NASA EONET) */}
+            <GSAPEnhancedCard className="metric-card p-6" delay={275}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-foreground font-poppins">Ongoing Disasters (EONET)</h3>
+                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Live</Badge>
+              </div>
+              <div className="space-y-3 max-h-[360px] overflow-auto pr-1">
+                {eonetEvents && eonetEvents.length > 0 ? (
+                  eonetEvents.slice(0, 12).map((ev: any, idx: number) => {
+                    const title = ev.title || ev.name || 'Event';
+                    const category = (ev.categories && ev.categories[0]?.title) || ev.category || '';
+                    const date = (ev.geometries && ev.geometries[0]?.date) || ev.date || null;
+                    return (
+                      <div key={(ev.id ?? idx).toString()} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                        <div className="min-w-0">
+                          <p className="font-medium truncate text-foreground font-inter">{title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{category}</p>
+                        </div>
+                        {date && (
+                          <span className="text-xs text-muted-foreground ml-3 whitespace-nowrap">{new Date(date).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-muted-foreground">No ongoing EONET disasters detected.</p>
+                )}
+              </div>
+            </GSAPEnhancedCard>
+
+            {/* High Probability Predictions */}
+            <GSAPEnhancedCard className="metric-card p-6" delay={300}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-foreground font-poppins">High Probability Predictions</h3>
+                <Button variant="ghost" size="sm">
+                  <Bell className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                {predictions
+                  .filter(p => p.probability > 0.7)
+                  .slice(0, 5)
+                  .map((prediction) => (
+                    <div key={prediction.id} className="flex items-center space-x-3 p-3 rounded-lg bg-muted/30">
+                      <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground font-inter">{prediction.event_type}</p>
+                        <p className="text-sm text-muted-foreground">{prediction.location}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-foreground">
+                          {(prediction.probability * 100).toFixed(0)}%
+                        </p>
+                        <p className="text-xs text-muted-foreground">{prediction.timeframe}</p>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </GSAPEnhancedCard>
+          </div>
+
+          {/* Additional Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <GSAPEnhancedCard className="p-6" delay={400}>
+              <div className="flex items-center space-x-3 mb-4">
+                <Users className="h-5 w-5 text-blue-500" />
+                <h3 className="font-semibold text-foreground font-poppins">Affected Population</h3>
+              </div>
+              <p className="text-2xl font-bold text-foreground">
+                {totalAffectedPopulation.toLocaleString()}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">People at risk</p>
+            </GSAPEnhancedCard>
+
+            <GSAPEnhancedCard className="p-6" delay={500}>
+              <div className="flex items-center space-x-3 mb-4">
+                <DollarSign className="h-5 w-5 text-green-500" />
+                <h3 className="font-semibold text-foreground font-poppins">Economic Impact</h3>
+              </div>
+              <p className="text-2xl font-bold text-foreground">
+                ${(totalEconomicImpact / 1000000).toFixed(1)}M
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">Estimated damage</p>
+            </GSAPEnhancedCard>
+
+            <GSAPEnhancedCard className="p-6" delay={600}>
+              <div className="flex items-center space-x-3 mb-4">
+                <BarChart3 className="h-5 w-5 text-purple-500" />
+                <h3 className="font-semibold text-foreground font-poppins">Data Quality</h3>
+              </div>
+              <p className="text-2xl font-bold text-foreground">
+                {sensorData.filter(s => s.data_quality === 'excellent').length}/{sensorData.length}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">Excellent quality sensors</p>
+            </GSAPEnhancedCard>
+          </div>
+        </>
+      )}
     </div>
   );
 }

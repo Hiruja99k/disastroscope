@@ -4,7 +4,23 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DisasterChart from '@/components/charts/DisasterChart';
 import { BarChart, LineChart, PieChart, TrendingUp, TrendingDown, Activity, AlertTriangle, Calendar } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 export default function Insights() {
+  const { toast } = useToast();
+
+  const handleExportReport = () => {
+    toast({
+      title: "Export Report",
+      description: "Generating comprehensive insights report...",
+    });
+  };
+
+  const handleGenerateForecast = () => {
+    toast({
+      title: "Generate Forecast",
+      description: "Running AI-powered forecast analysis...",
+    });
+  };
   const chartData = [{
     title: 'Earthquake Activity Trends',
     subtitle: 'Last 30 days seismic data',
@@ -92,10 +108,10 @@ export default function Insights() {
               <p className="text-muted-foreground">Advanced predictive analytics and trend analysis</p>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="outline" className="border-primary/20 hover:bg-primary/10">
+              <Button onClick={handleExportReport} variant="outline" className="border-primary/20 hover:bg-primary/10">
                 Export Report
               </Button>
-              <Button className="bg-gradient-primary hover:shadow-glow">
+              <Button onClick={handleGenerateForecast} className="bg-gradient-primary hover:shadow-glow">
                 Generate Forecast
               </Button>
             </div>

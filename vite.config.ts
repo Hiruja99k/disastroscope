@@ -19,4 +19,21 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    outDir: 'dist',
+    sourcemap: mode === 'development',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs'],
+          charts: ['chart.js', 'recharts'],
+          maps: ['leaflet', 'mapbox-gl']
+        }
+      }
+    }
+  },
+  define: {
+    __DEV__: mode === 'development'
+  }
 }));
