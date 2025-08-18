@@ -463,7 +463,9 @@ class DisasterPredictionService:
         # Scale weather data for each model
         for disaster_type, model in self.models.items():
             if disaster_type not in self.scalers:
-                logger.warning(f"No scaler found for {disaster_type}, using raw data")
+                # Fallback to rule-based estimate to avoid missing predictions in production
+                logger.warning(f"No scaler found for {disaster_type}, using rule-based fallback")
+                predictions[disaster_type] = self._rule_based_risk(disaster_type, weather_data)
                 continue
             
             # Prepare features based on disaster type
@@ -528,15 +530,18 @@ class DisasterPredictionService:
                     weather_data['pressure']
                 ]
             
-            # Scale features
-            features_scaled = self.scalers[disaster_type].transform([features])
-            features_tensor = torch.FloatTensor(features_scaled)
-            
-            # Make prediction
-            model.eval()
-            with torch.no_grad():
-                prediction = model(features_tensor)
-                predictions[disaster_type] = prediction.item()
+            try:
+                # Scale features
+                features_scaled = self.scalers[disaster_type].transform([features])
+                features_tensor = torch.FloatTensor(features_scaled)
+                # Make prediction
+                model.eval()
+                with torch.no_grad():
+                    prediction = model(features_tensor)
+                    predictions[disaster_type] = float(prediction.item())
+            except Exception as e:
+                logger.error(f"Prediction failure for {disaster_type}, using rule-based fallback: {e}")
+                predictions[disaster_type] = self._rule_based_risk(disaster_type, weather_data)
         
         # Clamp earthquake risk unless explicitly enabled via env
         if not self.allow_earthquake_predictions and 'earthquake' in predictions:
@@ -550,6 +555,46 @@ class DisasterPredictionService:
                 predictions['earthquake'] = 0.0
 
         return predictions
+
+    def _rule_based_risk(self, disaster_type: str, weather_data: Dict[str, float]) -> float:
+        """Lightweight rule-based fallback using live weather features.
+        Keeps the UI populated even when models/scalers are unavailable."""
+        temperature = float(weather_data.get('temperature', 20))
+        humidity = float(weather_data.get('humidity', 50))
+        precipitation = float(weather_data.get('precipitation', 0))
+        wind_speed = float(weather_data.get('wind_speed', 0))
+        pressure = float(weather_data.get('pressure', 1013))
+        cloud_cover = float(weather_data.get('cloud_cover', 0))
+
+        def clamp01(x: float) -> float:
+            return max(0.0, min(1.0, x))
+
+        if disaster_type == 'flood':
+            # Higher with heavy precipitation and low visibility proxy via cloud cover
+            return clamp01((precipitation / 50.0) * (0.5 + cloud_cover / 200.0))
+        if disaster_type == 'wildfire':
+            if temperature > 30 and humidity < 35:
+                return clamp01(((temperature - 30) / 20.0) * (1.0 - humidity / 100.0))
+            return 0.0
+        if disaster_type == 'storm':
+            # High wind + lower pressure + high cloud cover
+            return clamp01((wind_speed / 60.0) * (1.0 - min(pressure, 1100.0) / 1100.0) * (0.5 + cloud_cover / 200.0))
+        if disaster_type == 'earthquake':
+            # Base low probability (further clamped by env above)
+            return 0.05
+        if disaster_type == 'tornado':
+            if wind_speed > 25 and humidity > 60 and cloud_cover > 60:
+                return clamp01(((wind_speed - 25) / 40.0) * (humidity / 100.0))
+            return 0.0
+        if disaster_type == 'landslide':
+            if precipitation > 20 and humidity > 70:
+                return clamp01(precipitation / 100.0)
+            return 0.0
+        if disaster_type == 'drought':
+            if humidity < 25 and precipitation < 1 and temperature > 28:
+                return clamp01(((28.0 - min(humidity, 28.0)) / 28.0) * (1.0 - min(precipitation, 10.0) / 10.0))
+            return 0.0
+        return 0.0
     
     def get_disaster_severity(self, risk_score: float) -> str:
         """Convert risk score to severity level"""
