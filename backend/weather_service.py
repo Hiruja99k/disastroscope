@@ -287,47 +287,50 @@ class WeatherService:
                 "timezone": "auto",
             }
             url = "https://api.open-meteo.com/v1/forecast"
-            async with self.session.get(url, params=params) as response:
-                if response.status != 200:
-                    logger.error(f"Open-Meteo current weather failed: status={response.status}")
-                    return None
-                data = await response.json()
-                cur = (data or {}).get("current") or {}
-                # Extract values with sensible defaults
-                temperature = float(cur.get("temperature_2m") or 0.0)
-                humidity = float(cur.get("relative_humidity_2m") or 0.0)
-                pressure = float(cur.get("pressure_msl") or 1013.0)
-                wind_speed = float(cur.get("wind_speed_10m") or 0.0)
-                wind_direction = float(cur.get("wind_direction_10m") or 0.0)
-                precipitation = float(cur.get("precipitation") or 0.0)
-                visibility_m = float(cur.get("visibility") or 10000.0)
-                cloud_cover = float(cur.get("cloud_cover") or 0.0)
+            # Use a per-call session to avoid relying on a shared loop-bound session
+            import aiohttp
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, params=params) as response:
+                    if response.status != 200:
+                        logger.error(f"Open-Meteo current weather failed: status={response.status}")
+                        return None
+                    data = await response.json()
+                    cur = (data or {}).get("current") or {}
+                    # Extract values with sensible defaults
+                    temperature = float(cur.get("temperature_2m") or 0.0)
+                    humidity = float(cur.get("relative_humidity_2m") or 0.0)
+                    pressure = float(cur.get("pressure_msl") or 1013.0)
+                    wind_speed = float(cur.get("wind_speed_10m") or 0.0)
+                    wind_direction = float(cur.get("wind_direction_10m") or 0.0)
+                    precipitation = float(cur.get("precipitation") or 0.0)
+                    visibility_m = float(cur.get("visibility") or 10000.0)
+                    cloud_cover = float(cur.get("cloud_cover") or 0.0)
 
-                # Convert "standard" units to Kelvin for temperature approximation
-                if units == "standard":
-                    temperature = temperature + 273.15  # Kelvin approx from Celsius
+                    # Convert "standard" units to Kelvin for temperature approximation
+                    if units == "standard":
+                        temperature = temperature + 273.15  # Kelvin approx from Celsius
 
-                # Derive a coarse weather condition
-                if precipitation > 0.1:
-                    condition = "Rain"
-                else:
-                    condition = "Clouds" if cloud_cover >= 75 else ("Partly Cloudy" if cloud_cover >= 25 else "Clear")
+                    # Derive a coarse weather condition
+                    if precipitation > 0.1:
+                        condition = "Rain"
+                    else:
+                        condition = "Clouds" if cloud_cover >= 75 else ("Partly Cloudy" if cloud_cover >= 25 else "Clear")
 
-                wd = WeatherData(
-                    location=location_name or f"{lat}, {lon}",
-                    coordinates={"lat": lat, "lng": lon},
-                    temperature=temperature,
-                    humidity=humidity,
-                    pressure=pressure,
-                    wind_speed=wind_speed,
-                    wind_direction=wind_direction,
-                    precipitation=precipitation,
-                    visibility=max(0.0, visibility_m / 1000.0),  # km
-                    cloud_cover=cloud_cover,
-                    weather_condition=condition,
-                    timestamp=datetime.utcnow(),
-                )
-                return wd
+                    wd = WeatherData(
+                        location=location_name or f"{lat}, {lon}",
+                        coordinates={"lat": lat, "lng": lon},
+                        temperature=temperature,
+                        humidity=humidity,
+                        pressure=pressure,
+                        wind_speed=wind_speed,
+                        wind_direction=wind_direction,
+                        precipitation=precipitation,
+                        visibility=max(0.0, visibility_m / 1000.0),  # km
+                        cloud_cover=cloud_cover,
+                        weather_condition=condition,
+                        timestamp=datetime.utcnow(),
+                    )
+                    return wd
         except Exception as e:
             logger.error(f"Open-Meteo current weather error: {e}")
             return None
@@ -349,30 +352,32 @@ class WeatherService:
                 "timezone": "auto",
             }
             url = "https://api.open-meteo.com/v1/forecast"
-            async with self.session.get(url, params=params) as response:
-                if response.status != 200:
-                    logger.error(f"Open-Meteo forecast failed: status={response.status}")
-                    return []
-                data = await response.json()
-                hourly = (data or {}).get("hourly") or {}
-                times = hourly.get("time") or []
-                temps = hourly.get("temperature_2m") or []
-                precs = hourly.get("precipitation") or []
-                clouds = hourly.get("cloud_cover") or []
-                # Build a list with a familiar shape to the frontend
-                items: List[Dict[str, Any]] = []
-                for i in range(min(len(times), len(temps))):
-                    t_iso = times[i]
-                    t_val = float(temps[i] if temps[i] is not None else 0.0)
-                    p_val = float(precs[i] if precs[i] is not None else 0.0)
-                    c_val = float(clouds[i] if clouds[i] is not None else 0.0)
-                    cond = "Rain" if p_val > 0.1 else ("Clouds" if c_val >= 75 else ("Partly Cloudy" if c_val >= 25 else "Clear"))
-                    items.append({
-                        "dt_txt": t_iso,
-                        "main": {"temp": t_val},
-                        "weather": [{"main": cond}],
-                    })
-                return items
+            import aiohttp
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, params=params) as response:
+                    if response.status != 200:
+                        logger.error(f"Open-Meteo forecast failed: status={response.status}")
+                        return []
+                    data = await response.json()
+                    hourly = (data or {}).get("hourly") or {}
+                    times = hourly.get("time") or []
+                    temps = hourly.get("temperature_2m") or []
+                    precs = hourly.get("precipitation") or []
+                    clouds = hourly.get("cloud_cover") or []
+                    # Build a list with a familiar shape to the frontend
+                    items: List[Dict[str, Any]] = []
+                    for i in range(min(len(times), len(temps))):
+                        t_iso = times[i]
+                        t_val = float(temps[i] if temps[i] is not None else 0.0)
+                        p_val = float(precs[i] if precs[i] is not None else 0.0)
+                        c_val = float(clouds[i] if clouds[i] is not None else 0.0)
+                        cond = "Rain" if p_val > 0.1 else ("Clouds" if c_val >= 75 else ("Partly Cloudy" if c_val >= 25 else "Clear"))
+                        items.append({
+                            "dt_txt": t_iso,
+                            "main": {"temp": t_val},
+                            "weather": [{"main": cond}],
+                        })
+                    return items
         except Exception as e:
             logger.error(f"Open-Meteo forecast error: {e}")
             return []

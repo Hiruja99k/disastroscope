@@ -546,18 +546,28 @@ export default function EnhancedDashboard() {
       // Get city name from coordinates using reverse geocoding
     const getUserCityName = async (lat: number, lon: number) => {
       try {
-        const response = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=074ac01e6f3f5892c09dffcb01cdd1d4`);
-        const data = await response.json();
-        if (data && data[0]) {
-          const city = data[0].name;
-          const country = data[0].country;
-          const state = data[0].state;
+        // Prefer the shared reverse geocoder from our hook for better global coverage
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=12&addressdetails=1`);
+        if (res.ok) {
+          const data: any = await res.json();
+          const addr = data?.address || {};
+          const city = addr.city || addr.town || addr.village || addr.hamlet || 'Unknown';
+          const state = addr.state || addr.province || addr.region;
+          const country = addr.country || addr.country_code || 'Unknown';
           return state ? `${city}, ${state}, ${country}` : `${city}, ${country}`;
         }
-        return 'Unknown Location';
-      } catch (error) {
-        return 'Unknown Location';
-      }
+      } catch (_) {}
+      try {
+        const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+        if (res.ok) {
+          const data: any = await res.json();
+          const city = data.city || data.locality || data.principalSubdivision || 'Unknown';
+          const state = data.principalSubdivision || undefined;
+          const country = data.countryName || 'Unknown';
+          return state ? `${city}, ${state}, ${country}` : `${city}, ${country}`;
+        }
+      } catch (_) {}
+      return 'Unknown Location';
     };
 
     // Get disaster predictions for user's current location
@@ -577,41 +587,38 @@ export default function EnhancedDashboard() {
         const cityName = await getUserCityName(userLocation.latitude, userLocation.longitude);
         setUserCityName(cityName);
 
-        const ai = await apiService.predictDisaster(
-          userLocation.latitude, 
-          userLocation.longitude, 
-          cityName
-        );
+        // NEW: Use the enhanced location analysis endpoint
+        const analysis = await apiService.analyzeLocation(cityName);
         
-        if (!ai) {
+        if (!analysis || !analysis.disaster_risks) {
           toast({ 
-            title: 'Prediction failed', 
+            title: 'Analysis failed', 
             description: 'Could not compute prediction for your location', 
             variant: 'destructive' 
           });
           return;
         }
 
-        // Transform AIPrediction.predictions map -> Prediction[] compatible with grid
+        // Transform disaster_risks map -> Prediction[] compatible with grid
         const nowIso = new Date().toISOString();
-        const mapped = Object.entries(ai.predictions || {}).map(([eventType, risk]) => {
+        const mapped = Object.entries(analysis.disaster_risks || {}).map(([eventType, risk]) => {
           const riskValue = typeof risk === 'number' ? risk : Number(risk);
           const severity = riskValue >= 0.8 ? 'extreme' : riskValue >= 0.6 ? 'high' : riskValue >= 0.4 ? 'moderate' : 'low';
           return {
             id: `mylocation_${Date.now()}_${eventType}`,
             event_type: eventType,
-            location: cityName,
+            location: analysis.location?.name || cityName,
             probability: riskValue,
             severity,
             timeframe: '24-72h',
-            coordinates: ai.coordinates,
+            coordinates: analysis.location?.coordinates || { lat: userLocation.latitude, lng: userLocation.longitude },
             created_at: nowIso,
             updated_at: nowIso,
             confidence_level: Math.min(0.95, Math.max(0.5, riskValue + 0.1)),
             affected_area_km2: 0,
-            potential_impact: (ai.summaries && ai.summaries[eventType]) || '',
-            weather_data: ai.weather_data,
-            ai_model: (ai.summaries && ai.summaries[eventType]) ? 'PyTorch + Gemini' : 'PyTorch Neural Network'
+            potential_impact: analysis.risk_summary || '',
+            weather_data: analysis.current_weather,
+            ai_model: 'Enhanced Rule-Based Analysis'
           } as ApiPrediction;
         });
 
@@ -629,10 +636,12 @@ export default function EnhancedDashboard() {
           description: `Analyzed ${mapped.length} disaster risks for ${cityName}` 
         });
       } catch (err) {
-        console.error(err);
+        console.error('Location analysis error:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to analyze your location for disaster risks';
         toast({ 
-          title: 'Error', 
-          description: 'Failed to analyze your location for disaster risks',
+          title: 'Analysis Error', 
+          description: errorMessage,
+          variant: 'destructive'
         });
       } finally {
         setMyLocationLoading(false);
@@ -652,27 +661,10 @@ export default function EnhancedDashboard() {
 
       setAdvancedAnalysisLoading(true);
       try {
-        // First geocode the location
-        const geocodeResults = await apiService.geocode(advancedLocationQuery);
-        if (!geocodeResults || geocodeResults.length === 0) {
-          toast({
-            title: "Location Not Found",
-            description: "Could not find the specified location. Please try a different search term.",
-            variant: "destructive"
-          });
-          return;
-        }
+        // NEW: Use the enhanced location analysis endpoint directly
+        const analysis = await apiService.analyzeLocation(advancedLocationQuery);
 
-        const geocodeResult = geocodeResults[0]; // Use the first result
-
-        // Get advanced AI analysis
-        const ai = await apiService.predictDisaster(
-          geocodeResult.lat,
-          geocodeResult.lon,
-          advancedLocationQuery
-        );
-
-        if (!ai) {
+        if (!analysis || !analysis.disaster_risks) {
           toast({
             title: "Analysis Failed",
             description: "Unable to perform advanced analysis for this location.",
@@ -682,21 +674,24 @@ export default function EnhancedDashboard() {
         }
 
         setAdvancedAnalysisResults({
-          location: advancedLocationQuery,
-          coordinates: { lat: geocodeResult.lat, lon: geocodeResult.lon },
-          predictions: ai.predictions || [],
-          weather: ai.weather_data,
-          summary: ai.summaries || {}
+          location: analysis.location?.name || advancedLocationQuery,
+          coordinates: analysis.location?.coordinates || {},
+          predictions: analysis.disaster_risks || {},
+          weather: analysis.current_weather,
+          summary: { risk_summary: analysis.risk_summary },
+          forecast: analysis.forecast
         });
 
         toast({
           title: "Advanced Analysis Complete",
-          description: `Comprehensive disaster risk assessment for ${advancedLocationQuery}`,
+          description: `Comprehensive disaster risk assessment for ${analysis.location?.name || advancedLocationQuery}`,
         });
       } catch (error) {
+        console.error('Advanced analysis error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to perform advanced analysis. Please try again.';
         toast({
           title: "Analysis Error",
-          description: "Failed to perform advanced analysis. Please try again.",
+          description: errorMessage,
           variant: "destructive"
         });
       } finally {

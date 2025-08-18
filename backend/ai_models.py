@@ -13,6 +13,10 @@ from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger(__name__)
 
+# Conservative default for earthquake predictions unless explicitly enabled
+EARTHQUAKE_RISK_MULTIPLIER: float = float(os.getenv('EARTHQUAKE_RISK_MULTIPLIER', '0.05'))
+ALLOW_EARTHQUAKE_PREDICTIONS: bool = os.getenv('ALLOW_EARTHQUAKE_PREDICTIONS', 'false').lower() == 'true'
+
 class DisasterPredictionModel(nn.Module):
     """Base neural network for disaster prediction"""
     
@@ -194,6 +198,8 @@ class DisasterPredictionService:
         self.models = {}
         self.scalers = {}
         self.model_path = "models"
+        # Feature flags
+        self.allow_earthquake_predictions = ALLOW_EARTHQUAKE_PREDICTIONS
         self.load_or_initialize_models()
     
     def load_or_initialize_models(self):
@@ -522,6 +528,17 @@ class DisasterPredictionService:
                 prediction = model(features_tensor)
                 predictions[disaster_type] = prediction.item()
         
+        # Clamp earthquake risk unless explicitly enabled via env
+        if not self.allow_earthquake_predictions and 'earthquake' in predictions:
+            try:
+                predictions['earthquake'] = max(
+                    0.0,
+                    min(0.05, predictions['earthquake'] * EARTHQUAKE_RISK_MULTIPLIER)
+                )
+            except Exception:
+                # On any error, degrade gracefully to near-zero
+                predictions['earthquake'] = 0.0
+
         return predictions
     
     def get_disaster_severity(self, risk_score: float) -> str:

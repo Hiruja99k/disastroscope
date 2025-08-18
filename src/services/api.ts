@@ -1,8 +1,19 @@
 import { io, Socket } from 'socket.io-client';
 
-// API Configuration - Support both development and production
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+// API Configuration - Support both development and production with smart defaults
+const inferredBase = (() => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname.toLowerCase();
+    if (host === 'disastroscope.site' || host === 'www.disastroscope.site') {
+      // Default to your Railway backend in production
+      return 'https://web-production-47673.up.railway.app';
+    }
+  }
+  return 'http://localhost:5000';
+})();
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || inferredBase;
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_BASE_URL;
 
 // Debug logging to see which URLs are being used
 console.log('🔧 API Configuration:', {
@@ -288,6 +299,41 @@ class ApiService {
       return await response.json();
     } catch (error) {
       console.error('Error getting AI prediction:', error);
+      return null;
+    }
+  }
+
+  // NEW: Enhanced Location Analysis Method
+  async analyzeLocation(query: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/location/analyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Location analysis failed');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error in location analysis:', error);
+      throw error; // Re-throw to handle in UI
+    }
+  }
+
+  // NEW: Test Location Method for Debugging
+  async testLocation(query: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/test/location?query=${encodeURIComponent(query)}`);
+      if (!response.ok) throw new Error('Location test failed');
+      return await response.json();
+    } catch (error) {
+      console.error('Error testing location:', error);
       return null;
     }
   }

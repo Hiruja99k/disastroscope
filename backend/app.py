@@ -451,6 +451,109 @@ def get_weather_by_city():
         logger.error(f"Error fetching weather by city: {e}")
         return jsonify({'error': 'Failed to fetch weather by city'}), 500
 
+# Enhanced location-based analysis endpoint
+@app.route('/api/location/analyze', methods=['POST'])
+def analyze_location():
+    """Analyze a location for disaster risks, current weather, and near-term forecast"""
+    data = request.get_json() or {}
+    query = data.get('query')
+    if not query:
+        return jsonify({'error': 'Location query required'}), 400
+
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        # Step 1: Geocode the location with robust fallbacks
+        results = loop.run_until_complete(weather_service.geocode(query, limit=5))
+        if not results:
+            loop.close()
+            return jsonify({'error': 'Location not found'}), 404
+
+        # Step 2: Score and pick the best match
+        qnorm = query.strip().lower()
+        def score(item: dict) -> int:
+            name = str(item.get('name') or '').lower()
+            state = str(item.get('state') or '')
+            country = str(item.get('country') or '')
+            s = 0
+            if name == qnorm:
+                s += 3
+            if qnorm in name:
+                s += 1
+            if state:
+                s += 1
+            if country:
+                s += 1
+            return s
+
+        best = sorted(results, key=score, reverse=True)[0]
+        lat = best['lat']
+        lon = best['lon']
+        location_name = f"{best.get('name')}{', ' + best.get('state') if best.get('state') else ''}{' ' + best.get('country') if best.get('country') else ''}".strip()
+
+        # Step 3: Fetch current weather
+        weather = loop.run_until_complete(weather_service.get_current_weather(lat, lon, location_name, 'metric'))
+        if not weather:
+            loop.close()
+            return jsonify({'error': 'Could not compute prediction for your location - weather data unavailable'}), 502
+
+        weather_dict = {
+            'temperature': weather.temperature,
+            'humidity': weather.humidity,
+            'pressure': weather.pressure,
+            'wind_speed': weather.wind_speed,
+            'wind_direction': weather.wind_direction,
+            'precipitation': weather.precipitation,
+            'visibility': weather.visibility,
+            'cloud_cover': weather.cloud_cover
+        }
+
+        # Step 4: AI predictions
+        predictions_map = ai_prediction_service.predict_disaster_risks(weather_dict)
+
+        # Step 5: Short-term forecast (fallback-safe)
+        forecast = loop.run_until_complete(weather_service.get_weather_forecast(lat, lon, 5, 'metric'))
+        loop.close()
+
+        # Step 6: Build response
+        analysis = {
+            'location': {
+                'name': location_name,
+                'coordinates': {'lat': lat, 'lng': lon},
+                'geocoding_confidence': 'high' if best.get('state') and best.get('country') else 'medium'
+            },
+            'current_weather': weather_dict,
+            'disaster_risks': predictions_map,
+            'forecast': (forecast or [])[:8],
+            'analysis_timestamp': datetime.now(timezone.utc).isoformat(),
+            'risk_summary': _generate_risk_summary(predictions_map, weather_dict)
+        }
+
+        return jsonify(analysis)
+    except Exception as e:
+        logger.error(f"Error in location analysis: {e}")
+        return jsonify({'error': 'Could not compute prediction for your location'}), 500
+
+
+def _generate_risk_summary(predictions_map: Dict[str, float], weather: Dict[str, Any]) -> str:
+    """Generate a concise natural-language summary of risks using heuristics."""
+    high = [k for k, v in predictions_map.items() if v > 0.6]
+    med = [k for k, v in predictions_map.items() if 0.3 < v <= 0.6]
+
+    summary = (
+        f"Current: {weather.get('temperature', 0):.1f}°C, "
+        f"{weather.get('humidity', 0):.0f}% RH, "
+        f"{weather.get('wind_speed', 0):.1f} m/s wind. "
+    )
+    if high:
+        summary += f"High risks: {', '.join(sorted(high))}. "
+    if med:
+        summary += f"Moderate risks: {', '.join(sorted(med))}. "
+    if not high and not med:
+        summary += "No significant risks detected."
+    return summary
+
 @app.route('/api/events')
 def get_events():
     """Get all disaster events"""

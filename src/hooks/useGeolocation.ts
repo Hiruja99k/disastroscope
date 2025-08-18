@@ -37,10 +37,37 @@ export const useGeolocation = () => {
         }
       }
 
-      const position = await Geolocation.getCurrentPosition({
+      let position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 10000,
       });
+
+      // Fallback to IP geolocation if accuracy is very poor (> 50 km)
+      const accuracy = position.coords.accuracy ?? 9999999;
+      if (!position.coords || accuracy > 50000) {
+        try {
+          const resp = await fetch('https://ipapi.co/json/');
+          if (resp.ok) {
+            const data: any = await resp.json();
+            if (typeof data.latitude === 'number' && typeof data.longitude === 'number') {
+              position = {
+                coords: {
+                  latitude: data.latitude,
+                  longitude: data.longitude,
+                  accuracy: 50000,
+                  altitude: undefined as any,
+                  altitudeAccuracy: undefined as any,
+                  heading: undefined as any,
+                  speed: undefined as any,
+                },
+                timestamp: Date.now(),
+              } as any;
+            }
+          }
+        } catch (_) {
+          // ignore fallback failure
+        }
+      }
 
       const locationData: GeolocationData = {
         latitude: position.coords.latitude,
@@ -120,36 +147,43 @@ export const useGeolocation = () => {
     };
   };
 
-  // Reverse geocoding function (mock implementation)
+  // Reverse geocoding with real providers (OSM → BigDataCloud fallback)
   const reverseGeocode = async (lat: number, lng: number) => {
-    // In a real app, you'd use a geocoding service like Google Maps API
-    // For demo purposes, we'll return mock location data
-    const mockLocations = [
-      { lat: 40.7128, lng: -74.0060, city: 'New York', state: 'NY', country: 'USA' },
-      { lat: 34.0522, lng: -118.2437, city: 'Los Angeles', state: 'CA', country: 'USA' },
-      { lat: 25.7617, lng: -80.1918, city: 'Miami', state: 'FL', country: 'USA' },
-      { lat: 37.7749, lng: -122.4194, city: 'San Francisco', state: 'CA', country: 'USA' },
-      { lat: 41.8781, lng: -87.6298, city: 'Chicago', state: 'IL', country: 'USA' },
-    ];
-
-    // Find closest location
-    let closest = mockLocations[0];
-    let minDistance = Math.abs(lat - closest.lat) + Math.abs(lng - closest.lng);
-
-    for (const location of mockLocations) {
-      const distance = Math.abs(lat - location.lat) + Math.abs(lng - location.lng);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closest = location;
+    // Provider 1: OpenStreetMap Nominatim
+    try {
+      const osmUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=12&addressdetails=1`;
+      const resp = await fetch(osmUrl, {
+        headers: { 'Accept': 'application/json' },
+      });
+      if (resp.ok) {
+        const data: any = await resp.json();
+        const addr = data?.address || {};
+        const city = addr.city || addr.town || addr.village || addr.hamlet || 'Unknown';
+        const state = addr.state || addr.province || addr.region || 'Unknown';
+        const country = addr.country || addr.country_code || 'Unknown';
+        return { city, state, country, coordinates: { lat, lng } };
       }
+    } catch (e) {
+      // ignore and fallback
     }
 
-    return {
-      city: closest.city,
-      state: closest.state,
-      country: closest.country,
-      coordinates: { lat, lng }
-    };
+    // Provider 2: BigDataCloud
+    try {
+      const bdcUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`;
+      const resp = await fetch(bdcUrl);
+      if (resp.ok) {
+        const data: any = await resp.json();
+        const city = data.city || data.locality || data.principalSubdivision || 'Unknown';
+        const state = data.principalSubdivision || 'Unknown';
+        const country = data.countryName || 'Unknown';
+        return { city, state, country, coordinates: { lat, lng } };
+      }
+    } catch (e) {
+      // ignore and fallback
+    }
+
+    // Fallback
+    return { city: 'Unknown', state: 'Unknown', country: 'Unknown', coordinates: { lat, lng } };
   };
 
   return {
