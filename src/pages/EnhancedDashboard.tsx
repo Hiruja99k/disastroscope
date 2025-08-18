@@ -1777,11 +1777,11 @@ export default function EnhancedDashboard() {
                          <div className="grid grid-cols-2 gap-3 text-sm bg-muted/20 p-3 rounded-lg">
                            <div>
                              <span className="text-muted-foreground font-medium">Coordinates:</span>
-                             <span className="ml-2 font-mono text-xs">{userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}</span>
+                             <span className="ml-2 font-mono text-xs">{(userLocation as any)?.latitude != null ? Number((userLocation as any).latitude).toFixed(4) : '0.0000'}, {(userLocation as any)?.longitude != null ? Number((userLocation as any).longitude).toFixed(4) : '0.0000'}</span>
                            </div>
                            <div>
                              <span className="text-muted-foreground font-medium">Precision:</span>
-                             <span className="ml-2 font-mono text-xs">±{userLocation.accuracy?.toFixed(0) || 'N/A'}m</span>
+                             <span className="ml-2 font-mono text-xs">±{(userLocation as any)?.accuracy != null ? Number((userLocation as any).accuracy).toFixed(0) : 'N/A'}m</span>
                            </div>
                            <div>
                              <span className="text-muted-foreground font-medium">Status:</span>
@@ -1862,10 +1862,10 @@ export default function EnhancedDashboard() {
                                      {status.status}
                                    </Badge>
                                  </div>
-                                 <div className="text-lg font-bold text-foreground">{status.accuracy.toFixed(1)}%</div>
+                                 <div className="text-lg font-bold text-foreground">{(Number((status as any)?.accuracy ?? 0)).toFixed(1)}%</div>
                                  <div className="text-xs text-muted-foreground">Accuracy</div>
                                  <div className="text-xs text-muted-foreground">
-                                   Updated {status.lastUpdate.toLocaleTimeString()}
+                                   Updated {((status as any)?.lastUpdate ? new Date((status as any).lastUpdate as any).toLocaleTimeString() : '-')}
                                  </div>
                                </div>
                              ))}
@@ -2023,7 +2023,7 @@ export default function EnhancedDashboard() {
                              <div className="space-y-2 text-sm">
                                <div className="flex justify-between">
                                  <span className="text-muted-foreground">Coordinates:</span>
-                                 <span className="font-mono text-xs">{advancedAnalysisResults.coordinates.lat.toFixed(4)}, {advancedAnalysisResults.coordinates.lon.toFixed(4)}</span>
+                                 <span className="font-mono text-xs">{Number((advancedAnalysisResults as any)?.coordinates?.lat ?? 0).toFixed(4)}, {Number((advancedAnalysisResults as any)?.coordinates?.lon ?? 0).toFixed(4)}</span>
                                </div>
                                <div className="flex justify-between">
                                  <span className="text-muted-foreground">Analysis Type:</span>
@@ -2046,7 +2046,7 @@ export default function EnhancedDashboard() {
                              {Object.entries(aiModelStatus).slice(0, 3).map(([model, status]) => (
                                <div key={model} className="p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200/30">
                                  <div className="text-center">
-                                   <div className="text-lg font-bold text-purple-600">{status.accuracy.toFixed(1)}%</div>
+                                   <div className="text-lg font-bold text-purple-600">{Number((status as any)?.accuracy ?? 0).toFixed(1)}%</div>
                                    <div className="text-xs text-muted-foreground capitalize">{model}</div>
                                    <div className="text-xs text-purple-600 font-medium">{status.status}</div>
                                  </div>
