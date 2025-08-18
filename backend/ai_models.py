@@ -197,10 +197,20 @@ class DisasterPredictionService:
     def __init__(self):
         self.models = {}
         self.scalers = {}
-        self.model_path = "models"
+        # Use a path relative to this file to avoid CWD issues in deployments
+        self.model_path = os.path.join(os.path.dirname(__file__), "models")
         # Feature flags
         self.allow_earthquake_predictions = ALLOW_EARTHQUAKE_PREDICTIONS
         self.load_or_initialize_models()
+        # Optionally auto-train if scalers are missing
+        try:
+            need_scalers = len(self.scalers) < len(self.models)
+            auto_train = os.getenv('AI_AUTO_TRAIN_ON_STARTUP', 'true').lower() == 'true'
+            if need_scalers and auto_train:
+                logger.info("AI models: Missing scalers detected. Auto-training on startup...")
+                self.train_models(epochs=int(os.getenv('AI_STARTUP_TRAIN_EPOCHS', '30')))
+        except Exception as e:
+            logger.error(f"Auto-train on startup failed: {e}")
     
     def load_or_initialize_models(self):
         """Load existing models or initialize new ones"""

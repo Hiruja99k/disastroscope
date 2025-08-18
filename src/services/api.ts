@@ -1,19 +1,20 @@
 import { io, Socket } from 'socket.io-client';
 
-// API Configuration - Support both development and production with smart defaults
+// API Configuration - robust defaults: use Railway for any non-local host
 const inferredBase = (() => {
   if (typeof window !== 'undefined') {
     const host = window.location.hostname.toLowerCase();
-    if (host === 'disastroscope.site' || host === 'www.disastroscope.site') {
-      // Default to your Railway backend in production
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal) {
+      // Default to your Railway backend when running on Vercel or any non-local domain
       return 'https://web-production-47673.up.railway.app';
     }
   }
   return 'http://localhost:5000';
 })();
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || inferredBase;
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_BASE_URL;
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || inferredBase).replace(/\/$/, '');
+const SOCKET_URL = (import.meta.env.VITE_SOCKET_URL || API_BASE_URL).replace(/\/$/, '');
 
 // Debug logging to see which URLs are being used
 console.log('🔧 API Configuration:', {

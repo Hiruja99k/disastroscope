@@ -27,14 +27,16 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
-# Allow all localhost ports (e.g., 3000, 5173, 8080) and any origin for API routes
+# Allow SPA frontends on Vercel/preview and custom domains
 CORS(app, resources={r"/api/*": {"origins": [
     "http://localhost:3000",
     "http://localhost:5173", 
     "http://localhost:8080",
     "https://disastroscope.site",
     "https://www.disastroscope.site",
-    "https://api.disastroscope.site"
+    "https://api.disastroscope.site",
+    "https://*.vercel.app",
+    "https://*.vercel.dev"
 ]}})
 socketio = SocketIO(app, cors_allowed_origins=[
     "http://localhost:3000",
@@ -42,7 +44,9 @@ socketio = SocketIO(app, cors_allowed_origins=[
     "http://localhost:8080", 
     "https://disastroscope.site",
     "https://www.disastroscope.site",
-    "https://api.disastroscope.site"
+    "https://api.disastroscope.site",
+    "https://*.vercel.app",
+    "https://*.vercel.dev"
 ])
 
 # In-memory storage (replace with database in production)
