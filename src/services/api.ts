@@ -327,6 +327,25 @@ class ApiService {
     }
   }
 
+  // NEW: Analyze by precise coordinates (server reverse-geocodes and predicts)
+  async analyzeCoords(lat: number, lon: number, units: 'metric' | 'imperial' | 'standard' = 'metric'): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/location/analyze/coords`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat, lon, units })
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Coordinate analysis failed');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error in coordinate analysis:', error);
+      throw error;
+    }
+  }
+
   // NEW: Test Location Method for Debugging
   async testLocation(query: string): Promise<any> {
     try {

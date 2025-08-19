@@ -583,12 +583,10 @@ export default function EnhancedDashboard() {
 
       setMyLocationLoading(true);
       try {
-        // Get city name first
-        const cityName = await getUserCityName(userLocation.latitude, userLocation.longitude);
+        // Prefer precise coordinate-based analysis for accuracy
+        const analysis = await apiService.analyzeCoords(userLocation.latitude, userLocation.longitude, 'metric');
+        const cityName = analysis?.location?.name || await getUserCityName(userLocation.latitude, userLocation.longitude);
         setUserCityName(cityName);
-
-        // NEW: Use the enhanced location analysis endpoint
-        const analysis = await apiService.analyzeLocation(cityName);
         
         if (!analysis || !analysis.disaster_risks) {
           toast({ 
