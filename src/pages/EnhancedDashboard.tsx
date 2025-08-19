@@ -584,7 +584,7 @@ export default function EnhancedDashboard() {
       setMyLocationLoading(true);
       try {
         // Prefer precise coordinate-based analysis for accuracy
-        const analysis = await apiService.analyzeCoords(userLocation.latitude, userLocation.longitude, 'metric');
+        const analysis = await apiService.analyzeCoords(userLocation.latitude, userLocation.longitude, 'metric', 15000);
         const cityName = analysis?.location?.name || await getUserCityName(userLocation.latitude, userLocation.longitude);
         setUserCityName(cityName);
         
@@ -635,7 +635,8 @@ export default function EnhancedDashboard() {
         });
       } catch (err) {
         console.error('Location analysis error:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Failed to analyze your location for disaster risks';
+        const aborted = (err as any)?.name === 'AbortError';
+        const errorMessage = aborted ? 'Analysis timed out. Please try again.' : (err instanceof Error ? err.message : 'Failed to analyze your location for disaster risks');
         toast({ 
           title: 'Analysis Error', 
           description: errorMessage,
@@ -677,7 +678,9 @@ export default function EnhancedDashboard() {
           predictions: analysis.disaster_risks || {},
           weather: analysis.current_weather,
           summary: { risk_summary: analysis.risk_summary },
-          forecast: analysis.forecast
+          forecast: analysis.forecast,
+          sources: analysis.sources,
+          confidence: analysis.confidence
         });
 
         toast({
