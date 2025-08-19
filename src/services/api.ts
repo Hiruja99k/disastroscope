@@ -5,9 +5,10 @@ const inferredBase = (() => {
   if (typeof window !== 'undefined') {
     const host = window.location.hostname.toLowerCase();
     const isLocal = host === 'localhost' || host === '127.0.0.1';
-    // Prefer same-origin proxy on production (Vercel rewrite will forward /api/* to Railway)
-    if (host.endsWith('disastroscope.site')) return '';
-    if (!isLocal) return 'https://web-production-47673.up.railway.app';
+    if (!isLocal) {
+      // Default to your Railway backend when running on Vercel or any non-local domain
+      return 'https://web-production-47673.up.railway.app';
+    }
   }
   return 'http://localhost:5000';
 })();
@@ -327,30 +328,21 @@ class ApiService {
   }
 
   // NEW: Analyze by precise coordinates (server reverse-geocodes and predicts)
-  async analyzeCoords(
-    lat: number,
-    lon: number,
-    units: 'metric' | 'imperial' | 'standard' = 'metric',
-    timeoutMs: number = 15000
-  ): Promise<any> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+  async analyzeCoords(lat: number, lon: number, units: 'metric' | 'imperial' | 'standard' = 'metric'): Promise<any> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/location/analyze/coords`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat, lon, units }),
-        signal: controller.signal,
+        body: JSON.stringify({ lat, lon, units })
       });
       if (!response.ok) {
-        const maybeJson = await response.text();
-        let message = 'Coordinate analysis failed';
-        try { message = JSON.parse(maybeJson)?.error || message; } catch {}
-        throw new Error(message);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Coordinate analysis failed');
       }
       return await response.json();
-    } finally {
-      clearTimeout(timer);
+    } catch (error) {
+      console.error('Error in coordinate analysis:', error);
+      throw error;
     }
   }
 

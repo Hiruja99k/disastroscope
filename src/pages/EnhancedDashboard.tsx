@@ -583,12 +583,17 @@ export default function EnhancedDashboard() {
 
       setMyLocationLoading(true);
       try {
-        // Prefer precise coordinate-based analysis for accuracy
-        const analysis = await apiService.analyzeCoords(userLocation.latitude, userLocation.longitude, 'metric', 15000);
-        const cityName = analysis?.location?.name || await getUserCityName(userLocation.latitude, userLocation.longitude);
+        // Prefer fast, reliable backend prediction using live weather
+        const cityName = await getUserCityName(userLocation.latitude, userLocation.longitude);
         setUserCityName(cityName);
-        
-        if (!analysis || !analysis.disaster_risks) {
+
+        const result = await apiService.predictDisaster(
+          userLocation.latitude,
+          userLocation.longitude,
+          cityName
+        );
+
+        if (!result || !result.predictions) {
           toast({ 
             title: 'Analysis failed', 
             description: 'Could not compute prediction for your location', 
@@ -597,25 +602,25 @@ export default function EnhancedDashboard() {
           return;
         }
 
-        // Transform disaster_risks map -> Prediction[] compatible with grid
+        // Transform predictions map -> Prediction[] compatible with grid
         const nowIso = new Date().toISOString();
-        const mapped = Object.entries(analysis.disaster_risks || {}).map(([eventType, risk]) => {
+        const mapped = Object.entries(result.predictions || {}).map(([eventType, risk]) => {
           const riskValue = typeof risk === 'number' ? risk : Number(risk);
           const severity = riskValue >= 0.8 ? 'extreme' : riskValue >= 0.6 ? 'high' : riskValue >= 0.4 ? 'moderate' : 'low';
           return {
             id: `mylocation_${Date.now()}_${eventType}`,
             event_type: eventType,
-            location: analysis.location?.name || cityName,
+            location: cityName,
             probability: riskValue,
             severity,
             timeframe: '24-72h',
-            coordinates: analysis.location?.coordinates || { lat: userLocation.latitude, lng: userLocation.longitude },
+            coordinates: { lat: userLocation.latitude, lng: userLocation.longitude },
             created_at: nowIso,
             updated_at: nowIso,
             confidence_level: Math.min(0.95, Math.max(0.5, riskValue + 0.1)),
             affected_area_km2: 0,
-            potential_impact: analysis.risk_summary || '',
-            weather_data: analysis.current_weather,
+            potential_impact: '',
+            weather_data: result.weather_data,
             ai_model: 'Enhanced Rule-Based Analysis'
           } as ApiPrediction;
         });
@@ -635,8 +640,7 @@ export default function EnhancedDashboard() {
         });
       } catch (err) {
         console.error('Location analysis error:', err);
-        const aborted = (err as any)?.name === 'AbortError';
-        const errorMessage = aborted ? 'Analysis timed out. Please try again.' : (err instanceof Error ? err.message : 'Failed to analyze your location for disaster risks');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to analyze your location for disaster risks';
         toast({ 
           title: 'Analysis Error', 
           description: errorMessage,
@@ -678,9 +682,7 @@ export default function EnhancedDashboard() {
           predictions: analysis.disaster_risks || {},
           weather: analysis.current_weather,
           summary: { risk_summary: analysis.risk_summary },
-          forecast: analysis.forecast,
-          sources: analysis.sources,
-          confidence: analysis.confidence
+          forecast: analysis.forecast
         });
 
         toast({
