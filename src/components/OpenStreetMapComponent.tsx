@@ -70,24 +70,26 @@ const getDisasterIcon = (type: string, severity: string) => {
     className: 'custom-marker',
     html: `
       <div style="
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         background: ${color};
-        border: 2px solid white;
+        border: 3px solid white;
         border-radius: 50%;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        box-shadow: 0 3px 6px rgba(0,0,0,0.4);
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 10px;
+        font-size: 12px;
         font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
       ">
         ${type.charAt(0).toUpperCase()}
       </div>
     `,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   });
 };
 
@@ -131,12 +133,23 @@ export default function OpenStreetMapComponent({
 
         if (!mapRef.current) return;
 
-        // Create map instance
+        // Create map instance with better defaults
         const map = L.map(mapRef.current, {
           center: [20, 0],
           zoom: 2,
           zoomControl: false,
-          attributionControl: false,
+          attributionControl: true,
+          dragging: true,
+          touchZoom: true,
+          scrollWheelZoom: true,
+          doubleClickZoom: true,
+          boxZoom: true,
+          keyboard: true,
+          tap: true,
+          trackResize: true,
+          worldCopyJump: true,
+          maxBounds: L.latLngBounds(L.latLng(-90, -180), L.latLng(90, 180)),
+          maxBoundsViscosity: 1.0,
         });
 
         // Add zoom control
@@ -144,20 +157,31 @@ export default function OpenStreetMapComponent({
           position: 'topright'
         }).addTo(map);
 
-        // Add tile layers
+        // Add attribution control
+        L.control.attribution({
+          position: 'bottomright'
+        }).addTo(map);
+
+        // Add tile layers with better providers
         const tileLayers = {
           satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            maxZoom: 19,
+            subdomains: 'abcd'
           }),
           street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19,
+            subdomains: 'abc'
           }),
           terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-            attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+            attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+            maxZoom: 17,
+            subdomains: 'abc'
           })
         };
 
-        // Add default layer
+        // Add default layer (satellite)
         tileLayers.satellite.addTo(map);
         mapInstanceRef.current = map;
 
@@ -169,7 +193,14 @@ export default function OpenStreetMapComponent({
           trackEvent('map_clicked');
         });
 
-        setIsLoading(false);
+        map.on('load', () => {
+          setIsLoading(false);
+        });
+
+        // Set loading to false after a short delay to ensure map is ready
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 1000);
 
       } catch (err) {
         console.error('Error loading OpenStreetMap:', err);
@@ -231,33 +262,41 @@ export default function OpenStreetMapComponent({
       const position = [item.coordinates.lat, item.coordinates.lng] as [number, number];
 
       const marker = L.marker(position, {
-        icon: getDisasterIcon(item.event_type || item.prediction_type || 'disaster', item.severity || 'medium')
+        icon: getDisasterIcon(item.event_type || item.prediction_type || 'disaster', item.severity || 'medium'),
+        interactive: true,
+        draggable: false,
+        autoPan: false,
+        riseOnHover: true,
+        riseOffset: 250
       });
 
       // Create popup content
       const popupContent = `
-        <div style="padding: 10px; max-width: 300px;">
-          <h3 style="margin: 0 0 8px 0; color: #1f2937; font-weight: 600;">
+        <div style="padding: 12px; max-width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <h3 style="margin: 0 0 8px 0; color: #1f2937; font-weight: 600; font-size: 16px;">
             ${item.name || item.description || 'Disaster Event'}
           </h3>
-          <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">
+          <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 14px; line-height: 1.4;">
             ${item.location || 'Unknown Location'}
           </p>
-          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <span style="background: ${getDisasterColor(item.severity || 'medium')}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">
+          <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+            <span style="background: ${getDisasterColor(item.severity || 'medium')}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;">
               ${item.severity || 'Unknown'} Severity
             </span>
-            <span style="background: #e5e7eb; color: #374151; padding: 2px 8px; border-radius: 12px; font-size: 12px;">
+            <span style="background: #e5e7eb; color: #374151; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;">
               ${item.event_type || item.prediction_type || 'Unknown'} Type
             </span>
           </div>
-          <p style="margin: 0; color: #6b7280; font-size: 12px;">
+          <p style="margin: 0; color: #6b7280; font-size: 12px; border-top: 1px solid #e5e7eb; padding-top: 8px;">
             Updated: ${new Date(item.timestamp || Date.now()).toLocaleString()}
           </p>
         </div>
       `;
 
-      marker.bindPopup(popupContent);
+      marker.bindPopup(popupContent, {
+        maxWidth: 320,
+        className: 'custom-popup'
+      });
 
       // Add click listener
       marker.on('click', () => {
@@ -268,6 +307,15 @@ export default function OpenStreetMapComponent({
         if (onMarkerClick) {
           onMarkerClick(item);
         }
+      });
+
+      // Add hover effects
+      marker.on('mouseover', function() {
+        this.getElement()?.style.setProperty('transform', 'scale(1.1)');
+      });
+
+      marker.on('mouseout', function() {
+        this.getElement()?.style.setProperty('transform', 'scale(1)');
       });
 
       marker.addTo(map);
@@ -310,13 +358,13 @@ export default function OpenStreetMapComponent({
         <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading OpenStreetMap...</p>
+            <p className="text-muted-foreground">Loading Interactive Map...</p>
           </div>
         </div>
       )}
 
       {/* Map Container */}
-      <div ref={mapRef} className="w-full h-full" />
+      <div ref={mapRef} className="w-full h-full" style={{ cursor: 'grab' }} />
 
       {/* Controls Panel */}
       <AnimatePresence>
@@ -432,11 +480,20 @@ export default function OpenStreetMapComponent({
         </div>
       </div>
 
-      {/* Custom CSS for markers */}
+      {/* Custom CSS for markers and popups */}
       <style jsx>{`
         .custom-marker {
           background: transparent;
           border: none;
+        }
+        
+        .custom-popup .leaflet-popup-content-wrapper {
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .custom-popup .leaflet-popup-tip {
+          background: white;
         }
       `}</style>
     </div>
