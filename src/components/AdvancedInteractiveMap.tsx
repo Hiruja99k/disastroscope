@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '@/utils/monitoring';
+import FallbackMap from '@/components/FallbackMap';
 
 interface MapLayer {
   id: string;
@@ -126,42 +127,26 @@ export function AdvancedInteractiveMap() {
 
   return (
     <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-[600px]'}`}>
-      {/* Map Container */}
+      {/* Map Container with FallbackMap */}
       <div 
         ref={mapRef}
-        className={`w-full h-full bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 relative overflow-hidden ${
-          mapStyle === 'satellite' ? 'bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Cdefs%3E%3Cpattern id=\'grid\' width=\'10\' height=\'10\' patternUnits=\'userSpaceOnUse\'%3E%3Cpath d=\'M 10 0 L 0 0 0 10\' fill=\'none\' stroke=\'%23ffffff20\' stroke-width=\'0.5\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=\'100\' height=\'100\' fill=\'url(%23grid)\'/%3E%3C/svg%3E")]' : ''
-        }`}
+        className="w-full h-full relative overflow-hidden"
       >
-        {/* 3D Grid Effect */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent animate-pulse" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white to-transparent animate-pulse" />
-        </div>
-
-        {/* Disaster Points */}
-        <AnimatePresence>
-          {layers.find(l => l.id === 'disasters')?.visible && disasterPoints.map((point) => (
-            <motion.div
-              key={point.id}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className={`absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2 ${
-                getSeverityPulse(point.severity)
-              }`}
-              style={{
-                left: `${((point.lng + 180) / 360) * 100}%`,
-                top: `${((90 - point.lat) / 180) * 100}%`,
-              }}
-              onClick={() => setSelectedPoint(point)}
-            >
-              <div className={`w-4 h-4 rounded-full ${getSeverityColor(point.severity)} shadow-lg`} />
-              <div className={`w-6 h-6 rounded-full ${getSeverityColor(point.severity)} opacity-50 animate-ping absolute inset-0`} />
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        {/* Use FallbackMap as the base */}
+        <FallbackMap 
+          height="100%" 
+          showControls={false}
+          events={disasterPoints.map(point => ({
+            id: point.id,
+            name: point.description,
+            location: `${point.lat}, ${point.lng}`,
+            event_type: point.type,
+            severity: point.severity,
+            status: 'active',
+            coordinates: { lat: point.lat, lng: point.lng }
+          }))}
+          predictions={[]}
+        />
 
         {/* Prediction Zones */}
         {layers.find(l => l.id === 'predictions')?.visible && (
