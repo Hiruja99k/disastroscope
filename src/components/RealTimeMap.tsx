@@ -34,18 +34,20 @@ const getEventTypeIcon = (type: string) => {
   }
 };
 
-// Import the OpenStreetMap component
-import OpenStreetMapComponent from './OpenStreetMapComponent';
+// Import the Google Maps Embed component
+import GoogleMapsEmbed from './GoogleMapsEmbed';
 
-// Real map component using OpenStreetMap
+// Real map component using Google Maps Embed
 const RealMapComponent = ({ events, predictions }: { events: DisasterEvent[], predictions: Prediction[] }) => {
   return (
     <div className="relative h-full">
-      <OpenStreetMapComponent 
-        height="100%" 
-        showControls={false}
-        events={events}
-        predictions={predictions}
+      <GoogleMapsEmbed 
+        width="100%"
+        height="100%"
+        location="World"
+        zoom={2}
+        mapType="s"
+        className="w-full h-full"
       />
     </div>
   );

@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '@/utils/monitoring';
-import OpenStreetMapComponent from '@/components/OpenStreetMapComponent';
+import GoogleMapsEmbed from '@/components/GoogleMapsEmbed';
 
 interface MapLayer {
   id: string;
@@ -154,27 +154,19 @@ export function AdvancedInteractiveMap() {
 
   return (
     <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-[600px]'}`}>
-      {/* Map Container with OpenStreetMap */}
+      {/* Map Container with Google Maps Embed */}
       <div 
         ref={mapRef}
         className="w-full h-full relative overflow-hidden"
       >
-        {/* Use OpenStreetMap as the base */}
-        <OpenStreetMapComponent 
-          height="100%" 
-          showControls={false}
-          events={disasterPoints.map(point => ({
-            id: point.id,
-            name: point.description,
-            location: `${point.lat}, ${point.lng}`,
-            event_type: point.type,
-            severity: point.severity,
-            status: 'active',
-            coordinates: { lat: point.lat, lng: point.lng },
-            timestamp: point.timestamp
-          }))}
-          predictions={[]}
-          onMarkerClick={(point) => setSelectedPoint(point)}
+        {/* Use Google Maps Embed as the base */}
+        <GoogleMapsEmbed 
+          width="100%"
+          height="100%"
+          location="World"
+          zoom={2}
+          mapType="s"
+          className="w-full h-full"
         />
 
         {/* Prediction Zones */}
