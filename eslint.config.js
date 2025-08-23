@@ -4,27 +4,32 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 
 export default [
-  { 
+  {
     ignores: [
-      "dist", 
+      "dist/**",
+      "build/**",
+      "node_modules/**",
       "capacitor.config.ts",
       "backend/**/*",
-      "**/node_modules/**/*",
       "**/venv/**/*",
       "**/.venv/**/*",
       "tailwind.config.ts",
-      "vite.config.ts"
-    ] 
+      "vite.config.ts",
+      "postcss.config.js",
+      "jest.config.js",
+      "eslint.config.js"
+    ]
   },
   js.configs.recommended,
   {
-    files: ["**/*.{js,jsx,ts,tsx}"],
+    files: ["src/**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
       ecmaVersion: 2020,
+      sourceType: "module",
       globals: {
         ...globals.browser,
-        __dirname: "readonly",
-        process: "readonly"
+        React: "readonly",
+        JSX: "readonly"
       },
     },
     plugins: {
@@ -37,13 +42,14 @@ export default [
         "warn",
         { allowConstantExport: true },
       ],
-      // Basic enterprise rules that won't break existing code
+      // Basic enterprise rules - warnings only to not break build
       "prefer-const": "warn",
       "no-var": "warn",
       "eqeqeq": ["warn", "always"],
       "curly": ["warn", "all"],
-      // Disable TypeScript-specific rules for now
+      // Disable problematic rules for TypeScript
       "no-undef": "off",
+      "no-unused-vars": "off",
     },
   }
 ];

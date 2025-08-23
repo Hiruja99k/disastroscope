@@ -2,18 +2,48 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { trackError } from '@/utils/monitoring';
 
+/**
+ * Props for the ErrorBoundary component
+ */
 interface Props {
+  /** Child components to render */
   children: ReactNode;
+  /** Optional custom fallback UI to show when an error occurs */
   fallback?: ReactNode;
 }
 
+/**
+ * Internal state for the ErrorBoundary component
+ */
 interface State {
+  /** Whether an error has occurred */
   hasError: boolean;
+  /** The error object if one occurred */
   error?: Error;
+  /** Additional error information from React */
   errorInfo?: ErrorInfo;
 }
 
+/**
+ * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree,
+ * logs those errors, and displays a fallback UI instead of the component tree that crashed.
+ * 
+ * @example
+ * ```tsx
+ * <ErrorBoundary>
+ *   <MyComponent />
+ * </ErrorBoundary>
+ * ```
+ * 
+ * @example
+ * ```tsx
+ * <ErrorBoundary fallback={<div>Custom error UI</div>}>
+ *   <MyComponent />
+ * </ErrorBoundary>
+ * ```
+ */
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -32,10 +62,13 @@ class ErrorBoundary extends Component<Props, State> {
       console.error('Error caught by boundary:', error, errorInfo);
     }
     
-    // TODO: Send to error reporting service in production
-    // if (import.meta.env.PROD) {
-    //   // Send to Sentry, LogRocket, etc.
-    // }
+    // Track error with monitoring service
+    trackError(error, {
+      component: 'ErrorBoundary',
+      errorInfo: errorInfo.componentStack,
+      props: this.props,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   handleRetry = () => {

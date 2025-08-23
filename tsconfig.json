@@ -9,14 +9,22 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "noImplicitAny": false,
-    "noUnusedParameters": false,
+    // Gradually enable stricter checks
+    "noImplicitAny": true,
+    "noUnusedParameters": false, // Keep false for now to avoid breaking build
     "skipLibCheck": true,
     "allowJs": true,
-    "noUnusedLocals": false,
-    "strictNullChecks": false,
+    "noUnusedLocals": false, // Keep false for now to avoid breaking build
+    "strictNullChecks": true,
+    "strict": false, // Enable gradually
     "jsx": "react-jsx",
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    // Additional enterprise-level options
+    "forceConsistentCasingInFileNames": true,
+    "exactOptionalPropertyTypes": false, // Enable later
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false // Enable later
   }
 }

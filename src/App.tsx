@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, HashRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import Navigation from "./components/Navigation";
 import Landing from "./pages/EnhancedLanding";
 import Predictions from "./pages/EnhancedPredictions";
@@ -13,9 +14,25 @@ import NotFound from "./pages/NotFound";
 import RealTimeBridge from "./components/RealTimeBridge";
 import WeatherExplorer from "./pages/WeatherExplorer";
 import ErrorBoundary from "./components/ErrorBoundary";
+import PerformanceMonitor from "./components/PerformanceMonitor";
+import { trackPageView } from "./utils/monitoring";
 
 
 const queryClient = new QueryClient();
+
+// Component to track page views
+function PageViewTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname, {
+      referrer: document.referrer,
+      userAgent: navigator.userAgent,
+    });
+  }, [location.pathname]);
+
+  return null;
+}
 
 const App = () => (
   <ErrorBoundary>
@@ -33,6 +50,8 @@ const App = () => (
           const RouterImpl: any = useHash ? HashRouter : BrowserRouter;
           return (
             <RouterImpl>
+              <PerformanceMonitor />
+              <PageViewTracker />
               <RealTimeBridge />
               <Navigation />
 

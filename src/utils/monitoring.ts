@@ -121,6 +121,10 @@ export const trackPageView = (pageName: string, properties?: Record<string, any>
   monitoring.trackPageView(pageName, properties);
 };
 
+export const trackPerformance = (metricName: string, value: number, unit: string = 'ms') => {
+  monitoring.trackPerformance(metricName, value, unit);
+};
+
 export const trackApiCall = (endpoint: string, method: string, duration: number, status: number) => {
   monitoring.trackApiCall(endpoint, method, duration, status);
 };
