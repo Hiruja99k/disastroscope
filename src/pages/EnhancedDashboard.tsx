@@ -148,6 +148,7 @@ export default function EnhancedDashboard() {
   const [advancedLocationQuery, setAdvancedLocationQuery] = useState('');
   const [advancedAnalysisLoading, setAdvancedAnalysisLoading] = useState(false);
   const [advancedAnalysisResults, setAdvancedAnalysisResults] = useState<any>(null);
+  const [advancedModelMeta, setAdvancedModelMeta] = useState<Record<string, any>>({});
 
   // Advanced Dashboard Features
   const [weatherData, setWeatherData] = useState<any>(null);
@@ -633,7 +634,23 @@ export default function EnhancedDashboard() {
           return;
         }
 
-        setMyLocationPredictions(mapped);
+        // Attach transparency: model info
+        const models = await apiService.getModels();
+        // attach per-hazard transparency if available
+        const hazards = models?.models || {};
+        const withMeta = mapped.map(m => {
+          const hz = (m.event_type || '').toLowerCase();
+          const meta = hazards[hz] || {};
+          const trainedAt = meta.metrics?.trained_at ? new Date(meta.metrics.trained_at).toLocaleDateString() : 'N/A';
+          const auc = meta.metrics?.auc != null ? Number(meta.metrics.auc).toFixed(2) : 'N/A';
+          const ap = meta.metrics?.average_precision != null ? Number(meta.metrics.average_precision).toFixed(2) : 'N/A';
+          const src = Array.isArray(meta.sources) ? meta.sources.join(', ') : '—';
+          return {
+            ...m,
+            ai_model: `${meta.type === 'ml' ? 'ML' : 'Heuristic'} • Trained: ${trainedAt} • AUC: ${auc} • AP: ${ap} • Sources: ${src}`
+          };
+        });
+        setMyLocationPredictions(withMeta);
         toast({ 
           title: 'Location Analysis Complete', 
           description: `Analyzed ${mapped.length} disaster risks for ${cityName}` 
@@ -684,6 +701,13 @@ export default function EnhancedDashboard() {
           summary: { risk_summary: analysis.risk_summary },
           forecast: analysis.forecast
         });
+
+        // Fetch model metadata for transparency under each hazard
+        try {
+          const models = await apiService.getModels();
+          const hazardsMeta = models?.models || {};
+          setAdvancedModelMeta(hazardsMeta);
+        } catch {}
 
         toast({
           title: "Advanced Analysis Complete",
@@ -2007,15 +2031,38 @@ export default function EnhancedDashboard() {
                              <h5 className="text-sm font-semibold text-foreground mb-3 text-purple-600">Disaster Risk Assessment</h5>
                              <div className="space-y-3">
                                {Object.entries(advancedAnalysisResults.predictions).map(([disasterType, risk]) => (
-                                 <div key={disasterType} className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-lg border border-purple-200/30">
-                                   <div className="flex items-center gap-2">
-                                     <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                                     <span className="text-sm font-medium capitalize">{disasterType}</span>
+                                 <div key={disasterType} className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-lg border border-purple-200/30">
+                                   <div className="flex items-center justify-between">
+                                     <div className="flex items-center gap-2">
+                                       <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                                       <span className="text-sm font-medium capitalize">{disasterType}</span>
+                                     </div>
+                                     <div className="text-right">
+                                       <div className="text-lg font-bold text-purple-600">{Math.round(Number(risk) * 100)}%</div>
+                                       <div className="text-xs text-muted-foreground">Risk Probability</div>
+                                     </div>
                                    </div>
-                                   <div className="text-right">
-                                     <div className="text-lg font-bold text-purple-600">{Math.round(Number(risk) * 100)}%</div>
-                                     <div className="text-xs text-muted-foreground">Risk Probability</div>
-                                   </div>
+                                   {(() => {
+                                     const raw = String(disasterType || '').toLowerCase();
+                                     const key = raw.includes('hurricane') || raw.includes('severe') || raw.includes('storm') ? 'storm' : raw;
+                                     const meta = (advancedModelMeta as any)?.[key] || {};
+                                     const trainedAt = meta.metrics?.trained_at ? new Date(meta.metrics.trained_at).toLocaleDateString() : 'N/A';
+                                     const auc = meta.metrics?.auc != null ? Number(meta.metrics.auc).toFixed(2) : 'N/A';
+                                     const ap = meta.metrics?.average_precision != null ? Number(meta.metrics.average_precision).toFixed(2) : 'N/A';
+                                     const src = Array.isArray(meta.sources) ? meta.sources.join(', ') : '—';
+                                     const modelType = meta.type === 'ml' ? 'ML' : 'Heuristic';
+                                     return (
+                                       <div className="mt-2 text-[11px] text-muted-foreground flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                                         <div>
+                                           <span className="font-medium text-foreground">{modelType}</span>
+                                           <span> • Trained: {trainedAt} • AUC: {auc} • AP: {ap}</span>
+                                         </div>
+                                         <div>
+                                           <span className="text-foreground font-medium">Sources:</span> {src}
+                                         </div>
+                                       </div>
+                                     );
+                                   })()}
                                  </div>
                                ))}
                              </div>

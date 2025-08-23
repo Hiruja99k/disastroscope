@@ -346,6 +346,18 @@ class ApiService {
     }
   }
 
+  // NEW: Get model registry (for transparency: version, type, metrics placeholder)
+  async getModels(): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/models`);
+      if (!response.ok) throw new Error('Failed to fetch models');
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching models:', error);
+      return null;
+    }
+  }
+
   // NEW: Test Location Method for Debugging
   async testLocation(query: string): Promise<any> {
     try {

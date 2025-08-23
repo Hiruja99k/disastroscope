@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import apiService from '@/services/api';
 
 interface AdvancedAnalysisProps {
   isOpen: boolean;
@@ -43,10 +44,16 @@ export default function AdvancedAnalysis({ isOpen, onClose }: AdvancedAnalysisPr
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [locationPredictions, setLocationPredictions] = useState<any[]>([]);
   const [userLocation, setUserLocation] = useState<string>('');
+  const [hazardsMeta, setHazardsMeta] = useState<Record<string, any>>({});
   
   const { location, error: locationError, loading: locationLoading, getCurrentPosition, reverseGeocode } = useGeolocation();
 
   useEffect(() => {
+    // Fetch model registry once for transparency details
+    apiService.getModels().then(res => {
+      setHazardsMeta(res?.models || {});
+    }).catch(() => {});
+
     if (isOpen && isAnalyzing) {
       const interval = setInterval(() => {
         setAnalysisProgress(prev => {
@@ -162,6 +169,17 @@ export default function AdvancedAnalysis({ isOpen, onClose }: AdvancedAnalysisPr
       coordinates: { lat: 29.9, lng: -90.1 }
     }
   ];
+
+  const mapTypeToHazardKey = (t: string) => {
+    const s = String(t || '').toLowerCase();
+    if (s.includes('hurricane') || s.includes('severe weather') || s.includes('storm')) return 'storm';
+    if (s.includes('flood')) return 'flood';
+    if (s.includes('earthquake') || s.includes('seismic')) return 'earthquake';
+    if (s.includes('wildfire') || s.includes('fire')) return 'wildfire';
+    if (s.includes('landslide')) return 'landslide';
+    if (s.includes('drought')) return 'drought';
+    return s;
+  };
 
   const aiInsights = [
     {
@@ -453,6 +471,30 @@ export default function AdvancedAnalysis({ isOpen, onClose }: AdvancedAnalysisPr
                               </div>
                             </div>
                           )}
+
+                          {/* Transparency row */}
+                          <div className="mt-4 pt-4 border-t border-border">
+                            {(() => {
+                              const hzKey = mapTypeToHazardKey(prediction.type);
+                              const meta = hazardsMeta[hzKey] || {};
+                              const trainedAt = meta.metrics?.trained_at ? new Date(meta.metrics.trained_at).toLocaleDateString() : 'N/A';
+                              const auc = meta.metrics?.auc != null ? Number(meta.metrics.auc).toFixed(2) : 'N/A';
+                              const ap = meta.metrics?.average_precision != null ? Number(meta.metrics.average_precision).toFixed(2) : 'N/A';
+                              const src = Array.isArray(meta.sources) ? meta.sources.join(', ') : '—';
+                              const modelType = meta.type === 'ml' ? 'ML' : 'Heuristic';
+                              return (
+                                <div className="text-xs text-muted-foreground flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                  <div>
+                                    <span className="font-medium text-foreground">{modelType}</span>
+                                    <span> • Trained: {trainedAt} • AUC: {auc} • AP: {ap}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-foreground font-medium">Sources:</span> {src}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
                         </Card>
                       </motion.div>
                     ))}

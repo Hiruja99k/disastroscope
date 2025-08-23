@@ -12,43 +12,46 @@ import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import RealTimeBridge from "./components/RealTimeBridge";
 import WeatherExplorer from "./pages/WeatherExplorer";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      {(() => {
-        const useHash =
-          import.meta.env.VITE_HASH_ROUTER === 'true' ||
-          (typeof window !== 'undefined' && (
-            window.location.hostname === 'disastroscope.site' ||
-            window.location.hostname === 'www.disastroscope.site'
-          ));
-        const RouterImpl: any = useHash ? HashRouter : BrowserRouter;
-        return (
-          <RouterImpl>
-            <RealTimeBridge />
-            <Navigation />
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        {(() => {
+          const useHash =
+            import.meta.env.VITE_HASH_ROUTER === 'true' ||
+            (typeof window !== 'undefined' && (
+              window.location.hostname === 'disastroscope.site' ||
+              window.location.hostname === 'www.disastroscope.site'
+            ));
+          const RouterImpl: any = useHash ? HashRouter : BrowserRouter;
+          return (
+            <RouterImpl>
+              <RealTimeBridge />
+              <Navigation />
 
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/predictions" element={<Predictions />} />
-              <Route path="/weather" element={<WeatherExplorer />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/insights" element={<Insights />} />
-              <Route path="/about" element={<About />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </RouterImpl>
-        );
-      })()}
-    </TooltipProvider>
-  </QueryClientProvider>
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/predictions" element={<Predictions />} />
+                <Route path="/weather" element={<WeatherExplorer />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/insights" element={<Insights />} />
+                <Route path="/about" element={<About />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </RouterImpl>
+          );
+        })()}
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

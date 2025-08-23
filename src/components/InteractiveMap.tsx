@@ -37,6 +37,7 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 import { toast } from 'sonner';
 import MapboxInput from './MapboxInput';
 import FallbackMap from './FallbackMap';
+import { apiService } from '@/services/api';
 
 // Fallback map solution - will show a simplified map interface
 const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN || null; // Using null to trigger fallback mode
@@ -94,6 +95,10 @@ export default function InteractiveMap({
   const [showHazardOverlays, setShowHazardOverlays] = useState(true);
   const [showPredictions, setShowPredictions] = useState(true);
   const [showEvents, setShowEvents] = useState(true);
+  const [showUSGS, setShowUSGS] = useState(true);
+  const [showFIRMS, setShowFIRMS] = useState(true);
+  const [showGDACS, setShowGDACS] = useState(true);
+  const [timeWindowHours, setTimeWindowHours] = useState<number>(24);
   
   const { events } = useDisasterEvents();
   const { predictions } = usePredictions();
@@ -240,6 +245,34 @@ export default function InteractiveMap({
       } catch (error) {
         console.log('Terrain not available, using basic map');
       }
+      // Click-to-analyze: precise coordinate analysis
+      map.current?.on('click', async (e: mapboxgl.MapMouseEvent & mapboxgl.EventData) => {
+        try {
+          const { lng, lat } = e.lngLat;
+          toast.message('Analyzing this point...', { description: `${lat.toFixed(4)}, ${lng.toFixed(4)}` });
+          const analysis = await apiService.analyzeCoords(lat, lng, 'metric');
+          const name = analysis?.location?.name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+          // Show popup with top risks
+          const risks = Object.entries(analysis?.disaster_risks || {})
+            .map(([k, v]) => ({ k, v: Number(v) }))
+            .sort((a, b) => b.v - a.v)
+            .slice(0, 3);
+          const html = `
+            <div style="padding:8px;min-width:220px;">
+              <div style="font-weight:600;color:#111827;">${name}</div>
+              <div style="margin-top:6px;font-size:13px;color:#374151;">Top Risks (24–72h):</div>
+              ${risks.map(r => `<div style='display:flex;justify-content:space-between;font-size:13px;'><span>${r.k}</span><span>${Math.round(r.v*100)}%</span></div>`).join('')}
+            </div>`;
+          new mapboxgl.Popup({ closeButton: true })
+            .setLngLat([lng, lat])
+            .setHTML(html)
+            .addTo(map.current!);
+          onFeatureSelect?.(analysis);
+        } catch (err) {
+          console.error('Analyze click error:', err);
+          toast.error('Analysis failed for this point');
+        }
+      });
     });
 
     return () => {
@@ -384,6 +417,153 @@ export default function InteractiveMap({
       });
     }
   }, [events, predictions, isLoaded, showEvents, showPredictions]);
+
+  // Hazard layers (USGS quakes, FIRMS fires, GDACS floods/storms)
+  useEffect(() => {
+    if (!map.current || !isLoaded || !showHazardOverlays) return;
+
+    const removeLayerIfExists = (id: string) => {
+      if (!map.current) return;
+      if (map.current.getLayer(id)) map.current.removeLayer(id);
+      if (map.current.getSource(id)) map.current.removeSource(id);
+    };
+
+    const addUSGS = async () => {
+      try {
+        // all earthquakes past day
+        const res = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
+        if (!res.ok) return;
+        const gj = await res.json();
+        // Filter by time window
+        const cutoff = Date.now() - timeWindowHours * 3600 * 1000;
+        gj.features = (gj.features || []).filter((f: any) => (f.properties?.time || 0) >= cutoff);
+        removeLayerIfExists('usgs');
+        map.current!.addSource('usgs', { type: 'geojson', data: gj });
+        map.current!.addLayer({
+          id: 'usgs', type: 'circle', source: 'usgs', paint: {
+            'circle-radius': [
+              'interpolate', ['linear'], ['get', 'mag'],
+              1, 2, 3, 4, 5, 6
+            ],
+            'circle-color': [
+              'interpolate', ['linear'], ['get', 'mag'],
+              1, '#4ade80', 3, '#f59e0b', 5, '#ef4444'
+            ],
+            'circle-opacity': 0.8,
+            'circle-stroke-width': 1,
+            'circle-stroke-color': '#ffffff'
+          }
+        });
+        // Popup with link
+        map.current!.on('click', 'usgs', (e: any) => {
+          const f = e.features?.[0];
+          const p = f?.properties || {};
+          const url = p?.url || p?.detail || 'https://earthquake.usgs.gov/earthquakes';
+          const mag = p?.mag;
+          const place = p?.place || 'Earthquake';
+          new mapboxgl.Popup({ closeButton: true })
+            .setLngLat(e.lngLat)
+            .setHTML(`<div style="min-width:220px;padding:8px;"><div style="font-weight:600;color:#111827;">${place}</div><div style="font-size:13px;color:#374151;margin-top:4px;">Magnitude: ${mag ?? 'N/A'}</div><a href="${url}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;color:#2563eb;">View on USGS</a></div>`)
+            .addTo(map.current!);
+        });
+      } catch (e) { console.log('USGS load failed', e); }
+    };
+
+    const parseCSV = (csv: string) => {
+      const lines = csv.trim().split(/\r?\n/);
+      const headers = lines[0].split(',');
+      const get = (row: string[], key: string) => row[headers.indexOf(key)] || '';
+      const feats: any[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',');
+        const lat = parseFloat(get(row, 'latitude') || get(row, 'Latitude'));
+        const lon = parseFloat(get(row, 'longitude') || get(row, 'Longitude'));
+        if (isNaN(lat) || isNaN(lon)) continue;
+        feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { confidence: get(row, 'confidence') || '', bright_ti4: parseFloat(get(row, 'bright_ti4') || '0') } });
+      }
+      return { type: 'FeatureCollection', features: feats };
+    };
+
+    const addFIRMS = async () => {
+      try {
+        const url = 'https://firms.modaps.eosdis.nasa.gov/active_fire/c6/csv/V1/global/VIIRS_SNPP_NRT_Global_24h.csv';
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) return;
+        const text = await res.text();
+        const gj = parseCSV(text);
+        removeLayerIfExists('firms');
+        map.current!.addSource('firms', { type: 'geojson', data: gj });
+        map.current!.addLayer({
+          id: 'firms', type: 'circle', source: 'firms', paint: {
+            'circle-radius': 3,
+            'circle-color': '#ef4444',
+            'circle-opacity': 0.7,
+            'circle-stroke-width': 0.5,
+            'circle-stroke-color': '#ffffff'
+          }
+        });
+        map.current!.on('click', 'firms', (e: any) => {
+          const urlInfo = 'https://firms.modaps.eosdis.nasa.gov/';
+          new mapboxgl.Popup({ closeButton: true })
+            .setLngLat(e.lngLat)
+            .setHTML(`<div style="min-width:220px;padding:8px;"><div style="font-weight:600;color:#111827;">Active Fire (FIRMS)</div><div style="font-size:13px;color:#374151;margin-top:4px;">Source: NASA FIRMS VIIRS</div><a href="${urlInfo}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;color:#2563eb;">Open FIRMS</a></div>`)
+            .addTo(map.current!);
+        });
+      } catch (e) { console.log('FIRMS load failed', e); }
+    };
+
+    const addGDACS = async () => {
+      try {
+        const from = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+        const res = await fetch(`https://www.gdacs.org/gdacsapi/api/events/geteventlist/EVENTS?fromdate=${from}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const feats: any[] = [];
+        for (const f of (data.features || [])) {
+          const props = f.properties || {};
+          const type = String(props.eventtype || '').toLowerCase();
+          if (type !== 'fl' && type !== 'tc' && type !== 'se') continue; // floods, tropical cyclones, storms
+          const coords = f.geometry?.coordinates;
+          if (Array.isArray(coords) && coords.length >= 2) {
+            feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [coords[0], coords[1]] }, properties: { type, url: `https://www.gdacs.org/report.aspx?eventtype=${type.toUpperCase()}&eventid=${props.eventid || ''}` } });
+          }
+        }
+        const gj = { type: 'FeatureCollection', features: feats } as any;
+        removeLayerIfExists('gdacs');
+        map.current!.addSource('gdacs', { type: 'geojson', data: gj });
+        map.current!.addLayer({ id: 'gdacs', type: 'circle', source: 'gdacs', paint: {
+          'circle-radius': 4,
+          'circle-color': [ 'match', ['get','type'], 'fl', '#1d4ed8', 'tc', '#22c55e', /*se*/ '#f59e0b' ],
+          'circle-opacity': 0.8,
+          'circle-stroke-width': 0.8,
+          'circle-stroke-color': '#ffffff'
+        }});
+        map.current!.on('click', 'gdacs', (e: any) => {
+          const f = e.features?.[0];
+          const url = f?.properties?.url || 'https://www.gdacs.org/';
+          new mapboxgl.Popup({ closeButton: true })
+            .setLngLat(e.lngLat)
+            .setHTML(`<div style="min-width:220px;padding:8px;"><div style="font-weight:600;color:#111827;">GDACS Event</div><a href="${url}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;color:#2563eb;">View on GDACS</a></div>`)
+            .addTo(map.current!);
+        });
+      } catch (e) { console.log('GDACS load failed', e); }
+    };
+
+    // Apply toggles
+    removeLayerIfExists('usgs');
+    removeLayerIfExists('firms');
+    removeLayerIfExists('gdacs');
+    if (showUSGS) addUSGS();
+    if (showFIRMS) addFIRMS();
+    if (showGDACS) addGDACS();
+
+    // Cleanup on dependency change
+    return () => {
+      removeLayerIfExists('usgs');
+      removeLayerIfExists('firms');
+      removeLayerIfExists('gdacs');
+    };
+  }, [isLoaded, showHazardOverlays, showUSGS, showFIRMS, showGDACS, timeWindowHours]);
 
   const handleSearch = useCallback(async () => {
     if (!searchQuery.trim() || !map.current) return;
@@ -558,6 +738,40 @@ export default function InteractiveMap({
                   {showPredictions ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
                   AI
                 </Button>
+                <Button
+                  variant={showUSGS ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowUSGS(!showUSGS)}
+                  className="text-xs"
+                >
+                  {showUSGS ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
+                  Quakes
+                </Button>
+                <Button
+                  variant={showFIRMS ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowFIRMS(!showFIRMS)}
+                  className="text-xs"
+                >
+                  {showFIRMS ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
+                  Fires
+                </Button>
+                <Button
+                  variant={showGDACS ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowGDACS(!showGDACS)}
+                  className="text-xs"
+                >
+                  {showGDACS ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
+                  GDACS
+                </Button>
+              </div>
+              {/* Time window */}
+              <div className="flex items-center space-x-2 pt-2">
+                <span className="text-xs text-muted-foreground">Window:</span>
+                <Button variant={timeWindowHours===6?"default":"outline"} size="sm" className="text-xs" onClick={()=>setTimeWindowHours(6)}>6h</Button>
+                <Button variant={timeWindowHours===24?"default":"outline"} size="sm" className="text-xs" onClick={()=>setTimeWindowHours(24)}>24h</Button>
+                <Button variant={timeWindowHours===72?"default":"outline"} size="sm" className="text-xs" onClick={()=>setTimeWindowHours(72)}>72h</Button>
               </div>
             </div>
           </Card>
