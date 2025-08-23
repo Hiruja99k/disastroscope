@@ -34,14 +34,14 @@ const getEventTypeIcon = (type: string) => {
   }
 };
 
-// Import the fallback map component
-import FallbackMap from './FallbackMap';
+// Import the Google Maps component
+import GoogleMapsComponent from './GoogleMapsComponent';
 
-// Real map component using FallbackMap
+// Real map component using Google Maps
 const RealMapComponent = ({ events, predictions }: { events: DisasterEvent[], predictions: Prediction[] }) => {
   return (
     <div className="relative h-full">
-      <FallbackMap 
+      <GoogleMapsComponent 
         height="100%" 
         showControls={false}
         events={events}

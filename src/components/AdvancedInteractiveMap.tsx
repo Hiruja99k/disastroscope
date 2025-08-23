@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '@/utils/monitoring';
-import FallbackMap from '@/components/FallbackMap';
+import GoogleMapsComponent from '@/components/GoogleMapsComponent';
 
 interface MapLayer {
   id: string;
@@ -57,7 +57,7 @@ export function AdvancedInteractiveMap() {
   const [showControls, setShowControls] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Simulated disaster data
+  // Simulated disaster data with real coordinates
   const [disasterPoints, setDisasterPoints] = useState<DisasterPoint[]>([
     {
       id: '1',
@@ -70,21 +70,48 @@ export function AdvancedInteractiveMap() {
     },
     {
       id: '2',
-      lat: 35.6762,
-      lng: 139.6503,
-      type: 'Tsunami',
+      lat: 25.7617,
+      lng: -80.1918,
+      type: 'Hurricane',
       severity: 'critical',
       timestamp: '2024-01-15T09:15:00Z',
-      description: 'Tsunami warning issued for Tokyo Bay region'
+      description: 'Hurricane Maria approaching Miami, Florida'
     },
     {
       id: '3',
-      lat: -33.8688,
-      lng: 151.2093,
+      lat: 37.7749,
+      lng: -122.4194,
       type: 'Wildfire',
       severity: 'medium',
       timestamp: '2024-01-15T08:45:00Z',
-      description: 'Wildfire spreading in Sydney outskirts'
+      description: 'Wildfire spreading in San Francisco Bay Area'
+    },
+    {
+      id: '4',
+      lat: 29.7604,
+      lng: -95.3698,
+      type: 'Flood',
+      severity: 'high',
+      timestamp: '2024-01-15T07:30:00Z',
+      description: 'Severe flooding in Houston, Texas'
+    },
+    {
+      id: '5',
+      lat: 35.6762,
+      lng: 139.6503,
+      type: 'Earthquake',
+      severity: 'critical',
+      timestamp: '2024-01-15T06:20:00Z',
+      description: 'Major earthquake detected in Tokyo, Japan'
+    },
+    {
+      id: '6',
+      lat: 51.5074,
+      lng: -0.1278,
+      type: 'Storm',
+      severity: 'medium',
+      timestamp: '2024-01-15T05:10:00Z',
+      description: 'Severe storm system over London, UK'
     }
   ]);
 
@@ -127,13 +154,13 @@ export function AdvancedInteractiveMap() {
 
   return (
     <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-[600px]'}`}>
-      {/* Map Container with FallbackMap */}
+      {/* Map Container with Google Maps */}
       <div 
         ref={mapRef}
         className="w-full h-full relative overflow-hidden"
       >
-        {/* Use FallbackMap as the base */}
-        <FallbackMap 
+        {/* Use Google Maps as the base */}
+        <GoogleMapsComponent 
           height="100%" 
           showControls={false}
           events={disasterPoints.map(point => ({
@@ -143,9 +170,11 @@ export function AdvancedInteractiveMap() {
             event_type: point.type,
             severity: point.severity,
             status: 'active',
-            coordinates: { lat: point.lat, lng: point.lng }
+            coordinates: { lat: point.lat, lng: point.lng },
+            timestamp: point.timestamp
           }))}
           predictions={[]}
+          onMarkerClick={(point) => setSelectedPoint(point)}
         />
 
         {/* Prediction Zones */}
