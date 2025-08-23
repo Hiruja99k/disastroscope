@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '@/utils/monitoring';
-import GoogleMapsComponent from '@/components/GoogleMapsComponent';
+import OpenStreetMapComponent from '@/components/OpenStreetMapComponent';
 
 interface MapLayer {
   id: string;
@@ -154,13 +154,13 @@ export function AdvancedInteractiveMap() {
 
   return (
     <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-[600px]'}`}>
-      {/* Map Container with Google Maps */}
+      {/* Map Container with OpenStreetMap */}
       <div 
         ref={mapRef}
         className="w-full h-full relative overflow-hidden"
       >
-        {/* Use Google Maps as the base */}
-        <GoogleMapsComponent 
+        {/* Use OpenStreetMap as the base */}
+        <OpenStreetMapComponent 
           height="100%" 
           showControls={false}
           events={disasterPoints.map(point => ({

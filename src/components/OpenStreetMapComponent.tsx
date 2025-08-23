@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,6 +23,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '@/utils/monitoring';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 interface DisasterPoint {
   id: string;
@@ -36,7 +37,7 @@ interface DisasterPoint {
   location?: string;
 }
 
-interface GoogleMapsComponentProps {
+interface OpenStreetMapComponentProps {
   height?: string;
   showControls?: boolean;
   events?: any[];
@@ -44,27 +45,50 @@ interface GoogleMapsComponentProps {
   onMarkerClick?: (point: DisasterPoint) => void;
 }
 
+// Fix Leaflet icon issues
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
 const getDisasterIcon = (type: string, severity: string) => {
-  const baseUrl = 'https://maps.google.com/mapfiles/ms/icons/';
+  const getColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return '#dc2626';
+      case 'high': return '#ea580c';
+      case 'medium': return '#ca8a04';
+      case 'low': return '#16a34a';
+      default: return '#6b7280';
+    }
+  };
+
+  const color = getColor(severity);
   
-  switch (type.toLowerCase()) {
-    case 'earthquake':
-      return `${baseUrl}red-dot.png`;
-    case 'hurricane':
-      return `${baseUrl}blue-dot.png`;
-    case 'wildfire':
-      return `${baseUrl}orange-dot.png`;
-    case 'flood':
-      return `${baseUrl}ltblue-dot.png`;
-    case 'tornado':
-      return `${baseUrl}yellow-dot.png`;
-    case 'landslide':
-      return `${baseUrl}green-dot.png`;
-    default:
-      return severity === 'critical' ? `${baseUrl}red-dot.png` : 
-             severity === 'high' ? `${baseUrl}orange-dot.png` : 
-             `${baseUrl}green-dot.png`;
-  }
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `
+      <div style="
+        width: 20px;
+        height: 20px;
+        background: ${color};
+        border: 2px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 10px;
+        font-weight: bold;
+      ">
+        ${type.charAt(0).toUpperCase()}
+      </div>
+    `,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  });
 };
 
 const getDisasterColor = (severity: string) => {
@@ -77,16 +101,16 @@ const getDisasterColor = (severity: string) => {
   }
 };
 
-export default function GoogleMapsComponent({ 
+export default function OpenStreetMapComponent({ 
   height = '600px', 
   showControls = true, 
   events = [], 
   predictions = [],
   onMarkerClick 
-}: GoogleMapsComponentProps) {
+}: OpenStreetMapComponentProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.Marker[]>([]);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapStyle, setMapStyle] = useState<'satellite' | 'street' | 'terrain'>('satellite');
   const [layers, setLayers] = useState({
@@ -98,72 +122,91 @@ export default function GoogleMapsComponent({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize Google Maps
+  // Initialize OpenStreetMap
   useEffect(() => {
     const initMap = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
-        const loader = new Loader({
-          apiKey: 'AIzaSyDyEQ-dM3CiIXm5XwnSVTqCVK9oC633E7E',
-          version: 'weekly',
-          libraries: ['places']
-        });
-
-        const google = await loader.load();
-        
         if (!mapRef.current) return;
 
-        const map = new google.maps.Map(mapRef.current, {
-          center: { lat: 20, lng: 0 },
+        // Create map instance
+        const map = L.map(mapRef.current, {
+          center: [20, 0],
           zoom: 2,
-          mapTypeId: google.maps.MapTypeId.SATELLITE,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
-          zoomControl: true,
-          styles: [
-            {
-              featureType: 'administrative',
-              elementType: 'geometry',
-              stylers: [{ visibility: 'simplified' }]
-            },
-            {
-              featureType: 'landscape',
-              elementType: 'geometry',
-              stylers: [{ visibility: 'simplified' }]
-            }
-          ]
+          zoomControl: false,
+          attributionControl: false,
         });
 
+        // Add zoom control
+        L.control.zoom({
+          position: 'topright'
+        }).addTo(map);
+
+        // Add tile layers
+        const tileLayers = {
+          satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+          }),
+          street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          }),
+          terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+          })
+        };
+
+        // Add default layer
+        tileLayers.satellite.addTo(map);
         mapInstanceRef.current = map;
-        setIsLoading(false);
+
+        // Store tile layers for later use
+        (map as any).tileLayers = tileLayers;
 
         // Add map event listeners
-        map.addListener('click', () => {
+        map.on('click', () => {
           trackEvent('map_clicked');
         });
 
+        setIsLoading(false);
+
       } catch (err) {
-        console.error('Error loading Google Maps:', err);
-        setError('Failed to load Google Maps. Please check your internet connection.');
+        console.error('Error loading OpenStreetMap:', err);
+        setError('Failed to load map. Please check your internet connection.');
         setIsLoading(false);
       }
     };
 
     initMap();
+
+    // Cleanup
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
   }, []);
 
   // Update map style when mapStyle changes
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
-    const mapTypeId = mapStyle === 'satellite' ? google.maps.MapTypeId.SATELLITE :
-                     mapStyle === 'terrain' ? google.maps.MapTypeId.TERRAIN :
-                     google.maps.MapTypeId.ROADMAP;
+    const map = mapInstanceRef.current;
+    const tileLayers = (map as any).tileLayers;
 
-    mapInstanceRef.current.setMapTypeId(mapTypeId);
+    // Remove all existing tile layers
+    Object.values(tileLayers).forEach((layer: any) => {
+      map.removeLayer(layer);
+    });
+
+    // Add new tile layer
+    const newLayer = tileLayers[mapStyle];
+    if (newLayer) {
+      newLayer.addTo(map);
+    }
+
     trackEvent('map_style_changed', { style: mapStyle });
   }, [mapStyle]);
 
@@ -171,8 +214,10 @@ export default function GoogleMapsComponent({
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
+    const map = mapInstanceRef.current;
+
     // Clear existing markers
-    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current.forEach(marker => map.removeLayer(marker));
     markersRef.current = [];
 
     const allData = [
@@ -183,51 +228,39 @@ export default function GoogleMapsComponent({
     allData.forEach((item, index) => {
       if (!item.coordinates?.lat || !item.coordinates?.lng) return;
 
-      const position = {
-        lat: item.coordinates.lat,
-        lng: item.coordinates.lng
-      };
+      const position = [item.coordinates.lat, item.coordinates.lng] as [number, number];
 
-      const marker = new google.maps.Marker({
-        position,
-        map: mapInstanceRef.current,
-        title: item.name || item.description || 'Disaster Event',
-        icon: {
-          url: getDisasterIcon(item.event_type || item.prediction_type || 'disaster', item.severity || 'medium'),
-          scaledSize: new google.maps.Size(32, 32),
-          anchor: new google.maps.Point(16, 16)
-        },
-        animation: google.maps.Animation.DROP
+      const marker = L.marker(position, {
+        icon: getDisasterIcon(item.event_type || item.prediction_type || 'disaster', item.severity || 'medium')
       });
 
-      // Create info window
-      const infoWindow = new google.maps.InfoWindow({
-        content: `
-          <div style="padding: 10px; max-width: 300px;">
-            <h3 style="margin: 0 0 8px 0; color: #1f2937; font-weight: 600;">
-              ${item.name || item.description || 'Disaster Event'}
-            </h3>
-            <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">
-              ${item.location || 'Unknown Location'}
-            </p>
-            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-              <span style="background: ${getDisasterColor(item.severity || 'medium')}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">
-                ${item.severity || 'Unknown'} Severity
-              </span>
-              <span style="background: #e5e7eb; color: #374151; padding: 2px 8px; border-radius: 12px; font-size: 12px;">
-                ${item.event_type || item.prediction_type || 'Unknown'} Type
-              </span>
-            </div>
-            <p style="margin: 0; color: #6b7280; font-size: 12px;">
-              Updated: ${new Date(item.timestamp || Date.now()).toLocaleString()}
-            </p>
+      // Create popup content
+      const popupContent = `
+        <div style="padding: 10px; max-width: 300px;">
+          <h3 style="margin: 0 0 8px 0; color: #1f2937; font-weight: 600;">
+            ${item.name || item.description || 'Disaster Event'}
+          </h3>
+          <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">
+            ${item.location || 'Unknown Location'}
+          </p>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <span style="background: ${getDisasterColor(item.severity || 'medium')}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">
+              ${item.severity || 'Unknown'} Severity
+            </span>
+            <span style="background: #e5e7eb; color: #374151; padding: 2px 8px; border-radius: 12px; font-size: 12px;">
+              ${item.event_type || item.prediction_type || 'Unknown'} Type
+            </span>
           </div>
-        `
-      });
+          <p style="margin: 0; color: #6b7280; font-size: 12px;">
+            Updated: ${new Date(item.timestamp || Date.now()).toLocaleString()}
+          </p>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
 
       // Add click listener
-      marker.addListener('click', () => {
-        infoWindow.open(mapInstanceRef.current, marker);
+      marker.on('click', () => {
         trackEvent('marker_clicked', { 
           type: item.event_type || item.prediction_type,
           severity: item.severity 
@@ -237,6 +270,7 @@ export default function GoogleMapsComponent({
         }
       });
 
+      marker.addTo(map);
       markersRef.current.push(marker);
     });
 
@@ -249,8 +283,7 @@ export default function GoogleMapsComponent({
 
   const resetView = () => {
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.setCenter({ lat: 20, lng: 0 });
-      mapInstanceRef.current.setZoom(2);
+      mapInstanceRef.current.setView([20, 0], 2);
       trackEvent('map_reset_view');
     }
   };
@@ -277,7 +310,7 @@ export default function GoogleMapsComponent({
         <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading Google Maps...</p>
+            <p className="text-muted-foreground">Loading OpenStreetMap...</p>
           </div>
         </div>
       )}
@@ -398,6 +431,14 @@ export default function GoogleMapsComponent({
           </div>
         </div>
       </div>
+
+      {/* Custom CSS for markers */}
+      <style jsx>{`
+        .custom-marker {
+          background: transparent;
+          border: none;
+        }
+      `}</style>
     </div>
   );
 }
