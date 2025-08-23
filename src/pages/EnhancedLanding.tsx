@@ -15,6 +15,7 @@ import satelliteMonitoring from '@/assets/satellite-monitoring.jpg';
 import neuralNetwork from '@/assets/neural-network.jpg';
 import commandCenter from '@/assets/command-center.jpg';
 import AdvancedFeatureShowcase from '@/components/AdvancedFeatureShowcase';
+import EnterpriseFeaturesShowcase from '@/components/EnterpriseFeaturesShowcase';
 export default function EnhancedLanding() {
   const containerRef = useRef<HTMLDivElement>(null);
   const {
@@ -438,7 +439,7 @@ export default function EnhancedLanding() {
           }}>
               <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 px-6 py-3 text-lg">
                 <Globe className="mr-2 h-5 w-5" />
-                World's #1 Disaster Intelligence Platform
+                Sri Lanka's #1 Disaster Intelligence Platform
               </Badge>
             </motion.div>
             
@@ -470,7 +471,7 @@ export default function EnhancedLanding() {
             delay: 0.6,
             duration: 0.8
           }} className="text-2xl text-muted-foreground leading-relaxed font-inter max-w-5xl mx-auto">
-              DisastroScope is the world's most advanced disaster prediction and monitoring platform. 
+              DisastroScope is the Sri Lanka's most advanced disaster prediction and monitoring platform. 
               Using cutting-edge AI and global satellite networks, we help governments and organizations 
               protect communities from natural disasters with unprecedented accuracy.
             </motion.p>
@@ -770,6 +771,13 @@ export default function EnhancedLanding() {
 
       {/* Advanced Feature Showcase */}
       <AdvancedFeatureShowcase />
+
+      {/* Enterprise Features Showcase */}
+      <section className="py-24 px-4 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <div className="max-w-7xl mx-auto">
+          <EnterpriseFeaturesShowcase />
+        </div>
+      </section>
 
       {/* Use Cases Section */}
       <section className="py-24 px-4 bg-muted/30">

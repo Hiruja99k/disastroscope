@@ -15,6 +15,7 @@ import RealTimeBridge from "./components/RealTimeBridge";
 import WeatherExplorer from "./pages/WeatherExplorer";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PerformanceMonitor from "./components/PerformanceMonitor";
+import AdvancedMapPage from "./pages/AdvancedMapPage";
 import { trackPageView } from "./utils/monitoring";
 
 
@@ -61,6 +62,7 @@ const App = () => (
                 <Route path="/weather" element={<WeatherExplorer />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/insights" element={<Insights />} />
+                <Route path="/map" element={<AdvancedMapPage />} />
                 <Route path="/about" element={<About />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

@@ -116,6 +116,7 @@ import RealTimeMap from '@/components/RealTimeMap';
 import AlertSystem from '@/components/AlertSystem';
 import AdvancedAnalytics from '@/components/AdvancedAnalytics';
 import EnhancedAlerts from '@/components/EnhancedAlerts';
+import AdvancedInteractiveMap from '@/components/AdvancedInteractiveMap';
 import { apiService, Prediction as ApiPrediction, DisasterEvent as ApiEvent, SensorData as ApiSensorData } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -1534,7 +1535,7 @@ export default function EnhancedDashboard() {
                         </div>
                       </div>
                     ) : (
-                      <RealTimeMap height="400px" events={events} predictions={predictions} />
+                      <AdvancedInteractiveMap />
                     )}
                   </Card>
                 </motion.div>
