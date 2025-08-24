@@ -17,7 +17,7 @@ import {
   Clock,
   Users
 } from 'lucide-react';
-import AdvancedInteractiveMap from '@/components/AdvancedInteractiveMap';
+import DisasterMap from '@/components/DisasterMap';
 import { trackEvent } from '@/utils/monitoring';
 
 export default function AdvancedMapPage() {
@@ -80,7 +80,9 @@ export default function AdvancedMapPage() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden border border-border/50"
           >
-            <AdvancedInteractiveMap />
+            <DisasterMap 
+              height="600px"
+            />
           </motion.div>
         </div>
       </div>

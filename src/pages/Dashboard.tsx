@@ -24,7 +24,7 @@ import {
   BarChart3,
   Cloud
 } from 'lucide-react';
-import RealTimeMap from '@/components/RealTimeMap';
+import DisasterMap from '@/components/DisasterMap';
 import WeatherDashboard from '@/components/WeatherDashboard';
 import { useDisasterEvents, usePredictions, useSensorData, useStats, useApiHealth, useRealTimeUpdates, useFemaDisasters, useEonetEvents } from '@/hooks/useFlaskData';
 import { useToast } from '@/hooks/use-toast';
@@ -209,17 +209,13 @@ export default function Dashboard() {
             <WeatherDashboard />
           </div>
 
-          {/* Real-time Map */}
+          {/* Disaster Map */}
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-foreground font-poppins">Global Disaster Map</h2>
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                Real-time
-              </Badge>
-            </div>
-            <Card className="p-4">
-              <RealTimeMap height="500px" />
-            </Card>
+            <DisasterMap 
+              events={events}
+              predictions={predictions}
+              height="500px"
+            />
           </div>
 
           {/* Metrics Grid */}

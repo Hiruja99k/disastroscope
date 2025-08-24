@@ -112,11 +112,11 @@ import {
   TimerReset,
   TimerOff
 } from 'lucide-react';
-import RealTimeMap from '@/components/RealTimeMap';
+
 import AlertSystem from '@/components/AlertSystem';
 import AdvancedAnalytics from '@/components/AdvancedAnalytics';
 import EnhancedAlerts from '@/components/EnhancedAlerts';
-import AdvancedInteractiveMap from '@/components/AdvancedInteractiveMap';
+import DisasterMap from '@/components/DisasterMap';
 import { apiService, Prediction as ApiPrediction, DisasterEvent as ApiEvent, SensorData as ApiSensorData } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -1535,7 +1535,11 @@ export default function EnhancedDashboard() {
                         </div>
                       </div>
                     ) : (
-                      <AdvancedInteractiveMap />
+                      <DisasterMap 
+                        events={events}
+                        predictions={predictions}
+                        height="400px"
+                      />
                     )}
                   </Card>
                 </motion.div>
@@ -2874,7 +2878,11 @@ export default function EnhancedDashboard() {
                 <div className="lg:col-span-3">
                   <Card className="p-6 bg-gradient-card border-border/50">
                     <h2 className="text-2xl font-semibold text-foreground mb-4">Live Monitoring Dashboard</h2>
-                    <RealTimeMap height="600px" events={events} predictions={predictions} />
+                    <DisasterMap 
+                      events={events}
+                      predictions={predictions}
+                      height="600px"
+                    />
                   </Card>
                 </div>
                 <div className="space-y-6">
