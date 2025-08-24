@@ -1,0 +1,53 @@
+# Enterprise DisastroScope Backend Requirements - Railway Compatible
+# Core Framework
+Flask==2.3.3
+Flask-CORS==4.0.0
+Flask-SocketIO==5.3.6
+python-socketio==5.9.0
+python-engineio==4.7.1
+gunicorn==21.2.0
+eventlet==0.33.3
+
+# Data Processing & ML
+numpy==1.24.3
+pandas==2.0.3
+scikit-learn==1.3.0
+joblib==1.3.2
+scipy==1.11.1
+
+# Advanced ML & AI (Railway compatible versions)
+xgboost==1.7.6
+lightgbm==4.0.0
+
+# Data Sources & APIs
+aiohttp==3.8.6
+requests==2.31.0
+httpx==0.24.1
+
+# Environment & Configuration
+python-dotenv==1.0.0
+pydantic==2.3.0
+pydantic-settings==2.0.3
+
+# Monitoring & Logging (Railway compatible)
+structlog==23.1.0
+psutil==5.9.5
+
+# Performance & Optimization
+orjson==3.9.10
+
+# Security
+cryptography==41.0.4
+PyJWT==2.8.0
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2023.3
+geopy==2.3.0
+
+# Development & Testing (optional for production)
+pytest==7.4.2
+black==23.7.0
+
+# Production
+supervisor==4.2.5
