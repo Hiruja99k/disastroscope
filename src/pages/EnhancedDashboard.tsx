@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import ApiTest from '@/components/ApiTest';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
@@ -1301,6 +1302,11 @@ export default function EnhancedDashboard() {
                   )}
                 </Button>
               </div>
+            </div>
+
+            {/* API Connection Test */}
+            <div className="mb-6">
+              <ApiTest />
             </div>
 
             {/* Search and Filter Bar */}
