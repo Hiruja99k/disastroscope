@@ -1,97 +1,58 @@
 declare global {
   interface Window {
-    google: {
-      maps: {
-        Map: new (element: HTMLElement, options: google.maps.MapOptions) => google.maps.Map;
-        Marker: new (options: google.maps.MarkerOptions) => google.maps.Marker;
-        Geocoder: new () => google.maps.Geocoder;
-        Animation: {
-          DROP: number;
-          BOUNCE: number;
-        };
-        MapTypeId: {
-          ROADMAP: string;
-          SATELLITE: string;
-          HYBRID: string;
-          TERRAIN: string;
-        };
-      };
+    maplibregl: {
+      Map: new (options: maplibregl.MapOptions) => maplibregl.Map;
+      Marker: new (options?: maplibregl.MarkerOptions) => maplibregl.Marker;
+      Popup: new (options?: maplibregl.PopupOptions) => maplibregl.Popup;
+      NavigationControl: new (options?: maplibregl.NavigationControlOptions) => maplibregl.NavigationControl;
     };
   }
 }
 
-declare namespace google {
-  namespace maps {
-    interface MapOptions {
-      center?: LatLng | LatLngLiteral;
-      zoom?: number;
-      mapTypeId?: string;
-      mapTypeControl?: boolean;
-      streetViewControl?: boolean;
-      fullscreenControl?: boolean;
-      zoomControl?: boolean;
-      scaleControl?: boolean;
-      rotateControl?: boolean;
-      tilt?: number;
-    }
+declare namespace maplibregl {
+  interface MapOptions {
+    container: HTMLElement;
+    style: string;
+    center: [number, number];
+    zoom: number;
+    attributionControl?: boolean;
+  }
 
-    interface MarkerOptions {
-      position: LatLng | LatLngLiteral;
-      map?: Map;
-      title?: string;
-      icon?: string;
-      animation?: number;
-    }
+  interface MarkerOptions {
+    element?: HTMLElement;
+  }
 
-    interface GeocoderRequest {
-      address?: string;
-      location?: LatLng | LatLngLiteral;
-    }
+  interface PopupOptions {
+    offset?: number;
+  }
 
-    interface GeocoderResult {
-      geometry: {
-        location: LatLng;
-      };
-      formatted_address: string;
-    }
+  interface NavigationControlOptions {
+    showCompass?: boolean;
+    showZoom?: boolean;
+    visualizePitch?: boolean;
+  }
 
-    interface GeocoderStatus {
-      OK: string;
-      ZERO_RESULTS: string;
-      OVER_QUERY_LIMIT: string;
-      REQUEST_DENIED: string;
-      INVALID_REQUEST: string;
-      UNKNOWN_ERROR: string;
-    }
+  class Map {
+    constructor(options: MapOptions);
+    addControl(control: NavigationControl): void;
+    setCenter(center: [number, number]): void;
+    setZoom(zoom: number): void;
+  }
 
-    class Map {
-      constructor(element: HTMLElement, options: MapOptions);
-      setCenter(location: LatLng | LatLngLiteral): void;
-      setZoom(zoom: number): void;
-      setMapTypeId(mapTypeId: string): void;
-    }
+  class Marker {
+    constructor(options?: MarkerOptions);
+    setLngLat(lngLat: [number, number]): Marker;
+    setPopup(popup: Popup): Marker;
+    addTo(map: Map): Marker;
+  }
 
-    class Marker {
-      constructor(options: MarkerOptions);
-      setMap(map: Map | null): void;
-      setPosition(position: LatLng | LatLngLiteral): void;
-      setTitle(title: string): void;
-    }
+  class Popup {
+    constructor(options?: PopupOptions);
+    setHTML(html: string): Popup;
+  }
 
-    class Geocoder {
-      geocode(request: GeocoderRequest, callback: (results: GeocoderResult[], status: string) => void): void;
-    }
-
-    class LatLng {
-      constructor(lat: number, lng: number);
-      lat(): number;
-      lng(): number;
-    }
-
-    interface LatLngLiteral {
-      lat: number;
-      lng: number;
-    }
+  class NavigationControl {
+    constructor(options?: NavigationControlOptions);
   }
 }
 

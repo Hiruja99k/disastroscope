@@ -15,14 +15,12 @@ interface GoogleMapsEmbedProps {
   }>;
 }
 
-// TypeScript types are defined in src/types/google-maps.d.ts
-
 export default function GoogleMapsEmbed({ 
   width = '100%', 
   height = '600px', 
   location = '',
   zoom = 14,
-  mapType = 'roadmap',
+  mapType = 'streets',
   className = '',
   center = { lat: 0, lng: 0 },
   markers = []
@@ -32,32 +30,39 @@ export default function GoogleMapsEmbed({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyDz0Pktpw75btj-mpxR1j-8Pp7149y1qgY';
+  const MAPTILER_API_KEY = import.meta.env.VITE_MAPTILER_API_KEY || 'DOCOM2xq5hJddM7rfMdp';
 
   useEffect(() => {
-    // Load Google Maps API script
-    const loadGoogleMapsAPI = () => {
-      if (window.google && window.google.maps) {
+    // Load MapTiler GL JS
+    const loadMapTiler = () => {
+      if (window.maplibregl) {
         setIsLoaded(true);
+        setIsLoading(false);
         return;
       }
 
+      // Load MapTiler GL JS CSS
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css';
+      document.head.appendChild(link);
+
+      // Load MapTiler GL JS
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places`;
+      script.src = 'https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js';
       script.async = true;
-      script.defer = true;
       script.onload = () => {
         setIsLoaded(true);
         setIsLoading(false);
       };
       script.onerror = () => {
-        console.error('Failed to load Google Maps API');
+        console.error('Failed to load MapTiler GL JS');
         setIsLoading(false);
       };
       document.head.appendChild(script);
     };
 
-    loadGoogleMapsAPI();
+    loadMapTiler();
   }, []);
 
   useEffect(() => {
@@ -65,53 +70,81 @@ export default function GoogleMapsEmbed({
 
     // Initialize map
     const mapOptions = {
-      center: center,
+      container: mapRef.current,
+      style: `https://api.maptiler.com/maps/${mapType}/style.json?key=${MAPTILER_API_KEY}`,
+      center: [center.lng, center.lat] as [number, number],
       zoom: zoom,
-      mapTypeId: mapType === 's' ? 'satellite' : 
-                 mapType === 'h' ? 'hybrid' : 
-                 mapType === 't' ? 'terrain' : 'roadmap',
-      mapTypeControl: true,
-      streetViewControl: true,
-      fullscreenControl: true,
-      zoomControl: true,
-      scaleControl: true,
-      rotateControl: true,
-      tilt: 0
+      attributionControl: true
     };
 
     try {
-      mapInstanceRef.current = new window.google.maps.Map(mapRef.current, mapOptions);
+      mapInstanceRef.current = new window.maplibregl.Map(mapOptions);
+
+      // Add navigation controls
+      mapInstanceRef.current.addControl(new window.maplibregl.NavigationControl());
 
       // Add markers if provided
       markers.forEach(markerData => {
-        new window.google.maps.Marker({
-          position: markerData.position,
-          map: mapInstanceRef.current,
-          title: markerData.title || '',
-          icon: markerData.icon
-        });
+        // Create marker element
+        const markerEl = document.createElement('div');
+        markerEl.className = 'marker';
+        markerEl.style.width = '25px';
+        markerEl.style.height = '25px';
+        markerEl.style.borderRadius = '50%';
+        markerEl.style.backgroundColor = '#ff4444';
+        markerEl.style.border = '2px solid white';
+        markerEl.style.cursor = 'pointer';
+        markerEl.title = markerData.title || '';
+
+        // Create popup
+        const popup = new window.maplibregl.Popup({ offset: 25 }).setHTML(
+          `<h3>${markerData.title || 'Location'}</h3>`
+        );
+
+        // Add marker to map
+        new window.maplibregl.Marker({ element: markerEl })
+          .setLngLat([markerData.position.lng, markerData.position.lat])
+          .setPopup(popup)
+          .addTo(mapInstanceRef.current);
       });
 
       // If location string is provided, geocode it
       if (location && location.trim()) {
-        const geocoder = new window.google.maps.Geocoder();
-        geocoder.geocode({ address: location }, (results: any, status: any) => {
-          if (status === 'OK' && results[0]) {
-            const locationCenter = results[0].geometry.location;
-            mapInstanceRef.current.setCenter(locationCenter);
-            
-            // Add a marker for the searched location
-            new window.google.maps.Marker({
-              position: locationCenter,
-              map: mapInstanceRef.current,
-              title: location,
-              animation: window.google.maps.Animation.DROP
-            });
-          }
-        });
+        // Simple geocoding using MapTiler's geocoding API
+        fetch(`https://api.maptiler.com/geocoding/${encodeURIComponent(location)}.json?key=${MAPTILER_API_KEY}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.features && data.features.length > 0) {
+              const [lng, lat] = data.features[0].center;
+              mapInstanceRef.current.setCenter([lng, lat]);
+              
+              // Add a marker for the searched location
+              const markerEl = document.createElement('div');
+              markerEl.className = 'marker';
+              markerEl.style.width = '25px';
+              markerEl.style.height = '25px';
+              markerEl.style.borderRadius = '50%';
+              markerEl.style.backgroundColor = '#4444ff';
+              markerEl.style.border = '2px solid white';
+              markerEl.style.cursor = 'pointer';
+              markerEl.title = location;
+
+              const popup = new window.maplibregl.Popup({ offset: 25 }).setHTML(
+                `<h3>${location}</h3>`
+              );
+
+              new window.maplibregl.Marker({ element: markerEl })
+                .setLngLat([lng, lat])
+                .setPopup(popup)
+                .addTo(mapInstanceRef.current);
+            }
+          })
+          .catch(error => {
+            console.error('Geocoding error:', error);
+          });
       }
     } catch (error) {
-      console.error('Error initializing Google Maps:', error);
+      console.error('Error initializing MapTiler map:', error);
     }
   }, [isLoaded, center, zoom, mapType, location, markers]);
 

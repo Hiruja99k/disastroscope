@@ -1,47 +1,47 @@
-# Google Maps API Integration
+# MapTiler Integration
 
 ## Overview
 
-The DisastroScope application has been updated to use the Google Maps JavaScript API instead of the Google Maps embed iframe. This provides better performance, more customization options, and enhanced functionality.
+The DisastroScope application has been updated to use MapTiler's mapping service instead of Google Maps. This provides better performance, more customization options, and enhanced functionality with a modern mapping solution.
 
 ## Changes Made
 
-### 1. Updated GoogleMapsEmbed Component
+### 1. Updated Map Component
 
-The `src/components/GoogleMapsEmbed.tsx` component has been completely rewritten to use the Google Maps JavaScript API:
+The `src/components/GoogleMapsEmbed.tsx` component has been completely rewritten to use MapTiler:
 
-- **Before**: Used an iframe with embed code
-- **After**: Uses the Google Maps JavaScript API with proper React integration
+- **Before**: Used Google Maps JavaScript API
+- **After**: Uses MapTiler GL JS with proper React integration
 
 ### 2. New Features
 
-- **Dynamic Script Loading**: The Google Maps API script is loaded dynamically when needed
+- **Dynamic Script Loading**: The MapTiler GL JS script is loaded dynamically when needed
 - **Marker Support**: Can display custom markers for disaster events and predictions
-- **Geocoding**: Supports location search and geocoding
-- **Multiple Map Types**: Supports satellite, hybrid, terrain, and roadmap views
-- **Interactive Controls**: Full map controls including zoom, pan, street view, etc.
+- **Geocoding**: Supports location search using MapTiler's geocoding API
+- **Multiple Map Styles**: Supports various map styles including streets, satellite, and terrain
+- **Interactive Controls**: Full map controls including zoom, pan, and navigation
 
 ### 3. Updated Components
 
-The following components have been updated to work with the new Google Maps API:
+The following components have been updated to work with MapTiler:
 
 - `RealTimeMap.tsx`: Now displays disaster events and predictions as markers
 - `AdvancedInteractiveMap.tsx`: Enhanced with proper marker support and overlay layers
 
 ### 4. Environment Configuration
 
-The Google Maps API key is now configurable through environment variables:
+The MapTiler API key is now configurable through environment variables:
 
 ```bash
 # Add to your .env file
-VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+VITE_MAPTILER_API_KEY=your_maptiler_api_key_here
 ```
 
 ## API Key
 
-The application uses the following Google Maps API key:
+The application uses the following MapTiler API key:
 ```
-AIzaSyDz0Pktpw75btj-mpxR1j-8Pp7149y1qgY
+DOCOM2xq5hJddM7rfMdp
 ```
 
 This key is used as a fallback if no environment variable is provided.
@@ -57,7 +57,7 @@ import GoogleMapsEmbed from '@/components/GoogleMapsEmbed';
   width="100%"
   height="600px"
   zoom={14}
-  mapType="satellite"
+  mapType="streets"
   center={{ lat: 40.7128, lng: -74.0060 }}
 />
 ```
@@ -69,7 +69,7 @@ import GoogleMapsEmbed from '@/components/GoogleMapsEmbed';
   width="100%"
   height="600px"
   zoom={10}
-  mapType="roadmap"
+  mapType="streets"
   center={{ lat: 40.7128, lng: -74.0060 }}
   markers={[
     {
@@ -89,31 +89,37 @@ import GoogleMapsEmbed from '@/components/GoogleMapsEmbed';
   height="600px"
   location="New York City"
   zoom={12}
-  mapType="hybrid"
+  mapType="satellite-dark"
 />
 ```
 
 ## Map Types
 
-The component supports the following map types:
+The component supports the following MapTiler map styles:
 
-- `roadmap`: Standard street map
+- `streets`: Standard street map
+- `streets-dark`: Dark street map
+- `streets-light`: Light street map
 - `satellite`: Satellite imagery
+- `satellite-dark`: Dark satellite imagery
 - `hybrid`: Satellite imagery with street labels
 - `terrain`: Terrain map with elevation
+- `winter`: Winter-themed map
+- `basic`: Basic map style
 
 ## Benefits
 
-1. **Better Performance**: No iframe overhead, direct API access
+1. **Better Performance**: Modern GL JS rendering engine
 2. **Enhanced Interactivity**: Full map controls and interactions
 3. **Custom Markers**: Display disaster events and predictions as markers
-4. **Geocoding**: Search for locations by name
+4. **Geocoding**: Search for locations by name using MapTiler's API
 5. **Responsive Design**: Better integration with React components
-6. **Type Safety**: Proper TypeScript support (with fallback types)
+6. **Type Safety**: Proper TypeScript support
+7. **Open Source**: Based on MapLibre GL JS
 
 ## Browser Compatibility
 
-The Google Maps JavaScript API supports all modern browsers:
+MapTiler GL JS supports all modern browsers:
 - Chrome 60+
 - Firefox 55+
 - Safari 12+
@@ -131,4 +137,12 @@ The component includes proper error handling:
 
 - API key is configurable via environment variables
 - No hardcoded credentials in production
-- Proper CORS handling through Google's API
+- Proper CORS handling through MapTiler's API
+
+## MapTiler Features
+
+- **High Performance**: WebGL-based rendering
+- **Vector Tiles**: Efficient tile loading
+- **Custom Styling**: Extensive styling options
+- **Geocoding**: Built-in geocoding service
+- **Mobile Optimized**: Touch-friendly controls
