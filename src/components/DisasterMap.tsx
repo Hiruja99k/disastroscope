@@ -201,8 +201,20 @@ export default function DisasterMap({
       mapInstanceRef.current = new window.maplibregl.Map(mapOptions);
 
       mapInstanceRef.current.on('load', () => {
+        console.log('Map loaded successfully');
+        console.log('Adding markers for events:', displayEvents.length);
+        console.log('Adding markers for predictions:', displayPredictions.length);
         // Add all disaster events as markers
         displayEvents.forEach(event => {
+          // Validate coordinates before adding marker
+          if (typeof event.latitude !== 'number' || typeof event.longitude !== 'number' ||
+              isNaN(event.latitude) || isNaN(event.longitude) ||
+              event.latitude < -90 || event.latitude > 90 ||
+              event.longitude < -180 || event.longitude > 180) {
+            console.warn(`Invalid coordinates for event ${event.name}: lat=${event.latitude}, lng=${event.longitude}`);
+            return; // Skip this marker
+          }
+
           const color = getDisasterColor(event.event_type);
           const IconComponent = getDisasterIcon(event.event_type);
           
@@ -280,6 +292,14 @@ export default function DisasterMap({
 
         // Add all predictions as markers (yellow/orange color)
         displayPredictions.forEach(prediction => {
+          // Validate coordinates before adding marker
+          if (typeof prediction.latitude !== 'number' || typeof prediction.longitude !== 'number' ||
+              isNaN(prediction.latitude) || isNaN(prediction.longitude) ||
+              prediction.latitude < -90 || prediction.latitude > 90 ||
+              prediction.longitude < -180 || prediction.longitude > 180) {
+            console.warn(`Invalid coordinates for prediction ${prediction.event_type}: lat=${prediction.latitude}, lng=${prediction.longitude}`);
+            return; // Skip this marker
+          }
           const markerEl = document.createElement('div');
           markerEl.className = 'prediction-marker';
           markerEl.style.width = '20px';
@@ -402,11 +422,21 @@ export default function DisasterMap({
           <div className="flex items-center gap-3 text-xs text-gray-600">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span>Disasters ({displayEvents.length})</span>
+              <span>Disasters ({displayEvents.filter(e => 
+                typeof e.latitude === 'number' && typeof e.longitude === 'number' &&
+                !isNaN(e.latitude) && !isNaN(e.longitude) &&
+                e.latitude >= -90 && e.latitude <= 90 &&
+                e.longitude >= -180 && e.longitude <= 180
+              ).length})</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-              <span>Predictions ({displayPredictions.length})</span>
+              <span>Predictions ({displayPredictions.filter(p => 
+                typeof p.latitude === 'number' && typeof p.longitude === 'number' &&
+                !isNaN(p.latitude) && !isNaN(p.longitude) &&
+                p.latitude >= -90 && p.latitude <= 90 &&
+                p.longitude >= -180 && p.longitude <= 180
+              ).length})</span>
             </div>
           </div>
         </div>
