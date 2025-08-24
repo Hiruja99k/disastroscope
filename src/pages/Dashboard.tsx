@@ -214,7 +214,7 @@ export default function Dashboard() {
             <DisasterMap 
               events={events}
               predictions={predictions}
-              height="400px"
+              height="600px"
             />
           </div>
 
