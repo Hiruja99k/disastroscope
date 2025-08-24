@@ -133,7 +133,7 @@ export default function MapTilerMap({
 
         // Set color based on marker type
         if (markerData.type === 'prediction') {
-          markerEl.style.backgroundColor = '#3b82f6'; // Blue for predictions
+          markerEl.style.backgroundColor = '#fbbf24'; // Yellow for predictions
         } else {
           markerEl.style.backgroundColor = '#ef4444'; // Red for disasters
         }
@@ -160,12 +160,12 @@ export default function MapTilerMap({
             <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">
               ${markerData.title || 'Location'}
             </h3>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${markerData.type === 'prediction' ? '#3b82f6' : '#ef4444'}; border: 2px solid white;"></div>
-              <span style="font-size: 14px; color: #6b7280; text-transform: capitalize;">
-                ${markerData.type || 'event'}
-              </span>
-            </div>
+                           <div style="display: flex; align-items: center; gap: 8px;">
+                 <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${markerData.type === 'prediction' ? '#fbbf24' : '#ef4444'}; border: 2px solid white;"></div>
+                 <span style="font-size: 14px; color: #6b7280; text-transform: capitalize;">
+                   ${markerData.type || 'event'}
+                 </span>
+               </div>
           </div>
         `);
 
