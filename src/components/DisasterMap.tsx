@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -141,9 +141,15 @@ export default function DisasterMap({
 
   const MAPTILER_API_KEY = 'DOCOM2xq5hJddM7rfMdp';
 
-  // Use sample data if no real data is provided
-  const displayEvents = events.length > 0 ? events : sampleEvents;
-  const displayPredictions = predictions.length > 0 ? predictions : samplePredictions;
+  // Use sample data if no real data is provided - memoized to prevent infinite re-renders
+  const displayEvents = useMemo(() => 
+    events.length > 0 ? events : sampleEvents, 
+    [events]
+  );
+  const displayPredictions = useMemo(() => 
+    predictions.length > 0 ? predictions : samplePredictions, 
+    [predictions]
+  );
 
   useEffect(() => {
     // Load MapTiler GL JS
@@ -388,7 +394,7 @@ export default function DisasterMap({
       console.error('Error initializing map:', error);
       setLoadError('Failed to initialize map');
     }
-  }, [isLoaded, displayEvents, displayPredictions]);
+  }, [isLoaded, events, predictions]);
 
   if (loadError) {
     return (
