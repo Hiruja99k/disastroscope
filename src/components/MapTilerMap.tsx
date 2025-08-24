@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-interface GoogleMapsEmbedProps {
+interface MapTilerMapProps {
   width?: string;
   height?: string;
   location?: string;
@@ -15,7 +15,7 @@ interface GoogleMapsEmbedProps {
   }>;
 }
 
-export default function GoogleMapsEmbed({ 
+export default function MapTilerMap({ 
   width = '100%', 
   height = '600px', 
   location = '',
@@ -24,7 +24,7 @@ export default function GoogleMapsEmbed({
   className = '',
   center = { lat: 0, lng: 0 },
   markers = []
-}: GoogleMapsEmbedProps) {
+}: MapTilerMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);

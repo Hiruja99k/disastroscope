@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '@/utils/monitoring';
-import GoogleMapsEmbed from '@/components/GoogleMapsEmbed';
+import MapTilerMap from '@/components/MapTilerMap';
 
 interface MapLayer {
   id: string;
@@ -159,8 +159,8 @@ export function AdvancedInteractiveMap() {
         ref={mapRef}
         className="w-full h-full relative overflow-hidden"
       >
-        {/* Use Google Maps API as the base */}
-        <GoogleMapsEmbed 
+        {/* Use MapTiler as the base */}
+        <MapTilerMap 
           width="100%"
           height="100%"
           location=""

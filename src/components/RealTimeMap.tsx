@@ -35,9 +35,9 @@ const getEventTypeIcon = (type: string) => {
 };
 
 // Import the Google Maps Embed component
-import GoogleMapsEmbed from './GoogleMapsEmbed';
+import MapTilerMap from './MapTilerMap';
 
-// Real map component using Google Maps API
+// Real map component using MapTiler
 const RealMapComponent = ({ events, predictions }: { events: DisasterEvent[], predictions: Prediction[] }) => {
   // Convert events and predictions to markers
   const markers = [
@@ -55,7 +55,7 @@ const RealMapComponent = ({ events, predictions }: { events: DisasterEvent[], pr
 
   return (
     <div className="relative h-full">
-      <GoogleMapsEmbed 
+      <MapTilerMap 
         width="100%"
         height="100%"
         location=""
