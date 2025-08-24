@@ -693,6 +693,33 @@ def predict_disaster():
         logger.error(f"Error in AI prediction: {e}")
         return jsonify({'error': 'Prediction failed'}), 500
 
+@app.route('/api/models')
+def list_models():
+    """List available AI models and their status"""
+    try:
+        hazards = {}
+        # Data source hints per hazard
+        sources = {
+            'flood': ['ERA5', 'GDACS'],
+            'storm': ['ERA5'],
+            'wildfire': ['FIRMS', 'ERA5'],
+            'landslide': ['GDACS', 'ERA5'],
+            'drought': ['ERA5'],
+            'earthquake': ['USGS']
+        }
+        for hz, model in ai_prediction_service.models.items():
+            loaded = isinstance(model, dict) and 'clf' in model
+            hazards[hz] = {
+                'loaded': bool(loaded),
+                'type': 'ml' if loaded else 'heuristic',
+                'metrics': {},
+                'sources': sources.get(hz, [])
+            }
+        return jsonify({'models': hazards, 'timestamp': datetime.now(timezone.utc).isoformat()})
+    except Exception as e:
+        logger.error(f"/api/models error: {e}")
+        return jsonify({'error': 'failed to list models'}), 500
+
 @app.route('/api/ai/train', methods=['POST'])
 def train_models():
     """Train AI models"""
