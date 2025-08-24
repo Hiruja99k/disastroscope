@@ -37,17 +37,33 @@ const getEventTypeIcon = (type: string) => {
 // Import the Google Maps Embed component
 import GoogleMapsEmbed from './GoogleMapsEmbed';
 
-// Real map component using Google Maps Embed
+// Real map component using Google Maps API
 const RealMapComponent = ({ events, predictions }: { events: DisasterEvent[], predictions: Prediction[] }) => {
+  // Convert events and predictions to markers
+  const markers = [
+    ...events.map(event => ({
+      position: { lat: event.latitude, lng: event.longitude },
+      title: `${event.event_type} - ${event.title}`,
+      icon: undefined // Use default marker
+    })),
+    ...predictions.map(pred => ({
+      position: { lat: pred.latitude, lng: pred.longitude },
+      title: `Prediction: ${pred.prediction_type} - ${pred.severity}`,
+      icon: undefined // Use default marker
+    }))
+  ];
+
   return (
     <div className="relative h-full">
       <GoogleMapsEmbed 
         width="100%"
         height="100%"
-        location="World"
+        location=""
         zoom={2}
-        mapType="s"
+        mapType="satellite"
         className="w-full h-full"
+        center={{ lat: 0, lng: 0 }}
+        markers={markers}
       />
     </div>
   );

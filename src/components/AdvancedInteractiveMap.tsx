@@ -159,14 +159,20 @@ export function AdvancedInteractiveMap() {
         ref={mapRef}
         className="w-full h-full relative overflow-hidden"
       >
-        {/* Use Google Maps Embed as the base */}
+        {/* Use Google Maps API as the base */}
         <GoogleMapsEmbed 
           width="100%"
           height="100%"
-          location="World"
+          location=""
           zoom={2}
-          mapType="s"
+          mapType="satellite"
           className="w-full h-full"
+          center={{ lat: 0, lng: 0 }}
+          markers={disasterPoints.map(point => ({
+            position: { lat: point.lat, lng: point.lng },
+            title: `${point.type} - ${point.severity}`,
+            icon: undefined
+          }))}
         />
 
         {/* Prediction Zones */}
