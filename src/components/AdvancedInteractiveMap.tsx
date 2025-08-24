@@ -165,7 +165,7 @@ export function AdvancedInteractiveMap() {
           height="100%"
           location=""
           zoom={2}
-          mapType="satellite-dark"
+          mapType="basic"
           className="w-full h-full"
           center={{ lat: 0, lng: 0 }}
           markers={disasterPoints.map(point => ({

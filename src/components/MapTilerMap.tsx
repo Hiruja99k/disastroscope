@@ -20,7 +20,7 @@ export default function MapTilerMap({
   height = '600px', 
   location = '',
   zoom = 14,
-  mapType = 'streets',
+  mapType = 'basic',
   className = '',
   center = { lat: 0, lng: 0 },
   markers = []
@@ -29,6 +29,7 @@ export default function MapTilerMap({
   const mapInstanceRef = useRef<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const MAPTILER_API_KEY = import.meta.env.VITE_MAPTILER_API_KEY || 'DOCOM2xq5hJddM7rfMdp';
 
@@ -36,27 +37,32 @@ export default function MapTilerMap({
     // Load MapTiler GL JS
     const loadMapTiler = () => {
       if (window.maplibregl) {
+        console.log('MapTiler GL JS already loaded');
         setIsLoaded(true);
         setIsLoading(false);
         return;
       }
 
+      console.log('Loading MapTiler GL JS...');
+
       // Load MapTiler GL JS CSS
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css';
+      link.href = 'https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.css';
       document.head.appendChild(link);
 
       // Load MapTiler GL JS
       const script = document.createElement('script');
-      script.src = 'https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js';
+      script.src = 'https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.js';
       script.async = true;
       script.onload = () => {
+        console.log('MapTiler GL JS loaded successfully');
         setIsLoaded(true);
         setIsLoading(false);
       };
-      script.onerror = () => {
-        console.error('Failed to load MapTiler GL JS');
+      script.onerror = (error) => {
+        console.error('Failed to load MapTiler GL JS:', error);
+        setLoadError('Failed to load MapTiler library');
         setIsLoading(false);
       };
       document.head.appendChild(script);
@@ -68,6 +74,12 @@ export default function MapTilerMap({
   useEffect(() => {
     if (!isLoaded || !mapRef.current) return;
 
+    console.log('Initializing MapTiler map...');
+    console.log('API Key:', MAPTILER_API_KEY);
+    console.log('Map Type:', mapType);
+    console.log('Center:', center);
+    console.log('Zoom:', zoom);
+
     // Initialize map
     const mapOptions = {
       container: mapRef.current,
@@ -77,8 +89,18 @@ export default function MapTilerMap({
       attributionControl: true
     };
 
+    console.log('Map options:', mapOptions);
+
     try {
       mapInstanceRef.current = new window.maplibregl.Map(mapOptions);
+
+      mapInstanceRef.current.on('load', () => {
+        console.log('Map loaded successfully');
+      });
+
+      mapInstanceRef.current.on('error', (error: any) => {
+        console.error('Map error:', error);
+      });
 
       // Add navigation controls
       mapInstanceRef.current.addControl(new window.maplibregl.NavigationControl());
@@ -145,8 +167,24 @@ export default function MapTilerMap({
       }
     } catch (error) {
       console.error('Error initializing MapTiler map:', error);
+      setLoadError('Failed to initialize map');
     }
   }, [isLoaded, center, zoom, mapType, location, markers]);
+
+  if (loadError) {
+    return (
+      <div 
+        className={`flex items-center justify-center bg-red-50 dark:bg-red-900/20 ${className}`}
+        style={{ width, height }}
+      >
+        <div className="text-center">
+          <div className="text-red-600 mb-2">⚠️</div>
+          <p className="text-sm text-red-600 dark:text-red-400">Map Error: {loadError}</p>
+          <p className="text-xs text-gray-500 mt-1">API Key: {MAPTILER_API_KEY.substring(0, 8)}...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -156,7 +194,8 @@ export default function MapTilerMap({
       >
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Loading map...</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Loading MapTiler map...</p>
+          <p className="text-xs text-gray-500 mt-1">API Key: {MAPTILER_API_KEY.substring(0, 8)}...</p>
         </div>
       </div>
     );
