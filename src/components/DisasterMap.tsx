@@ -148,31 +148,37 @@ export default function DisasterMap({
   useEffect(() => {
     // Load MapTiler GL JS
     const loadMapTiler = () => {
-      if (window.maplibregl) {
-        setIsLoaded(true);
-        setIsLoading(false);
-        return;
-      }
+      try {
+        if (window.maplibregl) {
+          setIsLoaded(true);
+          setIsLoading(false);
+          return;
+        }
 
-      // Load MapTiler GL JS CSS
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.css';
-      document.head.appendChild(link);
+        // Load MapTiler GL JS CSS
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.css';
+        document.head.appendChild(link);
 
-      // Load MapTiler GL JS
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.js';
-      script.async = true;
-      script.onload = () => {
-        setIsLoaded(true);
-        setIsLoading(false);
-      };
-      script.onerror = () => {
+        // Load MapTiler GL JS
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.js';
+        script.async = true;
+        script.onload = () => {
+          setIsLoaded(true);
+          setIsLoading(false);
+        };
+        script.onerror = () => {
+          setLoadError('Failed to load MapTiler library');
+          setIsLoading(false);
+        };
+        document.head.appendChild(script);
+      } catch (error) {
+        console.error('Error loading MapTiler:', error);
         setLoadError('Failed to load MapTiler library');
         setIsLoading(false);
-      };
-      document.head.appendChild(script);
+      }
     };
 
     loadMapTiler();
@@ -181,21 +187,22 @@ export default function DisasterMap({
   useEffect(() => {
     if (!isLoaded || !mapRef.current) return;
 
-    // Initialize map with streets style
-    const mapOptions = {
-      container: mapRef.current,
-      style: `https://api.maptiler.com/maps/streets/style.json?key=${MAPTILER_API_KEY}`,
-      center: [0, 20] as [number, number], // Default center
-      zoom: 2,
-      attributionControl: false,
-      boxZoom: true,
-      doubleClickZoom: true,
-      dragPan: true,
-      dragRotate: false, // Disable rotation for simplicity
-      keyboard: true,
-      scrollZoom: true,
-      touchZoomRotate: true
-    };
+    try {
+      // Initialize map with streets style
+      const mapOptions = {
+        container: mapRef.current,
+        style: `https://api.maptiler.com/maps/streets/style.json?key=${MAPTILER_API_KEY}`,
+        center: [0, 20] as [number, number], // Default center
+        zoom: 2,
+        attributionControl: false,
+        boxZoom: true,
+        doubleClickZoom: true,
+        dragPan: true,
+        dragRotate: false, // Disable rotation for simplicity
+        keyboard: true,
+        scrollZoom: true,
+        touchZoomRotate: true
+      };
 
     try {
       mapInstanceRef.current = new window.maplibregl.Map(mapOptions);
