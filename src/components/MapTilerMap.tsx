@@ -12,7 +12,9 @@ interface MapTilerMapProps {
     position: { lat: number; lng: number };
     title?: string;
     icon?: string;
+    type?: 'disaster' | 'prediction';
   }>;
+  showControls?: boolean;
 }
 
 export default function MapTilerMap({ 
@@ -20,10 +22,11 @@ export default function MapTilerMap({
   height = '600px', 
   location = '',
   zoom = 14,
-  mapType = 'basic',
+  mapType = 'streets',
   className = '',
   center = { lat: 0, lng: 0 },
-  markers = []
+  markers = [],
+  showControls = false
 }: MapTilerMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -86,7 +89,14 @@ export default function MapTilerMap({
       style: `https://api.maptiler.com/maps/${mapType}/style.json?key=${MAPTILER_API_KEY}`,
       center: [center.lng, center.lat] as [number, number],
       zoom: zoom,
-      attributionControl: true
+      attributionControl: false, // Hide attribution for cleaner look
+      boxZoom: true,
+      doubleClickZoom: true,
+      dragPan: true,
+      dragRotate: true,
+      keyboard: true,
+      scrollZoom: true,
+      touchZoomRotate: true
     };
 
     console.log('Map options:', mapOptions);
@@ -102,26 +112,62 @@ export default function MapTilerMap({
         console.error('Map error:', error);
       });
 
-      // Add navigation controls
-      mapInstanceRef.current.addControl(new window.maplibregl.NavigationControl());
+      // Add navigation controls only if showControls is true
+      if (showControls) {
+        mapInstanceRef.current.addControl(new window.maplibregl.NavigationControl());
+      }
 
       // Add markers if provided
       markers.forEach(markerData => {
-        // Create marker element
+        // Create marker element with distinct styling
         const markerEl = document.createElement('div');
         markerEl.className = 'marker';
-        markerEl.style.width = '25px';
-        markerEl.style.height = '25px';
+        markerEl.style.width = '20px';
+        markerEl.style.height = '20px';
         markerEl.style.borderRadius = '50%';
-        markerEl.style.backgroundColor = '#ff4444';
-        markerEl.style.border = '2px solid white';
+        markerEl.style.border = '3px solid white';
         markerEl.style.cursor = 'pointer';
+        markerEl.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+        markerEl.style.transition = 'all 0.2s ease';
         markerEl.title = markerData.title || '';
 
-        // Create popup
-        const popup = new window.maplibregl.Popup({ offset: 25 }).setHTML(
-          `<h3>${markerData.title || 'Location'}</h3>`
-        );
+        // Set color based on marker type
+        if (markerData.type === 'prediction') {
+          markerEl.style.backgroundColor = '#3b82f6'; // Blue for predictions
+        } else {
+          markerEl.style.backgroundColor = '#ef4444'; // Red for disasters
+        }
+
+        // Add hover effect
+        markerEl.addEventListener('mouseenter', () => {
+          markerEl.style.transform = 'scale(1.2)';
+          markerEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
+        });
+
+        markerEl.addEventListener('mouseleave', () => {
+          markerEl.style.transform = 'scale(1)';
+          markerEl.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+        });
+
+        // Create popup with better styling
+        const popup = new window.maplibregl.Popup({ 
+          offset: 25,
+          closeButton: true,
+          closeOnClick: false,
+          maxWidth: '300px'
+        }).setHTML(`
+          <div style="padding: 8px; font-family: system-ui, -apple-system, sans-serif;">
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">
+              ${markerData.title || 'Location'}
+            </h3>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${markerData.type === 'prediction' ? '#3b82f6' : '#ef4444'}; border: 2px solid white;"></div>
+              <span style="font-size: 14px; color: #6b7280; text-transform: capitalize;">
+                ${markerData.type || 'event'}
+              </span>
+            </div>
+          </div>
+        `);
 
         // Add marker to map
         new window.maplibregl.Marker({ element: markerEl })
@@ -143,17 +189,27 @@ export default function MapTilerMap({
               // Add a marker for the searched location
               const markerEl = document.createElement('div');
               markerEl.className = 'marker';
-              markerEl.style.width = '25px';
-              markerEl.style.height = '25px';
+              markerEl.style.width = '20px';
+              markerEl.style.height = '20px';
               markerEl.style.borderRadius = '50%';
-              markerEl.style.backgroundColor = '#4444ff';
-              markerEl.style.border = '2px solid white';
+              markerEl.style.backgroundColor = '#10b981'; // Green for searched location
+              markerEl.style.border = '3px solid white';
               markerEl.style.cursor = 'pointer';
+              markerEl.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
               markerEl.title = location;
 
-              const popup = new window.maplibregl.Popup({ offset: 25 }).setHTML(
-                `<h3>${location}</h3>`
-              );
+              const popup = new window.maplibregl.Popup({ 
+                offset: 25,
+                closeButton: true,
+                closeOnClick: false
+              }).setHTML(`
+                <div style="padding: 8px; font-family: system-ui, -apple-system, sans-serif;">
+                  <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1f2937;">
+                    ${location}
+                  </h3>
+                  <span style="font-size: 14px; color: #6b7280;">Searched Location</span>
+                </div>
+              `);
 
               new window.maplibregl.Marker({ element: markerEl })
                 .setLngLat([lng, lat])
@@ -169,7 +225,7 @@ export default function MapTilerMap({
       console.error('Error initializing MapTiler map:', error);
       setLoadError('Failed to initialize map');
     }
-  }, [isLoaded, center, zoom, mapType, location, markers]);
+  }, [isLoaded, center, zoom, mapType, location, markers, showControls]);
 
   if (loadError) {
     return (
@@ -194,7 +250,7 @@ export default function MapTilerMap({
       >
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Loading MapTiler map...</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Loading interactive map...</p>
           <p className="text-xs text-gray-500 mt-1">API Key: {MAPTILER_API_KEY.substring(0, 8)}...</p>
         </div>
       </div>

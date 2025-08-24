@@ -39,17 +39,19 @@ import MapTilerMap from './MapTilerMap';
 
 // Real map component using MapTiler
 const RealMapComponent = ({ events, predictions }: { events: DisasterEvent[], predictions: Prediction[] }) => {
-  // Convert events and predictions to markers
+  // Convert events and predictions to markers with proper types
   const markers = [
     ...events.map(event => ({
       position: { lat: event.latitude, lng: event.longitude },
       title: `${event.event_type} - ${event.title}`,
-      icon: undefined // Use default marker
+      type: 'disaster' as const,
+      icon: undefined
     })),
     ...predictions.map(pred => ({
       position: { lat: pred.latitude, lng: pred.longitude },
       title: `Prediction: ${pred.prediction_type} - ${pred.severity}`,
-      icon: undefined // Use default marker
+      type: 'prediction' as const,
+      icon: undefined
     }))
   ];
 
@@ -60,10 +62,11 @@ const RealMapComponent = ({ events, predictions }: { events: DisasterEvent[], pr
         height="100%"
         location=""
         zoom={2}
-        mapType="basic"
+        mapType="streets"
         className="w-full h-full"
         center={{ lat: 0, lng: 0 }}
         markers={markers}
+        showControls={false}
       />
     </div>
   );

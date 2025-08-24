@@ -165,14 +165,16 @@ export function AdvancedInteractiveMap() {
           height="100%"
           location=""
           zoom={2}
-          mapType="basic"
+          mapType="streets"
           className="w-full h-full"
           center={{ lat: 0, lng: 0 }}
           markers={disasterPoints.map(point => ({
             position: { lat: point.lat, lng: point.lng },
             title: `${point.type} - ${point.severity}`,
+            type: 'disaster' as const,
             icon: undefined
           }))}
+          showControls={false}
         />
 
         {/* Prediction Zones */}
