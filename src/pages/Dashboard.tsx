@@ -210,16 +210,16 @@ export default function Dashboard() {
           </div>
 
           {/* Disaster Map */}
-          <div className="mb-8">
+          <div className="mb-6">
             <DisasterMap 
               events={events}
               predictions={predictions}
-              height="500px"
+              height="400px"
             />
           </div>
 
           {/* Metrics Grid */}
-          <div ref={metricsRef} className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div ref={metricsRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             {/* Recent Events */}
             <GSAPEnhancedCard className="metric-card p-6" delay={200}>
               <div className="flex items-center justify-between mb-4">
