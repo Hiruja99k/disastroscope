@@ -8,6 +8,7 @@ import DisasterMap from '@/components/DisasterMap';
 import { apiService, DisasterEvent, Prediction, SensorData } from '@/services/api';
 import gsap from 'gsap';
 import { BarChart3, Bell, MapPin, RefreshCw, TrendingUp } from 'lucide-react';
+import ProShell from '@/components/layout/ProShell';
 
 export default function ProDashboard() {
   const [events, setEvents] = useState<DisasterEvent[]>([]);
@@ -57,8 +58,8 @@ export default function ProDashboard() {
   const criticalEvents = useMemo(() => (events || []).filter(e => (e.severity || '').toLowerCase().includes('critical')), [events]);
 
   return (
-    <div className="min-h-screen bg-background pt-16">
-      <div className="max-w-[1600px] mx-auto p-6 space-y-6">
+    <ProShell title="Operations Command">
+      <div className="max-w-[1600px] mx-auto space-y-6">
         <div ref={headerRef} className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Operations Command</h1>
@@ -185,7 +186,7 @@ export default function ProDashboard() {
           </Tabs>
         </Card>
       </div>
-    </div>
+    </ProShell>
   );
 }
 
