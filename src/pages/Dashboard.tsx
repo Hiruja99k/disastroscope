@@ -4,8 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   Activity, 
-  AlertTriangle, 
-  TrendingUp, 
+  AlertTriangle,
+  TrendingUp,
   Zap,
   RefreshCw,
   MapPin,
@@ -130,8 +130,8 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background pt-16">
       <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
-        <div className="mb-8">
+      {/* Header */}
+      <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">
             Disaster Monitoring Dashboard
           </h1>
@@ -152,35 +152,35 @@ export default function Dashboard() {
             </Button>
           </div>
         </div>
-
+        
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statsData.map((stat, index) => (
+            {statsData.map((stat, index) => (
             <Card key={index} className="p-6">
               <div className="flex items-center space-x-4">
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${stat.bgColor}`}>
-                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                </div>
+                    <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                  </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
                   <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                 </div>
               </div>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Map Section */}
           <div className="lg:col-span-2">
             <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Global Disaster Map</h2>
                 <Badge variant="outline">
                   {events.length} Events, {predictions.length} Predictions
-                </Badge>
-              </div>
+              </Badge>
+            </div>
               {loading ? (
                 <div className="flex items-center justify-center h-96">
                   <RefreshCw className="h-8 w-8 animate-spin text-primary" />
@@ -225,9 +225,9 @@ export default function Dashboard() {
                           variant={event.severity?.toLowerCase().includes('critical') ? 'destructive' : 'secondary'}
                           className="text-xs"
                         >
-                          {event.severity}
-                        </Badge>
-                      </div>
+                      {event.severity}
+                    </Badge>
+                  </div>
                       <p className="text-xs text-muted-foreground mb-1">{event.location}</p>
                       <div className="flex items-center space-x-2">
                         <MapPin className="h-3 w-3 text-muted-foreground" />
@@ -235,9 +235,9 @@ export default function Dashboard() {
                           {event.event_type} • {event.magnitude}
                         </span>
                       </div>
-                    </div>
+              </div>
                   ))}
-                </div>
+                        </div>
               )}
             </Card>
 
@@ -250,9 +250,9 @@ export default function Dashboard() {
                     <div key={i} className="animate-pulse">
                       <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
                       <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                    </div>
+              </div>
                   ))}
-                </div>
+                      </div>
               ) : predictions.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
                   No predictions available
@@ -276,12 +276,12 @@ export default function Dashboard() {
                       </div>
                     </div>
                   ))}
-                </div>
+              </div>
               )}
             </Card>
           </div>
-        </div>
-      </div>
+              </div>
+          </div>
     </div>
   );
 }
