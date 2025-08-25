@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import DisasterMap from '@/components/DisasterMap';
 import { apiService, DisasterEvent, Prediction, SensorData } from '@/services/api';
 import gsap from 'gsap';
-import { BarChart3, Bell, MapPin, RefreshCw, TrendingUp } from 'lucide-react';
+import { BarChart3, Bell, MapPin, RefreshCw, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import ProShell from '@/components/layout/ProShell';
 import {
   ChartContainer,
@@ -79,6 +79,8 @@ export default function ProDashboard() {
   const criticalEvents = useMemo(() => (events || []).filter(e => (e.severity || '').toLowerCase().includes('critical')), [events]);
 
   const sales = 12875;
+  const riskNow = 0.62; // 0-1 risk index
+  const riskDelta = 0.04; // change vs last period
   const projectData = [
     { year: '2014', done: 80, new: 20, late: 10 },
     { year: '2015', done: 120, new: 30, late: 14 },
@@ -94,6 +96,16 @@ export default function ProDashboard() {
     { name: 'New', value: 40, fill: 'hsl(var(--primary))' },
     { name: 'In Progress', value: 60, fill: 'hsl(var(--secondary-foreground))' },
     { name: 'Done', value: 80, fill: 'hsl(var(--muted-foreground))' },
+  ];
+
+  // Multi-series predictions chart with disaster-specific colors
+  const predictionSeries = [
+    { month: 'Jan', flood: 20, landslide: 12, cyclone: 8, drought: 15 },
+    { month: 'Feb', flood: 28, landslide: 10, cyclone: 12, drought: 16 },
+    { month: 'Mar', flood: 25, landslide: 13, cyclone: 15, drought: 18 },
+    { month: 'Apr', flood: 31, landslide: 15, cyclone: 12, drought: 20 },
+    { month: 'May', flood: 35, landslide: 16, cyclone: 17, drought: 22 },
+    { month: 'Jun', flood: 30, landslide: 18, cyclone: 20, drought: 24 },
   ];
 
   const ops = Array.from({ length: 5 }).map((_, i) => ({
@@ -165,7 +177,7 @@ export default function ProDashboard() {
               ))}
             </div>
           </Card>
-          <Card className="p-6 lg:col-span-1 lg:col-span-1 lg:col-start-2 lg:col-end-4">
+          <Card className="p-6 lg:col-span-1 lg:col-start-2 lg:col-end-4">
             <div className="text-sm text-muted-foreground mb-2">My Projects</div>
             <ChartContainer
               config={{ done: { label: 'Done', color: 'hsl(var(--primary))' }, new: { label: 'New', color: 'hsl(var(--chart-2, 210 98% 50%))' }, late: { label: 'Late', color: 'hsl(var(--destructive))' } }}
@@ -192,6 +204,32 @@ export default function ProDashboard() {
                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
               </RadialBarChart>
             </ChartContainer>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="p-6">
+            <div className="text-sm text-muted-foreground mb-2">Overall Risk Index</div>
+            <div className="text-4xl font-bold">{Math.round(riskNow*100)}%</div>
+            <div className={`mt-1 flex items-center gap-1 text-xs ${riskDelta >= 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+              {riskDelta >= 0 ? <ArrowUpRight className="h-3 w-3"/> : <ArrowDownRight className="h-3 w-3"/>}
+              {Math.abs(riskDelta*100).toFixed(1)}% vs last period
+            </div>
+            <div className="mt-4">
+              <ChartContainer config={{ flood: { label: 'Flood', color: '#3b82f6' }, landslide: { label: 'Landslide', color: '#8B5E3C' }, cyclone: { label: 'Cyclone', color: '#f97316' }, drought: { label: 'Drought', color: '#f59e0b' } }}>
+                <LineChart data={predictionSeries}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Line type="monotone" dataKey="flood" stroke="var(--color-flood)" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="landslide" stroke="var(--color-landslide)" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="cyclone" stroke="var(--color-cyclone)" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="drought" stroke="var(--color-drought)" strokeWidth={2} dot={false} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                </LineChart>
+              </ChartContainer>
+            </div>
           </Card>
         </div>
 

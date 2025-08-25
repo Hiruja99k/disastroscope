@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Activity, Bell, GaugeCircle, Map, Settings, Sparkles, User } from 'lucide-react';
+import { Activity, Bell, GaugeCircle, Map, Settings, Sparkles, Home, FileText, BellRing } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 type ProShellProps = {
@@ -43,27 +43,39 @@ export function ProShell({ title = 'Operations Command', className, rightArea, c
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton isActive tooltip="Dashboard">
+                  <SidebarMenuButton isActive tooltip="Home">
+                    <Home />
+                    <span>Home</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton tooltip="Predictions">
                     <GaugeCircle />
-                    <span>Dashboard</span>
+                    <span>Predictions</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Map">
+                  <SidebarMenuButton tooltip="Disasters Map">
                     <Map />
-                    <span>Map</span>
+                    <span>Disasters Map</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Models">
-                    <Sparkles />
-                    <span>Models</span>
+                  <SidebarMenuButton tooltip="Reports">
+                    <FileText />
+                    <span>Reports</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Status">
-                    <Activity />
-                    <span>Status</span>
+                  <SidebarMenuButton tooltip="Alerts">
+                    <BellRing />
+                    <span>Alerts</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton tooltip="Settings">
+                    <Settings />
+                    <span>Settings</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
