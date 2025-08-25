@@ -24,6 +24,12 @@ export default function ProDashboard() {
   }, []);
 
   useEffect(() => {
+    const asArray = (data: any, key: string) => {
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray(data[key])) return data[key];
+      return [] as any[];
+    };
+
     const load = async () => {
       setLoading(true);
       try {
@@ -31,14 +37,14 @@ export default function ProDashboard() {
           apiService.getEvents(),
           apiService.getPredictions(),
         ]);
-        setEvents(ev || []);
-        setPredictions(pr || []);
+        setEvents(asArray(ev, 'events'));
+        setPredictions(asArray(pr, 'predictions'));
         // sensors optional endpoint
         try {
           const resp = await fetch((import.meta.env.VITE_API_BASE_URL || 'https://web-production-47673.up.railway.app').replace(/\/$/, '') + '/api/sensors');
           if (resp.ok) {
             const data = await resp.json();
-            setSensors(data.sensors || []);
+            setSensors(asArray(data, 'sensors'));
           }
         } catch (_) {}
       } finally {
