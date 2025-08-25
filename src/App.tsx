@@ -7,7 +7,8 @@ import { useEffect } from "react";
 import Navigation from "./components/Navigation";
 import Landing from "./pages/EnhancedLanding";
 import Predictions from "./pages/EnhancedPredictions";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/EnhancedDashboard";
+import SimpleDashboard from "./pages/Dashboard";
 import Insights from "./pages/Insights";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
@@ -61,6 +62,7 @@ const App = () => (
                 <Route path="/predictions" element={<Predictions />} />
                 <Route path="/weather" element={<WeatherExplorer />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard-simple" element={<SimpleDashboard />} />
                 <Route path="/insights" element={<Insights />} />
                 <Route path="/map" element={<AdvancedMapPage />} />
                 <Route path="/about" element={<About />} />
