@@ -226,14 +226,15 @@ export default function EnhancedDashboard() {
 
   console.log('State variables initialized successfully');
 
+  // Helper to safely normalize possibly undefined strings
+  const toLowerSafe = (value: string | undefined | null): string => (value || '').toLowerCase();
+
     // Enhanced real-time stats calculation
-    const activeEvents = events.filter(e => e.status === 'active' || e.status === 'monitoring');
-    const criticalEvents = events.filter(e => 
-      e.severity?.toLowerCase().includes('critical') || 
-      e.severity?.toLowerCase().includes('extreme') ||
-      e.severity?.toLowerCase().includes('category 4') ||
-      e.severity?.toLowerCase().includes('category 5')
-    );
+    const activeEvents = events.filter(e => toLowerSafe(e.status) === 'active' || toLowerSafe(e.status) === 'monitoring');
+    const criticalEvents = events.filter(e => {
+      const sev = toLowerSafe(e.severity);
+      return sev.includes('critical') || sev.includes('extreme') || sev.includes('category 4') || sev.includes('category 5');
+    });
     const totalAffectedPopulation = events.reduce((sum, event) => 
       sum + (event.affected_population || 0), 0
     );
@@ -244,10 +245,10 @@ export default function EnhancedDashboard() {
     console.log('Stats calculated successfully');
 
     const filteredEvents = events.filter(event => {
-      const matchesFilter = filterType === 'all' || event.event_type.toLowerCase() === filterType;
+      const matchesFilter = filterType === 'all' || toLowerSafe(event.event_type) === filterType;
       const matchesSearch = searchTerm === '' || 
-        event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchTerm.toLowerCase());
+        toLowerSafe(event.name).includes(searchTerm.toLowerCase()) ||
+        toLowerSafe(event.location).includes(searchTerm.toLowerCase());
       return matchesFilter && matchesSearch;
     });
 
@@ -335,7 +336,7 @@ export default function EnhancedDashboard() {
     ].slice(0, 6); // Limit to 6 most recent activities
 
     const getEventIcon = (type: string) => {
-      switch (type.toLowerCase()) {
+      switch (toLowerSafe(type)) {
         case 'earthquake': return Zap;
         case 'hurricane': return Waves;
         case 'wildfire': return Flame;
@@ -349,7 +350,7 @@ export default function EnhancedDashboard() {
     };
 
     const getStatusColor = (status: string) => {
-      switch (status.toLowerCase()) {
+      switch (toLowerSafe(status)) {
         case 'active': return 'text-destructive';
         case 'critical': return 'text-destructive';
         case 'monitoring': return 'text-warning';
