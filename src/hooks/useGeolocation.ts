@@ -46,24 +46,9 @@ export const useGeolocation = () => {
       const accuracy = position.coords.accuracy ?? 9999999;
       if (!position.coords || accuracy > 50000) {
         try {
-          const resp = await fetch('https://ipapi.co/json/');
-          if (resp.ok) {
-            const data: any = await resp.json();
-            if (typeof data.latitude === 'number' && typeof data.longitude === 'number') {
-              position = {
-                coords: {
-                  latitude: data.latitude,
-                  longitude: data.longitude,
-                  accuracy: 50000,
-                  altitude: undefined as any,
-                  altitudeAccuracy: undefined as any,
-                  heading: undefined as any,
-                  speed: undefined as any,
-                },
-                timestamp: Date.now(),
-              } as any;
-            }
-          }
+          // Use a CORS-friendly geolocation service or skip fallback
+          // Removed ipapi.co due to CORS restrictions
+          console.warn('High accuracy geolocation not available, using available coordinates');
         } catch (_) {
           // ignore fallback failure
         }
@@ -147,43 +132,15 @@ export const useGeolocation = () => {
     };
   };
 
-  // Reverse geocoding with real providers (OSM → BigDataCloud fallback)
+  // Simplified reverse geocoding - removed external API calls to prevent CORS issues
   const reverseGeocode = async (lat: number, lng: number) => {
-    // Provider 1: OpenStreetMap Nominatim
-    try {
-      const osmUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=12&addressdetails=1`;
-      const resp = await fetch(osmUrl, {
-        headers: { 'Accept': 'application/json' },
-      });
-      if (resp.ok) {
-        const data: any = await resp.json();
-        const addr = data?.address || {};
-        const city = addr.city || addr.town || addr.village || addr.hamlet || 'Unknown';
-        const state = addr.state || addr.province || addr.region || 'Unknown';
-        const country = addr.country || addr.country_code || 'Unknown';
-        return { city, state, country, coordinates: { lat, lng } };
-      }
-    } catch (e) {
-      // ignore and fallback
-    }
-
-    // Provider 2: BigDataCloud
-    try {
-      const bdcUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`;
-      const resp = await fetch(bdcUrl);
-      if (resp.ok) {
-        const data: any = await resp.json();
-        const city = data.city || data.locality || data.principalSubdivision || 'Unknown';
-        const state = data.principalSubdivision || 'Unknown';
-        const country = data.countryName || 'Unknown';
-        return { city, state, country, coordinates: { lat, lng } };
-      }
-    } catch (e) {
-      // ignore and fallback
-    }
-
-    // Fallback
-    return { city: 'Unknown', state: 'Unknown', country: 'Unknown', coordinates: { lat, lng } };
+    // Return basic coordinate info without external API calls
+    return { 
+      city: 'Location', 
+      state: 'Coordinates', 
+      country: `${lat.toFixed(4)}, ${lng.toFixed(4)}`, 
+      coordinates: { lat, lng } 
+    };
   };
 
   return {

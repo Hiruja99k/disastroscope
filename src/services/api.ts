@@ -192,6 +192,12 @@ class ApiService {
 
   private initializeSocket() {
     try {
+      // TEMPORARILY DISABLED: Socket.IO initialization disabled to prevent connection errors
+      // while backend Socket.IO server is being configured on Railway
+      console.log('[API] Socket.IO initialization temporarily disabled for backend stability');
+      
+      // TODO: Re-enable when Socket.IO server is properly configured
+      /*
       this.socket = io(SOCKET_URL, {
         transports: ['websocket', 'polling'],
         timeout: 20000,
@@ -253,6 +259,7 @@ class ApiService {
       this.socket.on('new_eonet_event', (item: any) => {
         this.emit('new_eonet_event', item);
       });
+      */
 
     } catch (error) {
       console.error('Failed to initialize socket:', error);
@@ -554,35 +561,55 @@ class ApiService {
     }
   }
 
-  // WebSocket Methods
+  // WebSocket Methods - TEMPORARILY DISABLED
   subscribeToEvents() {
+    // Temporarily disabled to prevent connection errors
+    console.log('[API] subscribeToEvents temporarily disabled');
+    /*
     if (this.socket) {
       this.socket.emit('subscribe_events');
     }
+    */
   }
 
   subscribeToPredictions() {
+    // Temporarily disabled to prevent connection errors
+    console.log('[API] subscribeToPredictions temporarily disabled');
+    /*
     if (this.socket) {
       this.socket.emit('subscribe_predictions');
     }
+    */
   }
 
   subscribeToWeather() {
+    // Temporarily disabled to prevent connection errors
+    console.log('[API] subscribeToWeather temporarily disabled');
+    /*
     if (this.socket) {
       this.socket.emit('subscribe_weather');
     }
+    */
   }
 
   subscribeToDisasters() {
+    // Temporarily disabled to prevent connection errors
+    console.log('[API] subscribeToDisasters temporarily disabled');
+    /*
     if (this.socket) {
       this.socket.emit('subscribe_disasters');
     }
+    */
   }
 
   subscribeToEONET() {
+    // Temporarily disabled to prevent connection errors
+    console.log('[API] subscribeToEONET temporarily disabled');
+    /*
     if (this.socket) {
       this.socket.emit('subscribe_eonet');
     }
+    */
   }
 
   // Event Listener Management
