@@ -8,7 +8,7 @@ import DisasterMap from '@/components/DisasterMap';
 import { apiService, DisasterEvent, Prediction, SensorData } from '@/services/api';
 import gsap from 'gsap';
 import { useRefineContext } from '@refinedev/core';
-import { BarChart3, Bell, MapPin, RefreshCw, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { BarChart3, Bell, MapPin, RefreshCw, TrendingUp, ArrowUpRight, ArrowDownRight, Download, Filter, ShieldAlert, Activity } from 'lucide-react';
 import ProShell from '@/components/layout/ProShell';
 import {
   ChartContainer,
@@ -120,24 +120,32 @@ export default function ProDashboard() {
     value: [77, 12, 43, 42, 65][i],
   }));
 
-  const CoffeeCard = () => (
+  const LegendCard = () => (
     <Card className="p-6">
-      <div className="text-sm text-muted-foreground mb-2">My Coffee</div>
-      <div className="relative aspect-square flex items-center justify-center">
-        <svg viewBox="0 0 200 150" className="w-full h-full">
-          <defs>
-            <clipPath id="cup">
-              <path d="M40 40 h110 v80 a5 5 0 0 1 -5 5 h-100 a5 5 0 0 1 -5 -5 z" />
-            </clipPath>
-          </defs>
-          <rect x="40" y="40" width="110" height="85" rx="8" ry="8" fill="#e9e9f1" stroke="#d2d2de" />
-          <rect x="150" y="70" width="30" height="35" rx="18" ry="18" fill="#e9e9f1" stroke="#d2d2de" />
-          <g clipPath="url(#cup)">
-            <rect x="40" y="90" width="110" height="35" fill="hsl(var(--primary))" opacity="0.8" />
-            <line x1="40" y1="90" x2="150" y2="90" stroke="#8aa3ff" strokeDasharray="4 4" />
-          </g>
-        </svg>
-        <Badge className="absolute" variant="secondary">60%</Badge>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold">Disaster Legend</h3>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#3b82f6]"></span> Flood</div>
+        <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#8B5E3C]"></span> Landslide</div>
+        <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#f97316]"></span> Cyclone</div>
+        <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#f59e0b]"></span> Drought</div>
+        <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#ef4444]"></span> Wildfire</div>
+        <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#22c55e]"></span> Storm</div>
+      </div>
+    </Card>
+  );
+
+  const QuickActions = () => (
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold">Quick Actions</h3>
+        <Badge variant="secondary">Admin</Badge>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <Button variant="secondary" className="justify-center"><Download className="h-4 w-4 mr-2"/>Export</Button>
+        <Button variant="secondary" className="justify-center"><Filter className="h-4 w-4 mr-2"/>Filter</Button>
+        <Button variant="secondary" className="justify-center" onClick={()=>location.reload()}><RefreshCw className="h-4 w-4 mr-2"/>Refresh</Button>
       </div>
     </Card>
   );
@@ -295,7 +303,8 @@ export default function ProDashboard() {
               </div>
             </Card>
 
-            <CoffeeCard />
+            <LegendCard />
+            <QuickActions />
           </div>
         </div>
 
