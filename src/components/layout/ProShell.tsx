@@ -19,7 +19,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Activity, Bell, GaugeCircle, Map, Sparkles } from 'lucide-react';
+import { Activity, Bell, GaugeCircle, Map, Settings, Sparkles, User } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 type ProShellProps = {
   title?: string;
@@ -30,6 +31,7 @@ type ProShellProps = {
 
 export function ProShell({ title = 'Operations Command', className, rightArea, children }: ProShellProps) {
   return (
+    <div className="min-h-svh bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600">
     <SidebarProvider>
       <Sidebar collapsible="icon">
         <SidebarHeader>
@@ -83,15 +85,22 @@ export function ProShell({ title = 'Operations Command', className, rightArea, c
             <div className="ml-auto flex items-center gap-2">
               <Input placeholder="Search" className="w-56" />
               <Button variant="ghost" size="icon"><Bell className="h-5 w-5" /></Button>
+              <Button variant="ghost" size="icon"><Settings className="h-5 w-5" /></Button>
               {rightArea}
+              <Avatar className="h-7 w-7">
+                <AvatarFallback>DS</AvatarFallback>
+              </Avatar>
             </div>
           </div>
         </header>
-        <div className={cn('p-4 md:p-6', className)}>
-          {children}
+        <div className="p-3 md:p-6">
+          <div className={cn('rounded-xl bg-muted/40 p-4 md:p-6 shadow-xl', className)}>
+            {children}
+          </div>
         </div>
       </SidebarInset>
     </SidebarProvider>
+    </div>
   );
 }
 

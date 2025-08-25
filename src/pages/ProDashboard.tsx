@@ -29,6 +29,7 @@ import {
   YAxis,
 } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
 
 export default function ProDashboard() {
   const [events, setEvents] = useState<DisasterEvent[]>([]);
@@ -101,6 +102,28 @@ export default function ProDashboard() {
     status: [70, 40, 50, 30, 50][i],
     value: [77, 12, 43, 42, 65][i],
   }));
+
+  const CoffeeCard = () => (
+    <Card className="p-6">
+      <div className="text-sm text-muted-foreground mb-2">My Coffee</div>
+      <div className="relative aspect-square flex items-center justify-center">
+        <svg viewBox="0 0 200 150" className="w-full h-full">
+          <defs>
+            <clipPath id="cup">
+              <path d="M40 40 h110 v80 a5 5 0 0 1 -5 5 h-100 a5 5 0 0 1 -5 -5 z" />
+            </clipPath>
+          </defs>
+          <rect x="40" y="40" width="110" height="85" rx="8" ry="8" fill="#e9e9f1" stroke="#d2d2de" />
+          <rect x="150" y="70" width="30" height="35" rx="18" ry="18" fill="#e9e9f1" stroke="#d2d2de" />
+          <g clipPath="url(#cup)">
+            <rect x="40" y="90" width="110" height="35" fill="hsl(var(--primary))" opacity="0.8" />
+            <line x1="40" y1="90" x2="150" y2="90" stroke="#8aa3ff" strokeDasharray="4 4" />
+          </g>
+        </svg>
+        <Badge className="absolute" variant="secondary">60%</Badge>
+      </div>
+    </Card>
+  );
 
   return (
     <ProShell title="Operations Command">
@@ -228,6 +251,8 @@ export default function ProDashboard() {
                 )}
               </div>
             </Card>
+
+            <CoffeeCard />
           </div>
         </div>
 
@@ -263,6 +288,7 @@ export default function ProDashboard() {
                         <TableHead>Name</TableHead>
                         <TableHead className="w-64">Status</TableHead>
                         <TableHead className="w-24 text-right">Value</TableHead>
+                        <TableHead className="w-32 text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -277,6 +303,13 @@ export default function ProDashboard() {
                           </TableCell>
                           <TableCell className="text-right">
                             <Badge variant="outline" className="px-2">{o.value}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button size="icon" variant="ghost"><Eye className="h-4 w-4" /></Button>
+                              <Button size="icon" variant="ghost"><Pencil className="h-4 w-4" /></Button>
+                              <Button size="icon" variant="ghost" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
