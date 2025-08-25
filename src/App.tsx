@@ -18,6 +18,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import PerformanceMonitor from "./components/PerformanceMonitor";
 import AdvancedMapPage from "./pages/AdvancedMapPage";
 import { trackPageView } from "./utils/monitoring";
+import { Refine } from "@refinedev/core";
+import { dataProvider, liveProvider, notificationProvider } from "./lib/refine";
 
 
 const queryClient = new QueryClient();
@@ -52,23 +54,35 @@ const App = () => (
           const RouterImpl: any = useHash ? HashRouter : BrowserRouter;
           return (
             <RouterImpl>
-              <PerformanceMonitor />
-              <PageViewTracker />
-              <RealTimeBridge />
-              <Navigation />
+              <Refine
+                dataProvider={dataProvider}
+                liveProvider={liveProvider}
+                notificationProvider={notificationProvider}
+                resources={[
+                  { name: 'events' },
+                  { name: 'predictions' },
+                  { name: 'sensors' },
+                  { name: 'reports' },
+                ]}
+              >
+                <PerformanceMonitor />
+                <PageViewTracker />
+                <RealTimeBridge />
+                <Navigation />
 
-              <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/predictions" element={<Predictions />} />
-                <Route path="/weather" element={<WeatherExplorer />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/dashboard-simple" element={<SimpleDashboard />} />
-                <Route path="/insights" element={<Insights />} />
-                <Route path="/map" element={<AdvancedMapPage />} />
-                <Route path="/about" element={<About />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+                <Routes>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/predictions" element={<Predictions />} />
+                  <Route path="/weather" element={<WeatherExplorer />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/dashboard-simple" element={<SimpleDashboard />} />
+                  <Route path="/insights" element={<Insights />} />
+                  <Route path="/map" element={<AdvancedMapPage />} />
+                  <Route path="/about" element={<About />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Refine>
             </RouterImpl>
           );
         })()}

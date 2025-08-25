@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import DisasterMap from '@/components/DisasterMap';
 import { apiService, DisasterEvent, Prediction, SensorData } from '@/services/api';
 import gsap from 'gsap';
+import { useRefineContext } from '@refinedev/core';
 import { BarChart3, Bell, MapPin, RefreshCw, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import ProShell from '@/components/layout/ProShell';
 import {
@@ -37,11 +38,15 @@ export default function ProDashboard() {
   const [sensors, setSensors] = useState<SensorData[]>([]);
   const [loading, setLoading] = useState(true);
   const headerRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const tl = gsap.timeline({ defaults: { duration: 0.6, ease: 'power2.out' } });
     if (headerRef.current) {
       tl.from(headerRef.current, { y: 20, opacity: 0 });
+    }
+    if (sectionRef.current) {
+      tl.from(sectionRef.current.children, { y: 24, opacity: 0, stagger: 0.08 }, '<');
     }
   }, []);
 
@@ -155,7 +160,7 @@ export default function ProDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div ref={sectionRef} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="p-6">
             <div className="text-sm text-muted-foreground mb-2">Overall Sales</div>
             <div className="text-4xl font-bold">${sales.toLocaleString()}</div>
