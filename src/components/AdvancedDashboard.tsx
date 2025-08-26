@@ -81,7 +81,6 @@ import AdvancedCharts from './AdvancedCharts';
 import RealTimeMonitor from './RealTimeMonitor';
 import AlertSystem from './AlertSystem';
 import EarthquakeMagnitudeMap from './EarthquakeMagnitudeMap';
-import WildfireFIRMSMap from './WildfireFIRMSMap';
 
 // Advanced mock data for enterprise dashboard
 const generateAdvancedData = () => {
@@ -728,20 +727,28 @@ const AdvancedDashboard = () => {
             </Card>
           </div>
 
-          {/* Wildfire FIRMS Map - placed immediately after Earthquake map */}
+          {/* Wildfire Map - embedded external source (Map of Fire) */}
           <div>
             <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Flame className="h-5 w-5 text-orange-600" />
-                  NASA FIRMS Active Wildfires
+                  Wildfire Map (Map of Fire)
                 </CardTitle>
                 <CardDescription>
-                  Hotspot density from VIIRS/MODIS (last 24 hours)
+                  Embedded map from Map of Fire
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <WildfireFIRMSMap height={600} />
+                <div className="w-full rounded-lg overflow-hidden border" style={{ height: `600px` }}>
+                  <iframe
+                    src="https://www.mapofire.com/"
+                    title="Wildfire Map"
+                    className="w-full h-full"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
