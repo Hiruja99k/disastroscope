@@ -63,6 +63,7 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
+import EarthquakeMagnitudeMap from './EarthquakeMagnitudeMap';
 
 // Mock data for charts and tables
 const disasterTrendsData = [
@@ -365,6 +366,11 @@ export default function EnterpriseDashboard() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Earthquake Magnitude Map Section */}
+      <div className="mb-8">
+        <EarthquakeMagnitudeMap height={600} />
       </div>
 
       {/* Tables Section */}
