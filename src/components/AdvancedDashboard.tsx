@@ -248,103 +248,85 @@ const AdvancedDashboard = () => {
        {/* Floating geometric shapes */}
        {/* Floating shapes removed for cleaner dashboard experience */}
 
-      {/* Header with Enterprise Features */}
-      <div 
-        className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 pt-4 space-y-4 lg:space-y-0"
-      >
-        <div className="relative">
-          <h1 
-            className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight"
-          >
-            DisastroScope Enterprise
-          </h1>
-          <p 
-            className={`mt-3 text-base sm:text-lg ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}
-          >
-            Advanced Disaster Monitoring & Response System
-          </p>
-          
-          {/* Enterprise Status Indicators */}
-          <div className="flex flex-wrap items-center gap-3 mt-4">
-            <div className="flex items-center gap-2 px-3 py-1 bg-green-100 rounded-full">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-green-700">System: {systemHealth}%</span>
+      {/* Header with a cleaner, professional style */}
+      <div className="mb-8 pt-2">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between pb-4 gap-4">
+          <div>
+            <h1 className={`text-3xl sm:text-4xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+              DisastroScope
+            </h1>
+            <p className={`mt-2 text-sm sm:text-base ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}>
+              Advanced Disaster Monitoring & Response System
+            </p>
+            {/* Subtle status chips */}
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full border text-xs ${isDarkMode ? 'border-gray-700 text-gray-200' : 'border-gray-300 text-slate-700'}`}>
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                System {systemHealth}%
+              </div>
+              <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full border text-xs ${isDarkMode ? 'border-gray-700 text-gray-200' : 'border-gray-300 text-slate-700'}`}>
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                Security {securityLevel}
+              </div>
+              <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full border text-xs ${isDarkMode ? 'border-gray-700 text-gray-200' : 'border-gray-300 text-slate-700'}`}>
+                <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                Compliance {complianceStatus}
+              </div>
+              <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full border text-xs ${isDarkMode ? 'border-gray-700 text-gray-200' : 'border-gray-300 text-slate-700'}`}>
+                <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                Threat {threatLevel}
+              </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 rounded-full">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm font-medium text-blue-700">Security: {securityLevel}</span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 rounded-full">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <span className="text-sm font-medium text-purple-700">Compliance: {complianceStatus}</span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1 bg-orange-100 rounded-full">
-              <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-orange-700">Threat: {threatLevel}</span>
-            </div>
-          </div>
-          
-          <div
-            className="absolute -top-2 -right-2"
-          >
-            <Crown className="h-6 w-6 text-yellow-500" />
-          </div>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          {/* Critical Alerts Badge */}
-          {criticalAlerts > 0 && (
-            <div className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg animate-pulse">
-              <AlertTriangle className="h-4 w-4" />
-              <span className="font-semibold">{criticalAlerts} Critical Alerts</span>
-            </div>
-          )}
-          
-          {/* Live Monitoring Status */}
-          <div className="flex items-center gap-1 bg-gradient-to-r from-green-400 to-blue-500 text-white px-3 py-2 rounded-full text-sm">
-            <div className="live-indicator w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <Activity className="h-3 w-3" />
-            <span className="whitespace-nowrap">Live Monitoring</span>
-            <span className="ml-2 text-xs opacity-90">{activeUsers} users</span>
-          </div>
-          
-          {/* Advanced Controls */}
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`${autoRefresh ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white border-0' : ''} transition-all duration-300 text-sm`}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
-              {autoRefresh ? 'Auto' : 'Manual'}
-            </Button>
-            
-            <Button variant="outline" onClick={handleExport} className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0 text-sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setMaintenanceMode(!maintenanceMode)}
-              className={`${maintenanceMode ? 'bg-yellow-500 text-white border-0' : ''} transition-all duration-300 text-sm`}
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              {maintenanceMode ? 'Maintenance' : 'Settings'}
-            </Button>
           </div>
 
-          {/* Theme and Display Controls */}
-          <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={toggleDarkMode} className="text-sm">
-              {isDarkMode ? <SunIcon className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-            
-            <Button variant="outline" size="icon" onClick={toggleFullscreen} className="text-sm">
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            </Button>
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+            {criticalAlerts > 0 && (
+              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm ${isDarkMode ? 'border-red-900 text-red-300 bg-red-950/40' : 'border-red-200 text-red-700 bg-red-50'}`}>
+                <AlertTriangle className="h-4 w-4" />
+                <span className="font-medium">{criticalAlerts} Critical</span>
+              </div>
+            )}
+
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs ${isDarkMode ? 'border-gray-700 text-gray-200' : 'border-gray-300 text-slate-700'}`}>
+              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              <Activity className="h-3 w-3" />
+              Live • {activeUsers} users
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setAutoRefresh(!autoRefresh)}
+                className="text-sm"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
+                {autoRefresh ? 'Auto' : 'Manual'}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleExport} className="text-sm">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMaintenanceMode(!maintenanceMode)}
+                className="text-sm"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                {maintenanceMode ? 'Maintenance' : 'Settings'}
+              </Button>
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="text-sm">
+                {isDarkMode ? <SunIcon className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+              <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="text-sm">
+                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -494,45 +476,45 @@ const AdvancedDashboard = () => {
         </div>
         
         <div className="w-full">
-          <TabsList className={`w-full flex flex-col sm:flex-row justify-between ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg rounded-lg p-1 gap-1`}>
+          <TabsList className={`w-full flex flex-wrap gap-2 p-0 bg-transparent border-b ${isDarkMode ? 'border-gray-800' : 'border-gray-200'}`}>
             <TabsTrigger 
               value="overview" 
-              className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-md"
+              className="relative -mb-px rounded-none flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base hover:bg-gray-50 dark:hover:bg-gray-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:bg-slate-900 dark:data-[state=active]:after:bg-white"
             >
               <BarChart3 className="h-4 w-4" />
               <span className="whitespace-nowrap">Overview</span>
             </TabsTrigger>
             <TabsTrigger 
               value="monitoring" 
-              className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base hover:bg-gradient-to-r hover:from-green-500 hover:to-blue-500 hover:text-white transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white rounded-md"
+              className="relative -mb-px rounded-none flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base hover:bg-gray-50 dark:hover:bg-gray-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:bg-slate-900 dark:data-[state=active]:after:bg-white"
             >
               <Satellite className="h-4 w-4" />
               <span className="whitespace-nowrap">Monitoring</span>
             </TabsTrigger>
             <TabsTrigger 
               value="maps" 
-              className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 hover:text-white transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white rounded-md"
+              className="relative -mb-px rounded-none flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base hover:bg-gray-50 dark:hover:bg-gray-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:bg-slate-900 dark:data-[state=active]:after:bg-white"
             >
               <Map className="h-4 w-4" />
               <span className="whitespace-nowrap">Maps</span>
             </TabsTrigger>
             <TabsTrigger 
               value="alerts" 
-              className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base hover:bg-gradient-to-r hover:from-red-500 hover:to-orange-500 hover:text-white transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-orange-500 data-[state=active]:text-white rounded-md"
+              className="relative -mb-px rounded-none flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base hover:bg-gray-50 dark:hover:bg-gray-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:bg-slate-900 dark:data-[state=active]:after:bg-white"
             >
               <Bell className="h-4 w-4" />
               <span className="whitespace-nowrap">Alerts</span>
             </TabsTrigger>
             <TabsTrigger 
               value="analytics" 
-              className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-500 hover:text-white transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-md"
+              className="relative -mb-px rounded-none flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base hover:bg-gray-50 dark:hover:bg-gray-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:bg-slate-900 dark:data-[state=active]:after:bg-white"
             >
               <PieChart className="h-4 w-4" />
               <span className="whitespace-nowrap">Analytics</span>
             </TabsTrigger>
             <TabsTrigger 
               value="enterprise" 
-              className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base hover:bg-gradient-to-r hover:from-yellow-500 hover:to-orange-500 hover:text-white transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-white rounded-md"
+              className="relative -mb-px rounded-none flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base hover:bg-gray-50 dark:hover:bg-gray-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:bg-slate-900 dark:data-[state=active]:after:bg-white"
             >
               <Crown className="h-4 w-4" />
               <span className="whitespace-nowrap">Enterprise</span>
