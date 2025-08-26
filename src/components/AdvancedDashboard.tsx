@@ -81,7 +81,7 @@ import AdvancedCharts from './AdvancedCharts';
 import RealTimeMonitor from './RealTimeMonitor';
 import AlertSystem from './AlertSystem';
 import EarthquakeMagnitudeMap from './EarthquakeMagnitudeMap';
-import FloodMonitoringMap from './FloodMonitoringMap';
+import WildfireFIRMSMap from './WildfireFIRMSMap';
 
 // Advanced mock data for enterprise dashboard
 const generateAdvancedData = () => {
@@ -728,23 +728,25 @@ const AdvancedDashboard = () => {
             </Card>
           </div>
 
-          {/* Flood Monitoring Map (MapTiler + EONET floods) */}
+          {/* Wildfire FIRMS Map - placed immediately after Earthquake map */}
           <div>
             <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CloudRain className="h-5 w-5 text-blue-600" />
-                  Real-time Flood Monitoring (EONET)
+                  <Flame className="h-5 w-5 text-orange-600" />
+                  NASA FIRMS Active Wildfires
                 </CardTitle>
                 <CardDescription>
-                  Live flood events from NASA EONET displayed on MapTiler tiles
+                  Hotspot density from VIIRS/MODIS (last 24 hours)
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <FloodMonitoringMap height={600} />
+                <WildfireFIRMSMap height={600} />
               </CardContent>
             </Card>
           </div>
+
+          
 
           
 
@@ -841,21 +843,7 @@ const AdvancedDashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Flood Monitoring Map */}
-            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CloudRain className="h-5 w-5" />
-                  Real-time Flood Monitoring (EONET)
-                </CardTitle>
-                <CardDescription>
-                  Live flood events from NASA EONET displayed on MapTiler tiles
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FloodMonitoringMap height={500} />
-              </CardContent>
-            </Card>
+            
 
             
           </div>
