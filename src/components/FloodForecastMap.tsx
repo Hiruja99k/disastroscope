@@ -14,6 +14,7 @@ export default function FloodForecastMap({ height = 600, className = "" }: Flood
         style={{ border: 0, width: "100%", height: "100%" }}
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
         allowFullScreen
       />
     </div>
