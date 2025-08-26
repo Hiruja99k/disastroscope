@@ -236,7 +236,7 @@ const AdvancedDashboard = () => {
   return (
     <div
       ref={dashboardRef}
-      className={`min-h-screen transition-all duration-500 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 bg-animated-minimal ${isFullscreen ? 'fixed inset-0 z-50' : 'pt-20 p-6'}`}
+      className={`min-h-screen transition-all duration-500 bg-white bg-animated-minimal ${isFullscreen ? 'fixed inset-0 z-50' : 'pt-20 p-6'}`}
     >
        {/* Enhanced Particle Effects */}
        {/* Particle effects removed for cleaner dashboard experience */}
@@ -248,7 +248,7 @@ const AdvancedDashboard = () => {
       <div className="mb-8 pt-2">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between pb-4 gap-4">
           <div>
-            <h1 className={`text-3xl sm:text-4xl font-semibold text-slate-900 font-poppins`}>
+            <h1 className={`text-3xl sm:text-4xl font-semibold font-poppins bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent`}>
               DisastroScope
             </h1>
             <p className={`mt-2 text-sm sm:text-base text-slate-600`}>
