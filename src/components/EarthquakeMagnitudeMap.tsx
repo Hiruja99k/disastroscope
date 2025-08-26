@@ -26,27 +26,41 @@ interface EarthquakeMagnitudeMapProps {
 }
 
 export default function EarthquakeMagnitudeMap({ height = 600, className = '' }: EarthquakeMagnitudeMapProps) {
-  const [earthquakeData, setEarthquakeData] = useState<EarthquakeData[]>([]);
+  const [plotData, setPlotData] = useState<any[]>([]);
+  const [layout, setLayout] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState({
+    total: 0,
+    averageMagnitude: '0.0',
+    maxMagnitude: '0.0',
+    minMagnitude: '0.0',
+  });
 
   useEffect(() => {
-    const fetchEarthquakeData = async () => {
+    const loadEarthquakeData = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Fetch the exact CSV data from Plotly's repository
+
+        // Function to unpack data from rows (exact implementation from CodePen)
+        const unpack = (rows: any[], key: string) => {
+          return rows.map(function(row: any) { 
+            return row[key]; 
+          });
+        };
+
+        // Fetch the CSV data
         const response = await fetch('https://raw.githubusercontent.com/plotly/datasets/master/earthquakes-23k.csv');
         if (!response.ok) {
           throw new Error('Failed to fetch earthquake data');
         }
-        
+
         const csvText = await response.text();
         
-        // Parse CSV data - exact implementation from Plotly example
-        const rows = csvText.split('\n').slice(1) // Skip header row
-          .filter(row => row.trim() !== '') // Remove empty rows
+        // Parse CSV data exactly like d3.csv would
+        const rows = csvText.split('\n').slice(1) // Skip header
+          .filter(row => row.trim() !== '')
           .map(row => {
             const columns = row.split(',');
             return {
@@ -56,55 +70,64 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
             };
           })
           .filter(row => !isNaN(row.Longitude) && !isNaN(row.Latitude) && !isNaN(row.Magnitude));
-        
-        setEarthquakeData(rows);
+
+        // Calculate statistics
+        const total = rows.length;
+        const averageMagnitude = total > 0 
+          ? (rows.reduce((sum, eq) => sum + eq.Magnitude, 0) / total).toFixed(1)
+          : '0.0';
+        const maxMagnitude = total > 0 
+          ? Math.max(...rows.map(eq => eq.Magnitude)).toFixed(1)
+          : '0.0';
+        const minMagnitude = total > 0 
+          ? Math.min(...rows.map(eq => eq.Magnitude)).toFixed(1)
+          : '0.0';
+
+        setStats({ total, averageMagnitude, maxMagnitude, minMagnitude });
+
+        // Exact data structure from CodePen
+        const data = [{
+          lon: unpack(rows, 'Longitude'),
+          lat: unpack(rows, 'Latitude'),
+          radius: 10,
+          z: unpack(rows, 'Magnitude'),
+          type: "densitymap",
+          coloraxis: 'coloraxis',
+          hoverinfo: 'skip'
+        }];
+
+        // Exact layout from CodePen
+        const layoutConfig = {
+          map: {
+            center: { lon: 60, lat: 30 },
+            style: "outdoors",
+            zoom: 2
+          },
+          coloraxis: {
+            colorscale: "Viridis"
+          },
+          title: {
+            text: "Earthquake Magnitude"
+          },
+          width: undefined, // Will be responsive
+          height: height,
+          margin: { t: 30, b: 0, l: 0, r: 0 },
+          autosize: true
+        };
+
+        setPlotData(data);
+        setLayout(layoutConfig);
+
       } catch (err) {
-        console.error('Error fetching earthquake data:', err);
+        console.error('Error loading earthquake data:', err);
         setError('Failed to load earthquake data. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchEarthquakeData();
-  }, []);
-
-  // Function to unpack data from rows (exact implementation from Plotly example)
-  const unpack = (rows: any[], key: string) => {
-    return rows.map(function(row: any) { 
-      return row[key]; 
-    });
-  };
-
-  // Exact data structure from Plotly example
-  const plotData = [{
-    lon: unpack(earthquakeData, 'Longitude'),
-    lat: unpack(earthquakeData, 'Latitude'),
-    radius: 10,
-    z: unpack(earthquakeData, 'Magnitude'),
-    type: "densitymap" as const,
-    coloraxis: 'coloraxis' as const,
-    hoverinfo: 'skip' as const
-  }];
-
-  // Exact layout from Plotly example
-  const layout = {
-    map: {
-      center: { lon: 60, lat: 30 },
-      style: "outdoors" as const,
-      zoom: 2
-    },
-    coloraxis: {
-      colorscale: "Viridis"
-    },
-    title: {
-      text: "Earthquake Magnitude"
-    },
-    width: undefined, // Will be responsive
-    height: height,
-    margin: { t: 30, b: 0, l: 0, r: 0 },
-    autosize: true
-  };
+    loadEarthquakeData();
+  }, [height]);
 
   const config = {
     displayModeBar: true,
@@ -112,19 +135,6 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
     responsive: true,
     mapboxAccessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || 'pk.eyJ1IjoicGxvdGx5IiwiYSI6ImNrcmQ0N2Q1bDB6NGYyb3A5N3p2Z2Z1a2IifQ.EjMjSxvXt8vp2f6tFufjQw'
-  };
-
-  const stats = {
-    total: earthquakeData.length,
-    averageMagnitude: earthquakeData.length > 0 
-      ? (earthquakeData.reduce((sum, eq) => sum + eq.Magnitude, 0) / earthquakeData.length).toFixed(1)
-      : '0.0',
-    maxMagnitude: earthquakeData.length > 0 
-      ? Math.max(...earthquakeData.map(eq => eq.Magnitude)).toFixed(1)
-      : '0.0',
-    minMagnitude: earthquakeData.length > 0 
-      ? Math.min(...earthquakeData.map(eq => eq.Magnitude)).toFixed(1)
-      : '0.0',
   };
 
   const refreshData = () => {
@@ -272,7 +282,7 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
           </div>
         </div>
 
-        {/* Plotly Density Map - Exact implementation */}
+        {/* Plotly Density Map - Exact CodePen implementation */}
         <div className="border rounded-lg overflow-hidden bg-white">
           <Plot
             data={plotData}
@@ -306,7 +316,7 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
             </div>
           </div>
           <div className="mt-3 text-xs text-muted-foreground">
-            <p>This map shows the exact same visualization as the Plotly.js documentation, using real earthquake data from the USGS database.</p>
+            <p>This map shows the exact same visualization as the Plotly.js CodePen example, using real earthquake data from the USGS database.</p>
           </div>
         </div>
       </CardContent>
