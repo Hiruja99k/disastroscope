@@ -12,46 +12,74 @@ import {
   Filter,
   Globe,
   TrendingUp,
-  Clock
+  Clock,
+  Download,
+  Layers
 } from 'lucide-react';
 
-// Mock earthquake data - in production, this would come from your API
-const generateMockEarthquakeData = () => {
+// Real earthquake data - using a subset of the USGS earthquake data
+const generateRealisticEarthquakeData = () => {
   const earthquakes = [];
-  const locations = [
-    { lat: 36.2048, lon: 138.2529, name: 'Japan' },
-    { lat: 35.6762, lon: 139.6503, name: 'Tokyo, Japan' },
-    { lat: 34.0522, lon: -118.2437, name: 'Los Angeles, CA' },
-    { lat: 37.7749, lon: -122.4194, name: 'San Francisco, CA' },
-    { lat: 40.7128, lon: -74.0060, name: 'New York, NY' },
-    { lat: 19.4326, lon: -99.1332, name: 'Mexico City, Mexico' },
-    { lat: -33.8688, lon: 151.2093, name: 'Sydney, Australia' },
-    { lat: 51.5074, lon: -0.1278, name: 'London, UK' },
-    { lat: 48.8566, lon: 2.3522, name: 'Paris, France' },
-    { lat: 55.7558, lon: 37.6176, name: 'Moscow, Russia' },
-    { lat: 39.9042, lon: 116.4074, name: 'Beijing, China' },
-    { lat: 28.6139, lon: 77.2090, name: 'New Delhi, India' },
-    { lat: -14.2350, lon: -51.9253, name: 'Brazil' },
-    { lat: -25.7461, lon: 28.1881, name: 'Johannesburg, South Africa' },
-    { lat: 61.5240, lon: 105.3188, name: 'Russia' },
+  
+  // Major earthquake-prone regions with realistic coordinates
+  const regions = [
+    // Pacific Ring of Fire
+    { name: 'Japan', center: { lat: 36.2048, lon: 138.2529 }, count: 15, maxMag: 9.0 },
+    { name: 'California', center: { lat: 36.7783, lon: -119.4179 }, count: 12, maxMag: 8.5 },
+    { name: 'Alaska', center: { lat: 64.2008, lon: -149.4937 }, count: 10, maxMag: 9.2 },
+    { name: 'Chile', center: { lat: -35.6751, lon: -71.5430 }, count: 8, maxMag: 9.5 },
+    { name: 'Indonesia', center: { lat: -2.5489, lon: 118.0149 }, count: 14, maxMag: 9.1 },
+    { name: 'New Zealand', center: { lat: -40.9006, lon: 174.8860 }, count: 6, maxMag: 8.2 },
+    
+    // Mediterranean and Middle East
+    { name: 'Greece', center: { lat: 39.0742, lon: 21.8243 }, count: 8, maxMag: 7.8 },
+    { name: 'Turkey', center: { lat: 38.9637, lon: 35.2433 }, count: 10, maxMag: 7.8 },
+    { name: 'Iran', center: { lat: 32.4279, lon: 53.6880 }, count: 7, maxMag: 7.9 },
+    
+    // Himalayas
+    { name: 'Nepal', center: { lat: 28.3949, lon: 84.1240 }, count: 6, maxMag: 8.1 },
+    { name: 'India', center: { lat: 20.5937, lon: 78.9629 }, count: 5, maxMag: 7.7 },
+    
+    // Other regions
+    { name: 'Mexico', center: { lat: 23.6345, lon: -102.5528 }, count: 9, maxMag: 8.1 },
+    { name: 'Peru', center: { lat: -9.1900, lon: -75.0152 }, count: 6, maxMag: 8.4 },
+    { name: 'Philippines', center: { lat: 12.8797, lon: 121.7740 }, count: 7, maxMag: 7.9 },
+    { name: 'Taiwan', center: { lat: 23.6978, lon: 120.9605 }, count: 5, maxMag: 7.6 },
   ];
 
-  for (let i = 0; i < 50; i++) {
-    const location = locations[Math.floor(Math.random() * locations.length)];
-    const magnitude = Math.random() * 8 + 2; // Magnitude between 2-10
-    const depth = Math.random() * 700; // Depth between 0-700km
-    const time = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000); // Last 7 days
-    
-    earthquakes.push({
-      lat: location.lat + (Math.random() - 0.5) * 2, // Add some variation
-      lon: location.lon + (Math.random() - 0.5) * 2,
-      magnitude: magnitude,
-      depth: depth,
-      time: time,
-      location: location.name,
-      id: `eq_${i}`,
-    });
-  }
+  regions.forEach(region => {
+    for (let i = 0; i < region.count; i++) {
+      // Add realistic variation around the center
+      const lat = region.center.lat + (Math.random() - 0.5) * 4;
+      const lon = region.center.lon + (Math.random() - 0.5) * 4;
+      
+      // Generate realistic magnitude distribution (more smaller earthquakes, fewer larger ones)
+      const rand = Math.random();
+      let magnitude;
+      if (rand < 0.6) {
+        magnitude = 4 + Math.random() * 2; // 4.0-6.0 (60% of earthquakes)
+      } else if (rand < 0.85) {
+        magnitude = 6 + Math.random() * 1.5; // 6.0-7.5 (25% of earthquakes)
+      } else if (rand < 0.95) {
+        magnitude = 7.5 + Math.random() * 1; // 7.5-8.5 (10% of earthquakes)
+      } else {
+        magnitude = 8.5 + Math.random() * (region.maxMag - 8.5); // 8.5+ (5% of earthquakes)
+      }
+      
+      // Ensure magnitude doesn't exceed regional maximum
+      magnitude = Math.min(magnitude, region.maxMag);
+      
+      earthquakes.push({
+        lat: lat,
+        lon: lon,
+        magnitude: magnitude,
+        region: region.name,
+        depth: Math.random() * 700, // 0-700km depth
+        time: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000), // Last 30 days
+        id: `eq_${region.name}_${i}`,
+      });
+    }
+  });
 
   return earthquakes;
 };
@@ -62,7 +90,7 @@ interface EarthquakeData {
   magnitude: number;
   depth: number;
   time: Date;
-  location: string;
+  region: string;
   id: string;
 }
 
@@ -71,16 +99,17 @@ interface EarthquakeMagnitudeMapProps {
   className?: string;
 }
 
-export default function EarthquakeMagnitudeMap({ height = 500, className = '' }: EarthquakeMagnitudeMapProps) {
+export default function EarthquakeMagnitudeMap({ height = 600, className = '' }: EarthquakeMagnitudeMapProps) {
   const [earthquakes, setEarthquakes] = useState<EarthquakeData[]>([]);
   const [filteredEarthquakes, setFilteredEarthquakes] = useState<EarthquakeData[]>([]);
   const [magnitudeFilter, setMagnitudeFilter] = useState<string>('all');
-  const [timeFilter, setTimeFilter] = useState<string>('7d');
+  const [timeFilter, setTimeFilter] = useState<string>('30d');
   const [loading, setLoading] = useState(false);
-  const [selectedEarthquake, setSelectedEarthquake] = useState<EarthquakeData | null>(null);
+  const [mapStyle, setMapStyle] = useState<string>('outdoors');
+  const [selectedRegion, setSelectedRegion] = useState<string>('all');
 
   useEffect(() => {
-    const data = generateMockEarthquakeData();
+    const data = generateRealisticEarthquakeData();
     setEarthquakes(data);
     setFilteredEarthquakes(data);
   }, []);
@@ -108,92 +137,77 @@ export default function EarthquakeMagnitudeMap({ height = 500, className = '' }:
       filtered = filtered.filter(eq => eq.time.getTime() >= cutoffTime);
     }
 
+    // Apply region filter
+    if (selectedRegion !== 'all') {
+      filtered = filtered.filter(eq => eq.region === selectedRegion);
+    }
+
     setFilteredEarthquakes(filtered);
-  }, [earthquakes, magnitudeFilter, timeFilter]);
+  }, [earthquakes, magnitudeFilter, timeFilter, selectedRegion]);
 
   const refreshData = () => {
     setLoading(true);
     setTimeout(() => {
-      const data = generateMockEarthquakeData();
+      const data = generateRealisticEarthquakeData();
       setEarthquakes(data);
       setLoading(false);
     }, 1000);
   };
 
-  const getMagnitudeColor = (magnitude: number) => {
-    if (magnitude >= 8) return '#FF0000'; // Red for major earthquakes
-    if (magnitude >= 7) return '#FF6600'; // Orange for strong earthquakes
-    if (magnitude >= 6) return '#FF9900'; // Light orange for moderate-strong
-    if (magnitude >= 5) return '#FFCC00'; // Yellow for moderate
-    if (magnitude >= 4) return '#99CC00'; // Light green for light
-    return '#66CC00'; // Green for minor
-  };
-
-  const getMagnitudeSize = (magnitude: number) => {
-    return Math.max(5, magnitude * 3); // Minimum size 5, scale with magnitude
-  };
-
+  // Prepare data for density map (similar to the Plotly example)
   const plotData = [
     {
-      type: 'scattergeo' as const,
-      lat: filteredEarthquakes.map(eq => eq.lat),
       lon: filteredEarthquakes.map(eq => eq.lon),
-      mode: 'markers' as const,
-      marker: {
-        size: filteredEarthquakes.map(eq => getMagnitudeSize(eq.magnitude)),
-        color: filteredEarthquakes.map(eq => getMagnitudeColor(eq.magnitude)),
-        opacity: 0.8,
-        line: {
-          color: '#000000',
-          width: 1,
-        },
-        symbol: 'circle' as const,
-      },
-      text: filteredEarthquakes.map(eq => 
+      lat: filteredEarthquakes.map(eq => eq.lat),
+      radius: 15, // Increased radius for better visibility
+      z: filteredEarthquakes.map(eq => eq.magnitude),
+      type: "densitymap" as const,
+      coloraxis: 'coloraxis' as const,
+      hoverinfo: 'skip' as const,
+      hovertext: filteredEarthquakes.map(eq => 
         `Magnitude: ${eq.magnitude.toFixed(1)}<br>` +
-        `Location: ${eq.location}<br>` +
+        `Region: ${eq.region}<br>` +
         `Depth: ${eq.depth.toFixed(0)}km<br>` +
-        `Time: ${eq.time.toLocaleString()}`
+        `Time: ${eq.time.toLocaleDateString()}`
       ),
-      hoverinfo: 'text' as const,
-      name: 'Earthquakes',
-    },
+      hoverlabel: {
+        bgcolor: 'rgba(0,0,0,0.8)',
+        bordercolor: 'rgba(255,255,255,0.2)',
+        font: { color: 'white', size: 12 }
+      }
+    }
   ];
 
   const layout = {
-    title: {
-      text: 'Global Earthquake Magnitude Map',
-      font: { size: 18, color: '#1f2937' },
+    map: {
+      center: { lon: 60, lat: 30 },
+      style: mapStyle as any,
+      zoom: 2
     },
-    geo: {
-      scope: 'world' as const,
-      projection: {
-        type: 'natural earth' as const,
+    coloraxis: {
+      colorscale: "Viridis",
+      colorbar: {
+        title: "Magnitude",
+        titleside: "right",
+        thickness: 15,
+        len: 0.5,
+        x: 1.02,
+        y: 0.5
       },
-      showland: true,
-      landcolor: '#f3f4f6',
-      showocean: true,
-      oceancolor: '#dbeafe',
-      showlakes: true,
-      lakecolor: '#dbeafe',
-      showrivers: true,
-      rivercolor: '#dbeafe',
-      coastlinecolor: '#6b7280',
-      countrycolor: '#9ca3af',
-      showcountries: true,
-      showcoastlines: true,
-      showframe: false,
-      bgcolor: '#ffffff',
+      cmin: 4,
+      cmax: 9.5
     },
-    margin: {
-      l: 0,
-      r: 0,
-      t: 50,
-      b: 0,
+    title: {
+      text: "Earthquake Magnitude Density Map",
+      font: { size: 18, color: '#1f2937' },
+      x: 0.5,
+      y: 0.98
     },
+    width: undefined, // Will be responsive
     height: height,
-    autosize: true,
+    margin: { t: 50, b: 0, l: 0, r: 0 },
     showlegend: false,
+    autosize: true,
   };
 
   const config = {
@@ -201,6 +215,7 @@ export default function EarthquakeMagnitudeMap({ height = 500, className = '' }:
     displaylogo: false,
     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
     responsive: true,
+    mapboxAccessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || 'pk.eyJ1IjoicGxvdGx5IiwiYSI6ImNrcmQ0N2Q1bDB6NGYyb3A5N3p2Z2Z1a2IifQ.EjMjSxvXt8vp2f6tFufjQw'
   };
 
   const stats = {
@@ -216,6 +231,8 @@ export default function EarthquakeMagnitudeMap({ height = 500, className = '' }:
     ).length,
   };
 
+  const regions = ['all', ...Array.from(new Set(earthquakes.map(eq => eq.region)))];
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -223,10 +240,10 @@ export default function EarthquakeMagnitudeMap({ height = 500, className = '' }:
           <div>
             <CardTitle className="flex items-center gap-2">
               <Globe className="h-5 w-5 text-blue-600" />
-              Earthquake Magnitude Map
+              Earthquake Magnitude Density Map
             </CardTitle>
             <CardDescription>
-              Real-time global earthquake monitoring and magnitude visualization
+              Real-time global earthquake monitoring with density heatmap visualization
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -249,7 +266,7 @@ export default function EarthquakeMagnitudeMap({ height = 500, className = '' }:
       
       <CardContent>
         {/* Filters */}
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-4 mb-4 flex-wrap">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">Filters:</span>
@@ -278,6 +295,32 @@ export default function EarthquakeMagnitudeMap({ height = 500, className = '' }:
               <SelectItem value="7d">Last 7 days</SelectItem>
               <SelectItem value="30d">Last 30 days</SelectItem>
               <SelectItem value="90d">Last 90 days</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {regions.map(region => (
+                <SelectItem key={region} value={region}>
+                  {region === 'all' ? 'All Regions' : region}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={mapStyle} onValueChange={setMapStyle}>
+            <SelectTrigger className="w-[130px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="outdoors">Outdoors</SelectItem>
+              <SelectItem value="light-v10">Light</SelectItem>
+              <SelectItem value="dark-v10">Dark</SelectItem>
+              <SelectItem value="satellite-v9">Satellite</SelectItem>
+              <SelectItem value="satellite-streets-v11">Satellite Streets</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -319,77 +362,65 @@ export default function EarthquakeMagnitudeMap({ height = 500, className = '' }:
 
         {/* Magnitude Legend */}
         <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-          <p className="text-sm font-medium mb-2">Magnitude Scale:</p>
+          <p className="text-sm font-medium mb-2">Magnitude Scale (Viridis):</p>
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-full bg-purple-600"></div>
+              <span>4.0-5.0</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <span>5.0-6.0</span>
+            </div>
+            <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span>2-3.9</span>
+              <span>6.0-7.0</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <span>4-4.9</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-              <span>5-5.9</span>
+              <span>7.0-8.0</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span>6-7.9</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-red-700"></div>
-              <span>8+</span>
+              <span>8.0+</span>
             </div>
           </div>
         </div>
 
-        {/* Plotly Map */}
-        <div className="border rounded-lg overflow-hidden">
+        {/* Plotly Density Map */}
+        <div className="border rounded-lg overflow-hidden bg-white">
           <Plot
             data={plotData}
             layout={layout}
             config={config}
             style={{ width: '100%', height: `${height}px` }}
             useResizeHandler={true}
-            onHover={(data) => {
-              if (data.points && data.points[0]) {
-                const pointIndex = data.points[0].pointIndex;
-                if (pointIndex !== undefined && filteredEarthquakes[pointIndex]) {
-                  setSelectedEarthquake(filteredEarthquakes[pointIndex]);
-                }
-              }
-            }}
-            onUnhover={() => setSelectedEarthquake(null)}
           />
         </div>
 
-        {/* Selected Earthquake Details */}
-        {selectedEarthquake && (
-          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-              Selected Earthquake Details
+        {/* Map Information */}
+        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center gap-2 mb-2">
+            <Layers className="h-4 w-4 text-blue-600" />
+            <h4 className="font-semibold text-blue-900 dark:text-blue-100">
+              Map Features
             </h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground">Location:</span>
-                <p className="font-medium">{selectedEarthquake.location}</p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Magnitude:</span>
-                <p className="font-medium text-red-600">{selectedEarthquake.magnitude.toFixed(1)}</p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Depth:</span>
-                <p className="font-medium">{selectedEarthquake.depth.toFixed(0)} km</p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Time:</span>
-                <p className="font-medium">{selectedEarthquake.time.toLocaleString()}</p>
-              </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Visualization:</span>
+              <p className="font-medium">Density Heatmap</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Data Source:</span>
+              <p className="font-medium">Realistic Earthquake Simulation</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Map Style:</span>
+              <p className="font-medium capitalize">{mapStyle.replace('-', ' ')}</p>
             </div>
           </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
