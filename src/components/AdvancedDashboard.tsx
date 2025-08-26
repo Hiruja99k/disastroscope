@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { gsap } from 'gsap';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,7 +63,16 @@ import {
   RotateCcw,
   Play,
   Pause,
-  Square
+  Square,
+  Sparkles,
+  Crown,
+  Star,
+  Award,
+  Rocket,
+  Zap as Lightning,
+  Palette,
+  Moon,
+  Sun as SunIcon
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { format, subDays, subHours } from 'date-fns';
@@ -76,21 +85,21 @@ import AlertSystem from './AlertSystem';
 const generateAdvancedData = () => {
   const now = new Date();
   const disasters = [
-    { id: 1, type: 'Earthquake', location: 'San Francisco, CA', magnitude: 6.2, severity: 'High', status: 'Active', timestamp: subHours(now, 2), affected: 125000, coordinates: [37.7749, -122.4194] },
-    { id: 2, type: 'Flood', location: 'Miami, FL', magnitude: 'Category 3', severity: 'Medium', status: 'Monitoring', timestamp: subHours(now, 4), affected: 89000, coordinates: [25.7617, -80.1918] },
-    { id: 3, type: 'Wildfire', location: 'Los Angeles, CA', magnitude: 'Large', severity: 'Critical', status: 'Active', timestamp: subHours(now, 6), affected: 156000, coordinates: [34.0522, -118.2437] },
-    { id: 4, type: 'Storm', location: 'New Orleans, LA', magnitude: 'Category 2', severity: 'Medium', status: 'Resolved', timestamp: subDays(now, 1), affected: 67000, coordinates: [29.9511, -90.0715] },
-    { id: 5, type: 'Tsunami', location: 'Tokyo, Japan', magnitude: '8.1', severity: 'Critical', status: 'Active', timestamp: subHours(now, 1), affected: 250000, coordinates: [35.6762, 139.6503] },
-    { id: 6, type: 'Volcano', location: 'Hawaii, USA', magnitude: 'Eruption', severity: 'High', status: 'Monitoring', timestamp: subHours(now, 3), affected: 45000, coordinates: [19.8968, -155.5828] },
+    { id: 1, type: 'Earthquake', location: 'San Francisco, CA', magnitude: 6.2, severity: 'High', status: 'Active', timestamp: subHours(now, 2), affected: 125000, coordinates: [37.7749, -122.4194] as [number, number] },
+    { id: 2, type: 'Flood', location: 'Miami, FL', magnitude: 'Category 3', severity: 'Medium', status: 'Monitoring', timestamp: subHours(now, 4), affected: 89000, coordinates: [25.7617, -80.1918] as [number, number] },
+    { id: 3, type: 'Wildfire', location: 'Los Angeles, CA', magnitude: 'Large', severity: 'Critical', status: 'Active', timestamp: subHours(now, 6), affected: 156000, coordinates: [34.0522, -118.2437] as [number, number] },
+    { id: 4, type: 'Storm', location: 'New Orleans, LA', magnitude: 'Category 2', severity: 'Medium', status: 'Resolved', timestamp: subDays(now, 1), affected: 67000, coordinates: [29.9511, -90.0715] as [number, number] },
+    { id: 5, type: 'Tsunami', location: 'Tokyo, Japan', magnitude: '8.1', severity: 'Critical', status: 'Active', timestamp: subHours(now, 1), affected: 250000, coordinates: [35.6762, 139.6503] as [number, number] },
+    { id: 6, type: 'Volcano', location: 'Hawaii, USA', magnitude: 'Eruption', severity: 'High', status: 'Monitoring', timestamp: subHours(now, 3), affected: 45000, coordinates: [19.8968, -155.5828] as [number, number] },
   ];
 
   const sensorData = [
-    { name: 'Temperature', value: 24.5, unit: '°C', status: 'Normal', trend: 'up', change: '+2.1°C' },
-    { name: 'Humidity', value: 65, unit: '%', status: 'Normal', trend: 'down', change: '-5%' },
-    { name: 'Pressure', value: 1013, unit: 'hPa', status: 'Normal', trend: 'stable', change: '0hPa' },
-    { name: 'Wind Speed', value: 12, unit: 'km/h', status: 'Elevated', trend: 'up', change: '+8km/h' },
-    { name: 'Air Quality', value: 45, unit: 'AQI', status: 'Good', trend: 'down', change: '-10AQI' },
-    { name: 'Seismic Activity', value: 78, unit: 'Richter', status: 'High', trend: 'up', change: '+15Richter' },
+    { name: 'Temperature', value: 24.5, unit: '°C', status: 'Normal' as const, trend: 'up' as const, change: '+2.1°C' },
+    { name: 'Humidity', value: 65, unit: '%', status: 'Normal' as const, trend: 'down' as const, change: '-5%' },
+    { name: 'Pressure', value: 1013, unit: 'hPa', status: 'Normal' as const, trend: 'stable' as const, change: '0hPa' },
+    { name: 'Wind Speed', value: 12, unit: 'km/h', status: 'Elevated' as const, trend: 'up' as const, change: '+8km/h' },
+    { name: 'Air Quality', value: 45, unit: 'AQI', status: 'Normal' as const, trend: 'down' as const, change: '-10AQI' },
+    { name: 'Seismic Activity', value: 78, unit: 'Richter', status: 'High' as const, trend: 'up' as const, change: '+15Richter' },
   ];
 
   const performanceMetrics = {
@@ -112,54 +121,117 @@ const AdvancedDashboard = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showParticles, setShowParticles] = useState(true);
   const dashboardRef = useRef(null);
 
-  // GSAP animations
+  // Advanced motion values for 3D effects
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const rotateX = useTransform(mouseY, [-300, 300], [15, -15]);
+  const rotateY = useTransform(mouseX, [-300, 300], [-15, 15]);
+
+  // GSAP animations with advanced effects
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Stagger animation for cards
+      // Stagger animation for cards with bounce effect
       gsap.from('.dashboard-card', {
-        duration: 0.8,
-        y: 50,
+        duration: 1.2,
+        y: 100,
         opacity: 0,
-        stagger: 0.1,
-        ease: 'power3.out'
+        rotationX: 45,
+        stagger: 0.15,
+        ease: "back.out(1.7)",
+        clearProps: "all"
       });
 
-      // Floating animation for key metrics
+      // Floating animation for key metrics with sine wave
       gsap.to('.floating-metric', {
-        y: -10,
-        duration: 2,
+        y: -15,
+        duration: 3,
         repeat: -1,
         yoyo: true,
-        ease: 'power2.inOut',
-        stagger: 0.2
+        ease: "sine.inOut",
+        stagger: 0.3
       });
+
+      // Pulse effect for live indicators
+      gsap.to('.live-indicator', {
+        scale: 1.1,
+        duration: 1.5,
+        repeat: -1,
+        yoyo: true,
+        ease: "power2.inOut"
+      });
+
+      // Particle animation
+      if (showParticles) {
+        gsap.to('.particle', {
+          y: -100,
+          opacity: 0,
+          duration: 4,
+          repeat: -1,
+          stagger: 0.1,
+          ease: "power1.out"
+        });
+      }
     }, dashboardRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [showParticles]);
 
-  // Auto-refresh data
+  // Auto-refresh data with enhanced feedback
   useEffect(() => {
     if (!autoRefresh) return;
 
     const interval = setInterval(() => {
       setData(generateAdvancedData());
-      toast.success('Data refreshed automatically');
-    }, 30000); // Refresh every 30 seconds
+      toast.success('🔄 Data refreshed automatically', {
+        icon: '⚡',
+        style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+        },
+      });
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [autoRefresh]);
 
   const handleExport = () => {
-    toast.success('Exporting dashboard data...');
-    // Export logic here
+    toast.success('📊 Exporting dashboard data...', {
+      icon: '🚀',
+      style: {
+        borderRadius: '10px',
+        background: '#333',
+        color: '#fff',
+      },
+    });
   };
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
-    toast.success(isFullscreen ? 'Exited fullscreen' : 'Entered fullscreen');
+    toast.success(isFullscreen ? '📱 Exited fullscreen' : '🖥️ Entered fullscreen', {
+      icon: '✨',
+      style: {
+        borderRadius: '10px',
+        background: '#333',
+        color: '#fff',
+      },
+    });
+  };
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    toast.success(isDarkMode ? '☀️ Switched to light mode' : '🌙 Switched to dark mode', {
+      icon: '🎨',
+      style: {
+        borderRadius: '10px',
+        background: '#333',
+        color: '#fff',
+      },
+    });
   };
 
   const getSeverityColor = (severity: string) => {
@@ -192,228 +264,447 @@ const AdvancedDashboard = () => {
   return (
     <motion.div
       ref={dashboardRef}
-      className={`min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6 transition-all duration-300 ${
-        isFullscreen ? 'fixed inset-0 z-50' : ''
-      }`}
+      className={`min-h-screen transition-all duration-500 ${
+        isDarkMode 
+          ? 'bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 text-white' 
+          : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
+      } ${isFullscreen ? 'fixed inset-0 z-50' : 'p-6'}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.8 }}
+      onMouseMove={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        mouseX.set(e.clientX - rect.left - rect.width / 2);
+        mouseY.set(e.clientY - rect.top - rect.height / 2);
+      }}
+      onMouseLeave={() => {
+        mouseX.set(0);
+        mouseY.set(0);
+      }}
     >
-      {/* Header */}
+      {/* Enhanced Particle Effects */}
+      {showParticles && (
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+          {[...Array(50)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="particle absolute rounded-full opacity-20"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                width: `${Math.random() * 4 + 1}px`,
+                height: `${Math.random() * 4 + 1}px`,
+                background: `hsl(${Math.random() * 360}, 70%, 60%)`,
+                boxShadow: `0 0 ${Math.random() * 10 + 5}px hsl(${Math.random() * 360}, 70%, 60%)`,
+              }}
+              animate={{
+                y: [-20, -200],
+                opacity: [0.3, 0],
+                scale: [1, 0.2],
+                rotate: [0, 360],
+              }}
+              transition={{
+                duration: Math.random() * 4 + 3,
+                repeat: Infinity,
+                delay: Math.random() * 3,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Floating geometric shapes */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={`shape-${i}`}
+            className="absolute opacity-10"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, -50, 0],
+              rotate: [0, 180, 360],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              delay: i * 0.5,
+            }}
+          >
+            <div 
+              className="w-16 h-16 border-2 border-blue-400 rounded-lg"
+              style={{
+                transform: `rotate(${i * 45}deg)`,
+              }}
+            />
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Header with 3D effect */}
       <motion.div 
         className="flex justify-between items-center mb-8"
-        initial={{ y: -20, opacity: 0 }}
+        initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.3, duration: 0.8 }}
+        style={{
+          transformStyle: "preserve-3d",
+          rotateX,
+          rotateY,
+        }}
       >
-        <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <div className="relative">
+          <motion.h1 
+            className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"
+            animate={{
+              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+            style={{
+              backgroundSize: "200% 200%",
+            }}
+          >
             DisastroScope Enterprise
-          </h1>
-          <p className="text-slate-600 mt-2">Advanced Disaster Monitoring & Response System</p>
+          </motion.h1>
+          <motion.p 
+            className={`mt-2 text-lg ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            Advanced Disaster Monitoring & Response System
+          </motion.p>
+          <motion.div
+            className="absolute -top-2 -right-2"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          >
+            <Crown className="h-6 w-6 text-yellow-500" />
+          </motion.div>
         </div>
         
         <div className="flex items-center gap-4">
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Activity className="h-3 w-3" />
-            Live Monitoring
-          </Badge>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setAutoRefresh(!autoRefresh)}
-            className={autoRefresh ? 'bg-green-50 border-green-200' : ''}
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
-            {autoRefresh ? 'Auto' : 'Manual'}
-          </Button>
+            <Badge variant="outline" className="flex items-center gap-1 bg-gradient-to-r from-green-400 to-blue-500 text-white border-0">
+              <div className="live-indicator w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <Activity className="h-3 w-3" />
+              Live Monitoring
+            </Badge>
+          </motion.div>
           
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              className={`${autoRefresh ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white border-0' : ''} transition-all duration-300`}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
+              {autoRefresh ? 'Auto' : 'Manual'}
+            </Button>
+          </motion.div>
           
-          <Button variant="outline" size="icon" onClick={toggleFullscreen}>
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </Button>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button variant="outline" onClick={handleExport} className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </motion.div>
+
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button variant="outline" size="icon" onClick={toggleDarkMode}>
+              {isDarkMode ? <SunIcon className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+          </motion.div>
+          
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button variant="outline" size="icon" onClick={toggleFullscreen}>
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
+          </motion.div>
         </div>
       </motion.div>
 
       {/* Main Dashboard Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="monitoring" className="flex items-center gap-2">
-            <Satellite className="h-4 w-4" />
-            Monitoring
-          </TabsTrigger>
-          <TabsTrigger value="maps" className="flex items-center gap-2">
-            <Map className="h-4 w-4" />
-            Maps
-          </TabsTrigger>
-          <TabsTrigger value="alerts" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            Alerts
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <PieChart className="h-4 w-4" />
-            Analytics
-          </TabsTrigger>
-        </TabsList>
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <TabsList className={`grid w-full grid-cols-5 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
+            <TabsTrigger value="overview" className="flex items-center gap-2 hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300">
+              <BarChart3 className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="monitoring" className="flex items-center gap-2 hover:bg-gradient-to-r hover:from-green-500 hover:to-blue-500 hover:text-white transition-all duration-300">
+              <Satellite className="h-4 w-4" />
+              Monitoring
+            </TabsTrigger>
+            <TabsTrigger value="maps" className="flex items-center gap-2 hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 hover:text-white transition-all duration-300">
+              <Map className="h-4 w-4" />
+              Maps
+            </TabsTrigger>
+            <TabsTrigger value="alerts" className="flex items-center gap-2 hover:bg-gradient-to-r hover:from-red-500 hover:to-orange-500 hover:text-white transition-all duration-300">
+              <Bell className="h-4 w-4" />
+              Alerts
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-500 hover:text-white transition-all duration-300">
+              <PieChart className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
+        </motion.div>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          {/* Key Metrics */}
+          {/* Key Metrics with enhanced animations */}
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-            initial={{ y: 20, opacity: 0 }}
+            initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.5, duration: 0.8 }}
           >
-            <Card className="dashboard-card floating-metric">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Active Disasters</p>
-                    <p className="text-3xl font-bold text-red-600">{data.disasters.filter(d => d.status === 'Active').length}</p>
-                    <div className="flex items-center gap-1 text-sm text-red-600">
-                      <TrendingUp className="h-4 w-4" />
-                      +2 today
+            <motion.div
+              whileHover={{ 
+                scale: 1.05,
+                rotateY: 5,
+                boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
+              }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Card className={`dashboard-card floating-metric ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+                <CardContent className="p-6 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-red-400/10 to-red-600/10 rounded-lg"></div>
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div>
+                      <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-muted-foreground'}`}>Active Disasters</p>
+                      <p className="text-4xl font-bold text-red-600">{data.disasters.filter(d => d.status === 'Active').length}</p>
+                      <div className="flex items-center gap-1 text-sm text-red-600">
+                        <TrendingUp className="h-4 w-4" />
+                        +2 today
+                      </div>
                     </div>
+                    <motion.div 
+                      className="p-3 rounded-full bg-red-100"
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    >
+                      <AlertTriangle className="h-8 w-8 text-red-600" />
+                    </motion.div>
                   </div>
-                  <div className="p-3 rounded-full bg-red-100">
-                    <AlertTriangle className="h-8 w-8 text-red-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card className="dashboard-card floating-metric">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Response Time</p>
-                    <p className="text-3xl font-bold text-green-600">{data.performanceMetrics.responseTime}%</p>
-                    <div className="flex items-center gap-1 text-sm text-green-600">
-                      <TrendingUp className="h-4 w-4" />
-                      +5% this week
+            <motion.div
+              whileHover={{ 
+                scale: 1.05,
+                rotateY: 5,
+                boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
+              }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Card className={`dashboard-card floating-metric ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+                <CardContent className="p-6 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 to-green-600/10 rounded-lg"></div>
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div>
+                      <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-muted-foreground'}`}>Response Time</p>
+                      <p className="text-4xl font-bold text-green-600">{data.performanceMetrics.responseTime}%</p>
+                      <div className="flex items-center gap-1 text-sm text-green-600">
+                        <TrendingUp className="h-4 w-4" />
+                        +5% this week
+                      </div>
                     </div>
+                    <motion.div 
+                      className="p-3 rounded-full bg-green-100"
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <Zap className="h-8 w-8 text-green-600" />
+                    </motion.div>
                   </div>
-                  <div className="p-3 rounded-full bg-green-100">
-                    <Zap className="h-8 w-8 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card className="dashboard-card floating-metric">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Prediction Accuracy</p>
-                    <p className="text-3xl font-bold text-blue-600">{data.performanceMetrics.accuracy}%</p>
-                    <div className="flex items-center gap-1 text-sm text-blue-600">
-                      <TrendingUp className="h-4 w-4" />
-                      +2.1% this month
+            <motion.div
+              whileHover={{ 
+                scale: 1.05,
+                rotateY: 5,
+                boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
+              }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Card className={`dashboard-card floating-metric ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+                <CardContent className="p-6 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-blue-600/10 rounded-lg"></div>
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div>
+                      <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-muted-foreground'}`}>Prediction Accuracy</p>
+                      <p className="text-4xl font-bold text-blue-600">{data.performanceMetrics.accuracy}%</p>
+                      <div className="flex items-center gap-1 text-sm text-blue-600">
+                        <TrendingUp className="h-4 w-4" />
+                        +2.1% this month
+                      </div>
                     </div>
+                    <motion.div 
+                      className="p-3 rounded-full bg-blue-100"
+                      animate={{ y: [-5, 5, -5] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    >
+                      <Target className="h-8 w-8 text-blue-600" />
+                    </motion.div>
                   </div>
-                  <div className="p-3 rounded-full bg-blue-100">
-                    <Target className="h-8 w-8 text-blue-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card className="dashboard-card floating-metric">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">System Uptime</p>
-                    <p className="text-3xl font-bold text-purple-600">{data.performanceMetrics.uptime}%</p>
-                    <div className="flex items-center gap-1 text-sm text-purple-600">
-                      <CheckCircle className="h-4 w-4" />
-                      Operational
+            <motion.div
+              whileHover={{ 
+                scale: 1.05,
+                rotateY: 5,
+                boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
+              }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Card className={`dashboard-card floating-metric ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+                <CardContent className="p-6 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-purple-600/10 rounded-lg"></div>
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div>
+                      <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-muted-foreground'}`}>System Uptime</p>
+                      <p className="text-4xl font-bold text-purple-600">{data.performanceMetrics.uptime}%</p>
+                      <div className="flex items-center gap-1 text-sm text-purple-600">
+                        <CheckCircle className="h-4 w-4" />
+                        Operational
+                      </div>
                     </div>
+                    <motion.div 
+                      className="p-3 rounded-full bg-purple-100"
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Server className="h-8 w-8 text-purple-600" />
+                    </motion.div>
                   </div>
-                  <div className="p-3 rounded-full bg-purple-100">
-                    <Server className="h-8 w-8 text-purple-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
           </motion.div>
 
-          {/* Charts and Maps Grid */}
+          {/* Charts and Maps Grid with enhanced styling */}
           <motion.div 
             className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-            initial={{ y: 20, opacity: 0 }}
+            initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
           >
-            <Card className="dashboard-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <LineChart className="h-5 w-5" />
-                  Disaster Trends
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AdvancedCharts type="trends" />
-              </CardContent>
-            </Card>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <LineChart className="h-5 w-5 text-blue-600" />
+                    Disaster Trends
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <AdvancedCharts type="trends" />
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card className="dashboard-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe2 className="h-5 w-5" />
-                  Global Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DisasterMap disasters={data.disasters} />
-              </CardContent>
-            </Card>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe2 className="h-5 w-5 text-green-600" />
+                    Global Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <DisasterMap disasters={data.disasters} />
+                </CardContent>
+              </Card>
+            </motion.div>
           </motion.div>
 
-          {/* Recent Disasters */}
+          {/* Recent Disasters with enhanced animations */}
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
+            initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.7, duration: 0.8 }}
           >
-            <Card className="dashboard-card">
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5" />
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
                     Recent Disasters
                   </CardTitle>
-                  <Button size="sm" variant="outline">
-                    <Eye className="h-4 w-4 mr-2" />
-                    View All
-                  </Button>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button size="sm" variant="outline" className="bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0">
+                      <Eye className="h-4 w-4 mr-2" />
+                      View All
+                    </Button>
+                  </motion.div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {data.disasters.slice(0, 4).map((disaster) => (
+                  {data.disasters.slice(0, 4).map((disaster, index) => (
                     <motion.div
                       key={disaster.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors"
-                      whileHover={{ scale: 1.02 }}
+                      initial={{ x: -50, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.8 + index * 0.1 }}
+                      className={`flex items-center justify-between p-4 border rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 ${isDarkMode ? 'border-gray-700 hover:from-gray-700 hover:to-gray-600' : 'hover:shadow-lg'}`}
+                      whileHover={{ scale: 1.02, x: 10 }}
                       whileTap={{ scale: 0.98 }}
                     >
                       <div className="flex items-center gap-4">
-                        <div className="p-2 rounded-full bg-red-100">
+                        <motion.div 
+                          className="p-2 rounded-full bg-red-100"
+                          animate={{ scale: [1, 1.1, 1] }}
+                          transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
+                        >
                           <AlertTriangle className="h-4 w-4 text-red-600" />
-                        </div>
+                        </motion.div>
                         <div>
                           <p className="font-medium">{disaster.type}</p>
-                          <p className="text-sm text-muted-foreground">{disaster.location}</p>
+                          <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-muted-foreground'}`}>{disaster.location}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
@@ -423,7 +714,7 @@ const AdvancedDashboard = () => {
                         <Badge variant={getStatusColor(disaster.status)}>
                           {disaster.status}
                         </Badge>
-                        <p className="text-sm text-muted-foreground">
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-muted-foreground'}`}>
                           {format(disaster.timestamp, 'MMM dd, HH:mm')}
                         </p>
                       </div>
@@ -442,7 +733,7 @@ const AdvancedDashboard = () => {
 
         {/* Maps Tab */}
         <TabsContent value="maps">
-          <Card className="dashboard-card">
+          <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Map className="h-5 w-5" />

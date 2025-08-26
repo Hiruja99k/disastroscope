@@ -17,7 +17,10 @@ import {
   Eye,
   Settings
 } from 'lucide-react';
-import { ResponsiveLine, ResponsiveBar, ResponsivePie, ResponsiveHeatMap } from '@nivo/core';
+import { ResponsiveLine } from '@nivo/line';
+import { ResponsiveBar } from '@nivo/bar';
+import { ResponsivePie } from '@nivo/pie';
+import { ResponsiveHeatMap } from '@nivo/heatmap';
 import { format, subDays, subHours } from 'date-fns';
 
 interface AdvancedChartsProps {
