@@ -1,482 +1,365 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  AlertTriangle, 
-  TrendingUp, 
   MapPin, 
+  AlertTriangle, 
   Flame, 
-  Waves, 
-  Zap, 
+  CloudRain, 
+  Wind, 
   Mountain,
-  CloudRain,
-  Wind
+  Globe,
+  Layers,
+  ZoomIn,
+  ZoomOut,
+  Navigation,
+  Compass,
+  RefreshCw,
+  Maximize2,
+  Minimize2,
+  Settings,
+  Filter,
+  Eye,
+  Info
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
-interface DisasterEvent {
-  id: string;
-  name: string;
-  event_type: string;
-  severity: string;
-  latitude: number;
-  longitude: number;
+interface Disaster {
+  id: number;
+  type: string;
   location: string;
-  timestamp: string;
+  magnitude: string | number;
+  severity: string;
   status: string;
-}
-
-interface Prediction {
-  id: string;
-  event_type: string;
-  severity: string;
-  latitude: number;
-  longitude: number;
-  location: string;
-  probability: number;
-  timeframe: string;
+  timestamp: Date;
+  affected: number;
+  coordinates: [number, number];
 }
 
 interface DisasterMapProps {
-  events?: DisasterEvent[];
-  predictions?: Prediction[];
-  height?: string;
-  className?: string;
+  disasters: Disaster[];
+  advanced?: boolean;
+  height?: number;
 }
 
-// Sample data for testing when no real data is provided
-const sampleEvents: DisasterEvent[] = [
-  {
-    id: '1',
-    name: 'California Wildfire',
-    event_type: 'Wildfire',
-    severity: 'High',
-    latitude: 34.0522,
-    longitude: -118.2437,
-    location: 'Los Angeles, CA',
-    timestamp: '2024-01-15T10:30:00Z',
-    status: 'active'
-  },
-  {
-    id: '2',
-    name: 'Florida Hurricane',
-    event_type: 'Hurricane',
-    severity: 'Critical',
-    latitude: 25.7617,
-    longitude: -80.1918,
-    location: 'Miami, FL',
-    timestamp: '2024-01-15T09:15:00Z',
-    status: 'active'
-  },
-  {
-    id: '3',
-    name: 'Texas Flood',
-    event_type: 'Flood',
-    severity: 'Medium',
-    latitude: 29.7604,
-    longitude: -95.3698,
-    location: 'Houston, TX',
-    timestamp: '2024-01-15T08:45:00Z',
-    status: 'active'
-  }
-];
+const DisasterMap: React.FC<DisasterMapProps> = ({ disasters, advanced = false, height = 400 }) => {
+  const [map, setMap] = useState<any>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedDisaster, setSelectedDisaster] = useState<Disaster | null>(null);
+  const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/streets-v12');
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const mapboxToken = 'pk.eyJ1IjoiaGlydWpha2wiLCJhIjoiY21lczA2ZTdsMGQ0czJxcTFjYzI4bDJvMiJ9.NvKvNXcT-gqoNomkWFeouw';
 
-const samplePredictions: Prediction[] = [
-  {
-    id: '1',
-    event_type: 'Earthquake',
-    severity: 'Medium',
-    latitude: 37.7749,
-    longitude: -122.4194,
-    location: 'San Francisco, CA',
-    probability: 0.75,
-    timeframe: 'Next 48 hours'
-  },
-  {
-    id: '2',
-    event_type: 'Storm',
-    severity: 'High',
-    latitude: 40.7128,
-    longitude: -74.0060,
-    location: 'New York, NY',
-    probability: 0.85,
-    timeframe: 'Next 24 hours'
-  }
-];
-
-// Disaster type to color mapping
-const getDisasterColor = (type: string): string => {
-  const typeLower = type.toLowerCase();
-  if (typeLower.includes('fire') || typeLower.includes('wildfire')) return '#dc2626'; // Red
-  if (typeLower.includes('flood') || typeLower.includes('water')) return '#2563eb'; // Blue
-  if (typeLower.includes('earthquake') || typeLower.includes('quake')) return '#7c3aed'; // Purple
-  if (typeLower.includes('storm') || typeLower.includes('hurricane') || typeLower.includes('tornado')) return '#059669'; // Green
-  if (typeLower.includes('drought')) return '#d97706'; // Orange
-  if (typeLower.includes('landslide')) return '#92400e'; // Brown
-  return '#6b7280'; // Gray for unknown types
-};
-
-// Disaster type to icon mapping
-const getDisasterIcon = (type: string) => {
-  const typeLower = type.toLowerCase();
-  if (typeLower.includes('fire') || typeLower.includes('wildfire')) return Flame;
-  if (typeLower.includes('flood') || typeLower.includes('water')) return Waves;
-  if (typeLower.includes('earthquake') || typeLower.includes('quake')) return Zap;
-  if (typeLower.includes('storm') || typeLower.includes('hurricane') || typeLower.includes('tornado')) return Wind;
-  if (typeLower.includes('drought')) return CloudRain;
-  if (typeLower.includes('landslide')) return Mountain;
-  return AlertTriangle;
-};
-
-export default function DisasterMap({ 
-  events = [], 
-  predictions = [], 
-  height = '500px',
-  className = ''
-}: DisasterMapProps) {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-
-  const MAPTILER_API_KEY = 'DOCOM2xq5hJddM7rfMdp';
-
-  // Memoize the display data to prevent infinite re-renders
-  const displayEvents = useMemo(() => 
-    events.length > 0 ? events : sampleEvents, 
-    [events]
-  );
-  
-  const displayPredictions = useMemo(() => 
-    predictions.length > 0 ? predictions : samplePredictions, 
-    [predictions]
-  );
-
-  // Memoize the filtered counts to prevent recalculation
-  const validEventsCount = useMemo(() => 
-    displayEvents.filter(e => 
-      typeof e.latitude === 'number' && typeof e.longitude === 'number' &&
-      !isNaN(e.latitude) && !isNaN(e.longitude) &&
-      e.latitude >= -90 && e.latitude <= 90 &&
-      e.longitude >= -180 && e.longitude <= 180
-    ).length,
-    [displayEvents]
-  );
-
-  const validPredictionsCount = useMemo(() => 
-    displayPredictions.filter(p => 
-      typeof p.latitude === 'number' && typeof p.longitude === 'number' &&
-      !isNaN(p.latitude) && !isNaN(p.longitude) &&
-      p.latitude >= -90 && p.latitude <= 90 &&
-      p.longitude >= -180 && p.longitude <= 180
-    ).length,
-    [displayPredictions]
-  );
-
-  // Load MapTiler library
   useEffect(() => {
-    const loadMapTiler = () => {
-      try {
-        if (window.maplibregl) {
-          setIsLoaded(true);
-          setIsLoading(false);
-          return;
-        }
+    if (!mapContainer.current) return;
 
-        // Load MapTiler GL JS CSS
+    // Load Mapbox GL JS dynamically
+    const loadMapbox = async () => {
+      try {
+        // Add Mapbox CSS
         const link = document.createElement('link');
+        link.href = 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css';
         link.rel = 'stylesheet';
-        link.href = 'https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.css';
         document.head.appendChild(link);
 
-        // Load MapTiler GL JS
+        // Load Mapbox GL JS
         const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.js';
-        script.async = true;
+        script.src = 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js';
         script.onload = () => {
-          setIsLoaded(true);
-          setIsLoading(false);
-        };
-        script.onerror = () => {
-          setLoadError('Failed to load MapTiler library');
-          setIsLoading(false);
+          initializeMap();
         };
         document.head.appendChild(script);
       } catch (error) {
-        console.error('Error loading MapTiler:', error);
-        setLoadError('Failed to load MapTiler library');
-        setIsLoading(false);
+        console.error('Error loading Mapbox:', error);
+        toast.error('Failed to load map');
       }
     };
 
-    loadMapTiler();
+    loadMapbox();
   }, []);
 
-  // Initialize map and add markers
-  const initializeMap = useCallback(() => {
-    if (!isLoaded || !mapRef.current) return;
+  const initializeMap = () => {
+    if (!mapContainer.current || !(window as any).mapboxgl) return;
 
-    try {
-      // Initialize map with streets style
-      const mapOptions = {
-        container: mapRef.current,
-        style: `https://api.maptiler.com/maps/streets/style.json?key=${MAPTILER_API_KEY}`,
-        center: [0, 20] as [number, number], // Default center
-        zoom: 2,
-        attributionControl: false,
-        boxZoom: true,
-        doubleClickZoom: true,
-        dragPan: true,
-        dragRotate: false, // Disable rotation for simplicity
-        keyboard: true,
-        scrollZoom: true,
-        touchZoomRotate: true
-      };
+    const mapboxgl = (window as any).mapboxgl;
+    mapboxgl.accessToken = mapboxToken;
 
-      mapInstanceRef.current = new window.maplibregl.Map(mapOptions);
+    const newMap = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: mapStyle,
+      center: [0, 20],
+      zoom: 2,
+      attributionControl: false
+    });
 
-      mapInstanceRef.current.on('load', () => {
-        console.log('Map loaded successfully');
-        console.log('Adding markers for events:', displayEvents.length);
-        console.log('Adding markers for predictions:', displayPredictions.length);
-        
-        // Add all disaster events as markers
-        displayEvents.forEach(event => {
-          // Validate coordinates before adding marker
-          if (typeof event.latitude !== 'number' || typeof event.longitude !== 'number' ||
-              isNaN(event.latitude) || isNaN(event.longitude) ||
-              event.latitude < -90 || event.latitude > 90 ||
-              event.longitude < -180 || event.longitude > 180) {
-            console.warn(`Invalid coordinates for event ${event.name}: lat=${event.latitude}, lng=${event.longitude}`);
-            return; // Skip this marker
-          }
+    newMap.on('load', () => {
+      addDisasterMarkers(newMap);
+    });
 
-          const color = getDisasterColor(event.event_type);
-          
-          // Create marker element
-          const markerEl = document.createElement('div');
-          markerEl.className = 'disaster-marker';
-          markerEl.style.width = '24px';
-          markerEl.style.height = '24px';
-          markerEl.style.borderRadius = '50%';
-          markerEl.style.backgroundColor = color;
-          markerEl.style.border = '3px solid white';
-          markerEl.style.cursor = 'pointer';
-          markerEl.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
-          markerEl.style.transition = 'all 0.2s ease';
-          markerEl.style.display = 'flex';
-          markerEl.style.alignItems = 'center';
-          markerEl.style.justifyContent = 'center';
-          markerEl.title = `${event.name} - ${event.severity}`;
+    setMap(newMap);
+  };
 
-          // Add icon to marker
-          const iconEl = document.createElement('div');
-          iconEl.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`;
-          markerEl.appendChild(iconEl);
+  const addDisasterMarkers = (mapInstance: any) => {
+    disasters.forEach((disaster) => {
+      const marker = new (window as any).mapboxgl.Marker({
+        color: getDisasterColor(disaster.type),
+        scale: getDisasterScale(disaster.severity)
+      })
+        .setLngLat(disaster.coordinates)
+        .setPopup(
+          new (window as any).mapboxgl.Popup({ offset: 25 })
+            .setHTML(createPopupContent(disaster))
+        )
+        .addTo(mapInstance);
 
-          // Add hover effect
-          markerEl.addEventListener('mouseenter', () => {
-            markerEl.style.transform = 'scale(1.2)';
-            markerEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
-          });
-
-          markerEl.addEventListener('mouseleave', () => {
-            markerEl.style.transform = 'scale(1)';
-            markerEl.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
-          });
-
-          // Create popup
-          const popup = new window.maplibregl.Popup({ 
-            offset: 25,
-            closeButton: true,
-            closeOnClick: false,
-            maxWidth: '300px'
-          }).setHTML(`
-            <div style="padding: 12px; font-family: system-ui, -apple-system, sans-serif;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${color}; border: 2px solid white;"></div>
-                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1f2937;">
-                  ${event.name}
-                </h3>
-              </div>
-              <div style="margin-bottom: 8px;">
-                <p style="margin: 0; font-size: 14px; color: #6b7280; text-transform: capitalize;">
-                  ${event.event_type}
-                </p>
-                <p style="margin: 4px 0 0 0; font-size: 14px; color: #6b7280;">
-                  ${event.location}
-                </p>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 12px; color: #9ca3af;">
-                  ${new Date(event.timestamp).toLocaleDateString()}
-                </span>
-                <span style="font-size: 12px; padding: 2px 8px; border-radius: 12px; background-color: ${color}20; color: ${color}; font-weight: 500;">
-                  ${event.severity}
-                </span>
-              </div>
-            </div>
-          `);
-
-          // Add marker to map
-          new window.maplibregl.Marker({ element: markerEl })
-            .setLngLat([event.longitude, event.latitude])
-            .setPopup(popup)
-            .addTo(mapInstanceRef.current);
-        });
-
-        // Add all predictions as markers (yellow/orange color)
-        displayPredictions.forEach(prediction => {
-          // Validate coordinates before adding marker
-          if (typeof prediction.latitude !== 'number' || typeof prediction.longitude !== 'number' ||
-              isNaN(prediction.latitude) || isNaN(prediction.longitude) ||
-              prediction.latitude < -90 || prediction.latitude > 90 ||
-              prediction.longitude < -180 || prediction.longitude > 180) {
-            console.warn(`Invalid coordinates for prediction ${prediction.event_type}: lat=${prediction.latitude}, lng=${prediction.longitude}`);
-            return; // Skip this marker
-          }
-          
-          const markerEl = document.createElement('div');
-          markerEl.className = 'prediction-marker';
-          markerEl.style.width = '20px';
-          markerEl.style.height = '20px';
-          markerEl.style.borderRadius = '50%';
-          markerEl.style.backgroundColor = '#f59e0b'; // Amber for predictions
-          markerEl.style.border = '3px solid white';
-          markerEl.style.cursor = 'pointer';
-          markerEl.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
-          markerEl.style.transition = 'all 0.2s ease';
-          markerEl.style.display = 'flex';
-          markerEl.style.alignItems = 'center';
-          markerEl.style.justifyContent = 'center';
-          markerEl.title = `Prediction: ${prediction.event_type} - ${(prediction.probability * 100).toFixed(0)}%`;
-
-          // Add prediction icon
-          const iconEl = document.createElement('div');
-          iconEl.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`;
-          markerEl.appendChild(iconEl);
-
-          // Add hover effect
-          markerEl.addEventListener('mouseenter', () => {
-            markerEl.style.transform = 'scale(1.2)';
-            markerEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
-          });
-
-          markerEl.addEventListener('mouseleave', () => {
-            markerEl.style.transform = 'scale(1)';
-            markerEl.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
-          });
-
-          // Create popup
-          const popup = new window.maplibregl.Popup({ 
-            offset: 25,
-            closeButton: true,
-            closeOnClick: false,
-            maxWidth: '300px'
-          }).setHTML(`
-            <div style="padding: 12px; font-family: system-ui, -apple-system, sans-serif;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #f59e0b; border: 2px solid white;"></div>
-                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1f2937;">
-                  AI Prediction
-                </h3>
-              </div>
-              <div style="margin-bottom: 8px;">
-                <p style="margin: 0; font-size: 14px; color: #6b7280; text-transform: capitalize;">
-                  ${prediction.event_type}
-                </p>
-                <p style="margin: 4px 0 0 0; font-size: 14px; color: #6b7280;">
-                  ${prediction.location}
-                </p>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 12px; color: #9ca3af;">
-                  ${prediction.timeframe}
-                </span>
-                <span style="font-size: 12px; padding: 2px 8px; border-radius: 12px; background-color: #f59e0b20; color: #d97706; font-weight: 500;">
-                  ${(prediction.probability * 100).toFixed(0)}% probability
-                </span>
-              </div>
-            </div>
-          `);
-
-          // Add marker to map
-          new window.maplibregl.Marker({ element: markerEl })
-            .setLngLat([prediction.longitude, prediction.latitude])
-            .setPopup(popup)
-            .addTo(mapInstanceRef.current);
-        });
+      marker.getElement().addEventListener('click', () => {
+        setSelectedDisaster(disaster);
       });
+    });
+  };
 
-      mapInstanceRef.current.on('error', (error: any) => {
-        console.error('Map error:', error);
-        setLoadError('Map initialization failed');
-      });
-
-    } catch (error) {
-      console.error('Error initializing map:', error);
-      setLoadError('Failed to initialize map');
+  const getDisasterColor = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'earthquake': return '#ff4444';
+      case 'flood': return '#4444ff';
+      case 'wildfire': return '#ff8800';
+      case 'storm': return '#8888ff';
+      case 'tsunami': return '#00aaff';
+      case 'volcano': return '#ff4400';
+      default: return '#666666';
     }
-  }, [isLoaded, displayEvents, displayPredictions]);
+  };
 
-  // Call initializeMap when dependencies change
-  useEffect(() => {
-    initializeMap();
-  }, [initializeMap]);
+  const getDisasterScale = (severity: string) => {
+    switch (severity.toLowerCase()) {
+      case 'critical': return 1.5;
+      case 'high': return 1.2;
+      case 'medium': return 1.0;
+      case 'low': return 0.8;
+      default: return 1.0;
+    }
+  };
 
-  if (loadError) {
-    return (
-      <Card className={`p-6 ${className}`} style={{ height }}>
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-            <p className="text-sm text-red-600">Map Error: {loadError}</p>
+  const createPopupContent = (disaster: Disaster) => {
+    return `
+      <div class="p-4 max-w-xs">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-3 h-3 rounded-full" style="background-color: ${getDisasterColor(disaster.type)}"></div>
+          <h3 class="font-semibold text-lg">${disaster.type}</h3>
+        </div>
+        <p class="text-sm text-gray-600 mb-2">${disaster.location}</p>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <div>
+            <span class="font-medium">Magnitude:</span>
+            <span class="ml-1">${disaster.magnitude}</span>
+          </div>
+          <div>
+            <span class="font-medium">Severity:</span>
+            <span class="ml-1">${disaster.severity}</span>
+          </div>
+          <div>
+            <span class="font-medium">Status:</span>
+            <span class="ml-1">${disaster.status}</span>
+          </div>
+          <div>
+            <span class="font-medium">Affected:</span>
+            <span class="ml-1">${disaster.affected.toLocaleString()}</span>
           </div>
         </div>
-      </Card>
-    );
-  }
+      </div>
+    `;
+  };
 
-  if (isLoading) {
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+    if (map) {
+      setTimeout(() => map.resize(), 100);
+    }
+  };
+
+  const changeMapStyle = (style: string) => {
+    setMapStyle(style);
+    if (map) {
+      map.setStyle(style);
+      map.on('style.load', () => {
+        addDisasterMarkers(map);
+      });
+    }
+  };
+
+  const getDisasterIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'earthquake': return <AlertTriangle className="h-4 w-4" />;
+      case 'flood': return <CloudRain className="h-4 w-4" />;
+      case 'wildfire': return <Flame className="h-4 w-4" />;
+      case 'storm': return <Wind className="h-4 w-4" />;
+      case 'volcano': return <Mountain className="h-4 w-4" />;
+      default: return <MapPin className="h-4 w-4" />;
+    }
+  };
+
+  if (!advanced) {
     return (
-      <Card className={`p-6 ${className}`} style={{ height }}>
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-sm text-gray-600">Loading disaster map...</p>
-          </div>
-        </div>
-      </Card>
+      <div className="relative">
+        <div 
+          ref={mapContainer} 
+          className="w-full rounded-lg overflow-hidden border"
+          style={{ height: `${height}px` }}
+        />
+        {selectedDisaster && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute bottom-4 left-4 bg-white p-4 rounded-lg shadow-lg border max-w-sm"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              {getDisasterIcon(selectedDisaster.type)}
+              <h3 className="font-semibold">{selectedDisaster.type}</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-2">{selectedDisaster.location}</p>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline">{selectedDisaster.severity}</Badge>
+              <Badge variant="outline">{selectedDisaster.status}</Badge>
+            </div>
+          </motion.div>
+        )}
+      </div>
     );
   }
 
   return (
-    <Card className={`overflow-hidden ${className}`} style={{ height }}>
-      <div className="p-4 border-b bg-gray-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h3 className="font-semibold text-gray-900">Global Disaster Map</h3>
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              Real-time
-            </Badge>
+    <Card className={`${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              Advanced Disaster Monitoring Map
+            </CardTitle>
+            <CardDescription>
+              Real-time disaster tracking with advanced visualization
+            </CardDescription>
           </div>
-          <div className="flex items-center gap-3 text-xs text-gray-600">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span>Disasters ({validEventsCount})</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-              <span>Predictions ({validPredictionsCount})</span>
-            </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => changeMapStyle('mapbox://styles/mapbox/satellite-v9')}
+            >
+              Satellite
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => changeMapStyle('mapbox://styles/mapbox/streets-v12')}
+            >
+              Streets
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => changeMapStyle('mapbox://styles/mapbox/dark-v11')}
+            >
+              Dark
+            </Button>
+            <Button variant="outline" size="icon" onClick={toggleFullscreen}>
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
           </div>
         </div>
-      </div>
-      <div 
-        ref={mapRef}
-        className="w-full"
-        style={{ height: `calc(${height} - 80px)` }}
-      />
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {/* Map Controls */}
+          <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              <span className="text-sm font-medium">Filters:</span>
+            </div>
+            <Badge variant="outline">All Types</Badge>
+            <Badge variant="outline">All Severities</Badge>
+            <Badge variant="outline">Active Only</Badge>
+          </div>
+
+          {/* Map Container */}
+          <div className="relative">
+            <div 
+              ref={mapContainer} 
+              className="w-full rounded-lg overflow-hidden border"
+              style={{ height: `${height}px` }}
+            />
+            
+            {/* Map Overlay Controls */}
+            <div className="absolute top-4 right-4 flex flex-col gap-2">
+              <Button size="icon" variant="secondary" className="w-8 h-8">
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button size="icon" variant="secondary" className="w-8 h-8">
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <Button size="icon" variant="secondary" className="w-8 h-8">
+                <Navigation className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Legend */}
+            <div className="absolute bottom-4 left-4 bg-white p-4 rounded-lg shadow-lg border">
+              <h4 className="font-semibold mb-2">Disaster Types</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <span>Earthquake</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <span>Flood</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                  <span>Wildfire</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                  <span>Storm</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Disaster List */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {disasters.map((disaster) => (
+              <motion.div
+                key={disaster.id}
+                className="p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedDisaster(disaster)}
+              >
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="p-2 rounded-full"
+                    style={{ backgroundColor: `${getDisasterColor(disaster.type)}20` }}
+                  >
+                    {getDisasterIcon(disaster.type)}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium">{disaster.type}</h4>
+                    <p className="text-sm text-gray-600">{disaster.location}</p>
+                  </div>
+                  <Badge variant={disaster.status === 'Active' ? 'destructive' : 'outline'}>
+                    {disaster.status}
+                  </Badge>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
     </Card>
   );
-}
+};
+
+export default DisasterMap;

@@ -1,5 +1,8 @@
-import EnterpriseDashboard from '@/components/EnterpriseDashboard';
+import React from 'react';
+import AdvancedDashboard from '@/components/AdvancedDashboard';
 
-export default function ProDashboard() {
-  return <EnterpriseDashboard />;
-}
+const ProDashboard = () => {
+  return <AdvancedDashboard />;
+};
+
+export default ProDashboard;
