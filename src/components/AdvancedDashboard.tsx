@@ -279,6 +279,32 @@ const AdvancedDashboard = () => {
             </div>
           </div>
 
+          {/* Global Temperature Distribution - embedded Ventusky */}
+          <div>
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Thermometer className="h-5 w-5 text-red-500" />
+                  Global Temperature Distribution
+                </CardTitle>
+                <CardDescription>
+                  Interactive global 2m air temperature visualization (Ventusky)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="w-full rounded-lg overflow-hidden border" style={{ height: `600px` }}>
+                  <iframe
+                    src="https://www.ventusky.com/?p=11.2;80.8;4&l=temperature-2m"
+                    title="Global Temperature Distribution"
+                    className="w-full h-full"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
             {criticalAlerts > 0 && (
               <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm ${isDarkMode ? 'border-red-900 text-red-300 bg-red-950/40' : 'border-red-200 text-red-700 bg-red-50'}`}>
@@ -733,10 +759,10 @@ const AdvancedDashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Flame className="h-5 w-5 text-orange-600" />
-                  Wildfire Map (Map of Fire)
+                  Global Wildfire Distribution Monitoring
                 </CardTitle>
                 <CardDescription>
-                  Embedded map from Map of Fire
+                Harness and utilize the NASA FIRMS data to monitor, analyze, and gain actionable insights.
                 </CardDescription>
               </CardHeader>
               <CardContent>
