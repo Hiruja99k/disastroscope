@@ -80,6 +80,7 @@ import DisasterMap from './DisasterMap';
 import AdvancedCharts from './AdvancedCharts';
 import RealTimeMonitor from './RealTimeMonitor';
 import AlertSystem from './AlertSystem';
+import EarthquakeMagnitudeMap from './EarthquakeMagnitudeMap';
 
 // Advanced mock data for enterprise dashboard
 const generateAdvancedData = () => {
@@ -124,6 +125,11 @@ const AdvancedDashboard = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showParticles, setShowParticles] = useState(true);
   const dashboardRef = useRef(null);
+
+  // Debug: Log active tab changes
+  useEffect(() => {
+    // Tab change logging removed to fix linter error
+  }, [activeTab]);
 
   // Advanced motion values for 3D effects
   const mouseX = useMotionValue(0);
@@ -658,6 +664,28 @@ const AdvancedDashboard = () => {
             </motion.div>
           </motion.div>
 
+          {/* Earthquake Magnitude Map - Now visible in Overview tab */}
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.7, duration: 0.8 }}
+          >
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-red-600" />
+                  Global Earthquake Magnitude Distribution
+                </CardTitle>
+                <CardDescription>
+                  Real-time seismic activity monitoring and historical earthquake data visualization
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <EarthquakeMagnitudeMap height={400} />
+              </CardContent>
+            </Card>
+          </motion.div>
+
           {/* Recent Disasters with enhanced animations */}
           <motion.div
             initial={{ y: 50, opacity: 0 }}
@@ -733,20 +761,38 @@ const AdvancedDashboard = () => {
 
         {/* Maps Tab */}
         <TabsContent value="maps">
-          <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Map className="h-5 w-5" />
-                Advanced Disaster Mapping
-              </CardTitle>
-              <CardDescription>
-                Real-time disaster monitoring with advanced visualization
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DisasterMap disasters={data.disasters} advanced={true} />
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Map className="h-5 w-5" />
+                  Advanced Disaster Mapping
+                </CardTitle>
+                <CardDescription>
+                  Real-time disaster monitoring with advanced visualization
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DisasterMap disasters={data.disasters} advanced={true} />
+              </CardContent>
+            </Card>
+            
+            {/* Earthquake Magnitude Map */}
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Global Earthquake Magnitude Distribution
+                </CardTitle>
+                <CardDescription>
+                  Real-time seismic activity monitoring and historical earthquake data visualization
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <EarthquakeMagnitudeMap height={500} />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Alerts Tab */}

@@ -119,6 +119,7 @@ import AdvancedAnalytics from '@/components/AdvancedAnalytics';
 import EnhancedAlerts from '@/components/EnhancedAlerts';
 import DisasterMap from '@/components/DisasterMap';
 import MapErrorBoundary from '@/components/MapErrorBoundary';
+import EarthquakeMagnitudeMap from '@/components/EarthquakeMagnitudeMap';
 import { apiService, Prediction as ApiPrediction, DisasterEvent as ApiEvent, SensorData as ApiSensorData } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -3260,6 +3261,21 @@ export default function EnhancedDashboard() {
                     </div>
                   </Card>
                 </div>
+                
+                {/* Earthquake Magnitude Map */}
+                <Card className="p-6 bg-gradient-card border-border/50">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-xl font-semibold text-foreground">Global Earthquake Magnitude Distribution</h3>
+                      <p className="text-sm text-muted-foreground">Real-time seismic activity monitoring and historical earthquake data visualization</p>
+                    </div>
+                    <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
+                      <Activity className="h-3 w-3 mr-1" />
+                      Live Data
+                    </Badge>
+                  </div>
+                  <EarthquakeMagnitudeMap height={500} />
+                </Card>
               </div>
             </TabsContent>
 

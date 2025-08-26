@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useGeolocation } from '@/hooks/useGeolocation';
-import apiService from '@/services/api';
+import { apiService } from '@/services/api';
 
 interface AdvancedAnalysisProps {
   isOpen: boolean;

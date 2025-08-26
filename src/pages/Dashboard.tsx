@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import DisasterMap from '@/components/DisasterMap';
 import MapErrorBoundary from '@/components/MapErrorBoundary';
+import EarthquakeMagnitudeMap from '@/components/EarthquakeMagnitudeMap';
 
 // Simple data fetching without complex hooks
 const useSimpleData = () => {
@@ -200,6 +201,17 @@ export default function Dashboard() {
 
           {/* Events List */}
           <div className="space-y-6">
+            {/* Earthquake Magnitude Map */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Global Earthquake Activity</h3>
+                <Badge variant="outline">
+                  <Activity className="h-3 w-3 mr-1" />
+                  Live Data
+                </Badge>
+              </div>
+              <EarthquakeMagnitudeMap height="300px" />
+            </Card>
             <Card className="p-6">
               <h3 className="text-lg font-semibold mb-4">Recent Events</h3>
               {loading ? (
