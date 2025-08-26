@@ -3,26 +3,16 @@ import Plot from 'react-plotly.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   MapPin, 
   Activity, 
   AlertTriangle, 
   RefreshCw, 
-  Filter,
   Globe,
   TrendingUp,
   Clock,
-  Download,
   Layers
 } from 'lucide-react';
-
-// Function to unpack data from rows (exact implementation from Plotly example)
-const unpack = (rows: any[], key: string) => {
-  return rows.map(function(row: any) { 
-    return row[key]; 
-  });
-};
 
 interface EarthquakeData {
   Longitude: number;
@@ -54,7 +44,7 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
         
         const csvText = await response.text();
         
-        // Parse CSV data
+        // Parse CSV data - exact implementation from Plotly example
         const rows = csvText.split('\n').slice(1) // Skip header row
           .filter(row => row.trim() !== '') // Remove empty rows
           .map(row => {
@@ -78,6 +68,13 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
 
     fetchEarthquakeData();
   }, []);
+
+  // Function to unpack data from rows (exact implementation from Plotly example)
+  const unpack = (rows: any[], key: string) => {
+    return rows.map(function(row: any) { 
+      return row[key]; 
+    });
+  };
 
   // Exact data structure from Plotly example
   const plotData = [{
