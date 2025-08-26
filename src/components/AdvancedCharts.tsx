@@ -24,46 +24,32 @@ interface AdvancedChartsProps {
   data?: any;
 }
 
-// Helper: lazy load Nivo components safely
+// Helper: lazy load Nivo components safely, gated by a runtime flag
 const isClient = typeof window !== 'undefined';
+const enableNivo = isClient && (window as any).__ENABLE_NIVO__ === true;
 
 function createLazyNivo<TProps>(
   loader: () => Promise<{ default: React.ComponentType<TProps> }>
 ) {
-  // Wrap in try/catch to avoid hard crashes if module missing
   try {
     return React.lazy(loader);
   } catch (e) {
-    // Fallback dummy component
-    return React.lazy(async () => ({
-      default: (props: any) => null,
-    }));
+    return React.lazy(async () => ({ default: (props: any) => null }));
   }
 }
 
-const LazyLine = createLazyNivo<any>(async () => {
-  const m = await import('@nivo/line');
-  // @ts-ignore
-  return { default: m.ResponsiveLine };
-});
-
-const LazyBar = createLazyNivo<any>(async () => {
-  const m = await import('@nivo/bar');
-  // @ts-ignore
-  return { default: m.ResponsiveBar };
-});
-
-const LazyPie = createLazyNivo<any>(async () => {
-  const m = await import('@nivo/pie');
-  // @ts-ignore
-  return { default: m.ResponsivePie };
-});
-
-const LazyHeatmap = createLazyNivo<any>(async () => {
-  const m = await import('@nivo/heatmap');
-  // @ts-ignore
-  return { default: m.ResponsiveHeatMap };
-});
+const LazyLine = enableNivo
+  ? createLazyNivo<any>(async () => { const m = await import('@nivo/line'); return { default: (m as any).ResponsiveLine }; })
+  : undefined as any;
+const LazyBar = enableNivo
+  ? createLazyNivo<any>(async () => { const m = await import('@nivo/bar'); return { default: (m as any).ResponsiveBar }; })
+  : undefined as any;
+const LazyPie = enableNivo
+  ? createLazyNivo<any>(async () => { const m = await import('@nivo/pie'); return { default: (m as any).ResponsivePie }; })
+  : undefined as any;
+const LazyHeatmap = enableNivo
+  ? createLazyNivo<any>(async () => { const m = await import('@nivo/heatmap'); return { default: (m as any).ResponsiveHeatMap }; })
+  : undefined as any;
 
 const Placeholder: React.FC<{ icon: React.ReactNode; title: string; subtitle?: string }> = ({ icon, title, subtitle }) => (
   <div className="flex items-center justify-center h-full bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
@@ -114,7 +100,8 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type }) => {
     const heightStyle = { height: '300px' } as const;
     switch (chartType) {
       case 'line':
-        return isClient ? (
+        if (!enableNivo) return <Placeholder icon={<LineChart className="h-12 w-12" />} title="Line Chart disabled" subtitle="Set window.__ENABLE_NIVO__ = true to enable" />;
+        return (
           <div style={heightStyle}>
             <Suspense fallback={<Placeholder icon={<LineChart className="h-12 w-12" />} title="Loading line chart..." /> }>
               <LazyLine
@@ -134,11 +121,10 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type }) => {
               />
             </Suspense>
           </div>
-        ) : (
-          <Placeholder icon={<LineChart className="h-12 w-12" />} title="Line Chart unavailable" />
         );
       case 'bar':
-        return isClient ? (
+        if (!enableNivo) return <Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Bar Chart disabled" subtitle="Set window.__ENABLE_NIVO__ = true to enable" />;
+        return (
           <div style={heightStyle}>
             <Suspense fallback={<Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Loading bar chart..." /> }>
               <LazyBar
@@ -166,11 +152,10 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type }) => {
               />
             </Suspense>
           </div>
-        ) : (
-          <Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Bar Chart unavailable" />
         );
       case 'pie':
-        return isClient ? (
+        if (!enableNivo) return <Placeholder icon={<PieChart className="h-12 w-12" />} title="Pie Chart disabled" subtitle="Set window.__ENABLE_NIVO__ = true to enable" />;
+        return (
           <div style={heightStyle}>
             <Suspense fallback={<Placeholder icon={<PieChart className="h-12 w-12" />} title="Loading pie chart..." /> }>
               <LazyPie
@@ -185,11 +170,10 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type }) => {
               />
             </Suspense>
           </div>
-        ) : (
-          <Placeholder icon={<PieChart className="h-12 w-12" />} title="Pie Chart unavailable" />
         );
       case 'heatmap':
-        return isClient ? (
+        if (!enableNivo) return <Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Heatmap disabled" subtitle="Set window.__ENABLE_NIVO__ = true to enable" />;
+        return (
           <div style={heightStyle}>
             <Suspense fallback={<Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Loading heatmap..." /> }>
               <LazyHeatmap
@@ -203,8 +187,6 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type }) => {
               />
             </Suspense>
           </div>
-        ) : (
-          <Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Heatmap unavailable" />
         );
       default:
         return null;
@@ -336,7 +318,7 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type }) => {
             </CardHeader>
             <CardContent>
               <div style={{ height: '300px' }}>
-                {isClient ? (
+                {enableNivo ? (
                   <Suspense fallback={<Placeholder icon={<PieChart className="h-12 w-12" />} title="Loading pie chart..." /> }>
                     <LazyPie
                       data={generateAnalyticsData()}
@@ -350,7 +332,7 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type }) => {
                     />
                   </Suspense>
                 ) : (
-                  <Placeholder icon={<PieChart className="h-12 w-12" />} title="Pie Chart unavailable" />
+                  <Placeholder icon={<PieChart className="h-12 w-12" />} title="Pie Chart disabled" subtitle="Set window.__ENABLE_NIVO__ = true to enable" />
                 )}
               </div>
             </CardContent>
@@ -365,7 +347,7 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type }) => {
             </CardHeader>
             <CardContent>
               <div style={{ height: '300px' }}>
-                {isClient ? (
+                {enableNivo ? (
                   <Suspense fallback={<Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Loading heatmap..." /> }>
                     <LazyHeatmap
                       data={generateHeatmapData()}
@@ -378,7 +360,7 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type }) => {
                     />
                   </Suspense>
                 ) : (
-                  <Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Heatmap unavailable" />
+                  <Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Heatmap disabled" subtitle="Set window.__ENABLE_NIVO__ = true to enable" />
                 )}
               </div>
             </CardContent>
