@@ -103,11 +103,16 @@ const DisasterMap: React.FC<DisasterMapProps> = ({ disasters, advanced = false, 
 
   const addDisasterMarkers = (mapInstance: any) => {
     disasters.forEach((disaster) => {
+      // Input coordinates are provided as [lat, lon] in the dashboard data.
+      // Mapbox expects [lon, lat]. Flip the order defensively.
+      const [lat, lon] = disaster.coordinates;
+      const lngLat: [number, number] = [lon, lat];
+
       const marker = new (window as any).mapboxgl.Marker({
         color: getDisasterColor(disaster.type),
         scale: getDisasterScale(disaster.severity)
       })
-        .setLngLat(disaster.coordinates)
+        .setLngLat(lngLat)
         .setPopup(
           new (window as any).mapboxgl.Popup({ offset: 25 })
             .setHTML(createPopupContent(disaster))
