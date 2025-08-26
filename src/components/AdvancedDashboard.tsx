@@ -279,31 +279,7 @@ const AdvancedDashboard = () => {
             </div>
           </div>
 
-          {/* Global Temperature Distribution - embedded Ventusky */}
-          <div>
-            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Thermometer className="h-5 w-5 text-red-500" />
-                  Global Temperature Distribution
-                </CardTitle>
-                <CardDescription>
-                  Interactive global 2m air temperature visualization (Ventusky)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="w-full rounded-lg overflow-hidden border" style={{ height: `600px` }}>
-                  <iframe
-                    src="https://www.ventusky.com/?p=11.2;80.8;4&l=temperature-2m"
-                    title="Global Temperature Distribution"
-                    className="w-full h-full"
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          
 
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
             {criticalAlerts > 0 && (
@@ -770,6 +746,32 @@ const AdvancedDashboard = () => {
                   <iframe
                     src="https://www.mapofire.com/"
                     title="Wildfire Map"
+                    className="w-full h-full"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Global Temperature Distribution - embedded Ventusky (placed right after wildfire map) */}
+          <div>
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Thermometer className="h-5 w-5 text-red-500" />
+                  Global Temperature Distribution
+                </CardTitle>
+                <CardDescription>
+                  Interactive global 2m air temperature visualization (Ventusky)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="w-full rounded-lg overflow-hidden border" style={{ height: `600px` }}>
+                  <iframe
+                    src="https://www.ventusky.com/?p=11.2;80.8;4&l=temperature-2m"
+                    title="Global Temperature Distribution"
                     className="w-full h-full"
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
