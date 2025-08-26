@@ -1,442 +1,555 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
-  Activity, 
-  AlertTriangle, 
-  BarChart3, 
-  Clock, 
-  Globe, 
-  MapPin, 
   TrendingUp, 
-  Users,
-  Zap,
+  TrendingDown, 
+  Users, 
+  AlertTriangle, 
+  MapPin, 
+  Clock, 
+  Filter, 
+  Download, 
+  MoreHorizontal, 
+  Eye, 
+  Edit, 
+  Trash2, 
+  Plus, 
+  Search, 
+  Bell, 
+  Settings,
+  Activity,
+  BarChart3,
+  PieChart,
+  Globe,
   Shield,
+  Zap,
+  Target,
   Database,
-  Cpu
+  Server,
+  Satellite,
+  Radar,
+  Thermometer,
+  Droplets,
+  Wind,
+  Flame,
+  Mountain,
+  CloudRain,
+  Sun,
+  Gauge
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useDisasterLoadingState, useStats } from '@/hooks/useDisasterData';
-import { trackEvent } from '@/utils/monitoring';
+import { toast } from 'react-hot-toast';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+} from 'recharts';
 
-interface MetricCardProps {
-  title: string;
-  value: string | number;
-  change?: number;
-  icon: React.ReactNode;
-  color: string;
-  loading?: boolean;
-}
+// Mock data for charts and tables
+const disasterTrendsData = [
+  { month: 'Jan', earthquakes: 12, floods: 8, wildfires: 15, storms: 20 },
+  { month: 'Feb', earthquakes: 15, floods: 10, wildfires: 18, storms: 25 },
+  { month: 'Mar', earthquakes: 18, floods: 12, wildfires: 22, storms: 30 },
+  { month: 'Apr', earthquakes: 20, floods: 15, wildfires: 25, storms: 28 },
+  { month: 'May', earthquakes: 22, floods: 18, wildfires: 30, storms: 35 },
+  { month: 'Jun', earthquakes: 25, floods: 20, wildfires: 35, storms: 40 },
+];
 
-const MetricCard: React.FC<MetricCardProps> = ({ title, value, change, icon, color, loading }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <Card className="relative overflow-hidden">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <div className="flex items-center gap-2 mt-2">
-              <p className="text-2xl font-bold">
-                {loading ? (
-                  <div className="h-8 w-16 bg-gray-200 rounded animate-pulse" />
-                ) : (
-                  value
-                )}
-              </p>
-              {change !== undefined && (
-                <Badge 
-                  variant={change >= 0 ? "default" : "destructive"}
-                  className="text-xs"
-                >
-                  {change >= 0 ? '+' : ''}{change}%
-                </Badge>
-              )}
-            </div>
-          </div>
-          <div className={`p-3 rounded-full ${color}`}>
-            {icon}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  </motion.div>
-);
+const predictionAccuracyData = [
+  { name: 'Earthquakes', value: 94.2, color: '#3182CE' },
+  { name: 'Floods', value: 89.7, color: '#38B2AC' },
+  { name: 'Wildfires', value: 91.5, color: '#ED8936' },
+  { name: 'Storms', value: 87.3, color: '#805AD5' },
+];
 
-interface SystemStatusProps {
-  status: 'operational' | 'degraded' | 'down';
-  name: string;
-  uptime: string;
-}
+const recentEvents = [
+  {
+    id: 1,
+    type: 'Earthquake',
+    location: 'San Francisco, CA',
+    magnitude: '6.2',
+    severity: 'High',
+    status: 'Active',
+    timestamp: '2 hours ago',
+    affected: 125000,
+  },
+  {
+    id: 2,
+    type: 'Flood',
+    location: 'Miami, FL',
+    magnitude: 'Category 3',
+    severity: 'Medium',
+    status: 'Monitoring',
+    timestamp: '4 hours ago',
+    affected: 89000,
+  },
+  {
+    id: 3,
+    type: 'Wildfire',
+    location: 'Los Angeles, CA',
+    magnitude: 'Large',
+    severity: 'Critical',
+    status: 'Active',
+    timestamp: '6 hours ago',
+    affected: 156000,
+  },
+  {
+    id: 4,
+    type: 'Storm',
+    location: 'New Orleans, LA',
+    magnitude: 'Category 2',
+    severity: 'Medium',
+    status: 'Resolved',
+    timestamp: '1 day ago',
+    affected: 67000,
+  },
+];
 
-const SystemStatus: React.FC<SystemStatusProps> = ({ status, name, uptime }) => {
-  const statusConfig = {
-    operational: { color: 'bg-green-500', text: 'Operational' },
-    degraded: { color: 'bg-yellow-500', text: 'Degraded' },
-    down: { color: 'bg-red-500', text: 'Down' }
+const sensorData = [
+  { name: 'Temperature', value: 24.5, unit: '°C', status: 'Normal' },
+  { name: 'Humidity', value: 65, unit: '%', status: 'Normal' },
+  { name: 'Pressure', value: 1013, unit: 'hPa', status: 'Normal' },
+  { name: 'Wind Speed', value: 12, unit: 'km/h', status: 'Elevated' },
+  { name: 'Air Quality', value: 45, unit: 'AQI', status: 'Good' },
+];
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+export default function EnterpriseDashboard() {
+  const [selectedTimeframe, setSelectedTimeframe] = useState('30d');
+  const [selectedRegion, setSelectedRegion] = useState('all');
+
+  const handleExport = () => {
+    toast.success('Export started! Your dashboard data is being exported...');
   };
 
-  const config = statusConfig[status];
-
-  return (
-    <div className="flex items-center justify-between p-4 border rounded-lg">
-      <div className="flex items-center gap-3">
-        <div className={`w-3 h-3 rounded-full ${config.color}`} />
-        <div>
-          <p className="font-medium">{name}</p>
-          <p className="text-sm text-muted-foreground">Uptime: {uptime}</p>
-        </div>
-      </div>
-      <Badge variant="outline">{config.text}</Badge>
-    </div>
-  );
-};
-
-export function EnterpriseDashboard() {
-  const { isLoading, isError, error } = useDisasterLoadingState();
-  const { data: stats } = useStats();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [systemMetrics, setSystemMetrics] = useState({
-    cpu: 45,
-    memory: 62,
-    network: 78,
-    storage: 34
-  });
-
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSystemMetrics(prev => ({
-        cpu: Math.max(20, Math.min(90, prev.cpu + (Math.random() - 0.5) * 10)),
-        memory: Math.max(30, Math.min(85, prev.memory + (Math.random() - 0.5) * 8)),
-        network: Math.max(50, Math.min(95, prev.network + (Math.random() - 0.5) * 12)),
-        storage: Math.max(25, Math.min(60, prev.storage + (Math.random() - 0.5) * 5))
-      }));
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    trackEvent('dashboard_tab_changed', { tab: value });
+  const getSeverityColor = (severity: string) => {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        return 'destructive';
+      case 'high':
+        return 'default';
+      case 'medium':
+        return 'secondary';
+      case 'low':
+        return 'outline';
+      default:
+        return 'outline';
+    }
   };
 
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 text-center">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Dashboard Error</h3>
-            <p className="text-muted-foreground">
-              Unable to load dashboard data. Please try again later.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'destructive';
+      case 'monitoring':
+        return 'secondary';
+      case 'resolved':
+        return 'default';
+      default:
+        return 'outline';
+    }
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Enterprise Dashboard</h1>
-          <p className="text-muted-foreground">
-            Real-time monitoring and analytics for DisastroScope
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">DisastroScope Dashboard</h1>
+          <p className="text-gray-600">Real-time disaster monitoring and prediction analytics</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full" />
-            Live
-          </Badge>
-          <Button variant="outline" size="sm">
-            <Zap className="h-4 w-4 mr-2" />
-            Refresh
+        
+        <div className="flex items-center gap-4">
+          <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7d">Last 7 days</SelectItem>
+              <SelectItem value="30d">Last 30 days</SelectItem>
+              <SelectItem value="90d">Last 90 days</SelectItem>
+              <SelectItem value="1y">Last year</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Regions</SelectItem>
+              <SelectItem value="us-west">US West</SelectItem>
+              <SelectItem value="us-east">US East</SelectItem>
+              <SelectItem value="us-central">US Central</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          
+          <Button variant="ghost" size="icon">
+            <Bell className="h-4 w-4" />
+          </Button>
+          
+          <Button variant="ghost" size="icon">
+            <Settings className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title="Active Disasters"
-          value={stats?.activeDisasters || 0}
-          change={12}
-          icon={<AlertTriangle className="h-6 w-6 text-white" />}
-          color="bg-red-500"
-          loading={isLoading}
-        />
-        <MetricCard
-          title="Predictions Generated"
-          value={stats?.totalPredictions || 0}
-          change={8}
-          icon={<TrendingUp className="h-6 w-6 text-white" />}
-          color="bg-blue-500"
-          loading={isLoading}
-        />
-        <MetricCard
-          title="System Uptime"
-          value="99.9%"
-          change={0.1}
-          icon={<Shield className="h-6 w-6 text-white" />}
-          color="bg-green-500"
-        />
-        <MetricCard
-          title="API Response Time"
-          value="245ms"
-          change={-5}
-          icon={<Zap className="h-6 w-6 text-white" />}
-          color="bg-purple-500"
-        />
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Events</p>
+                <p className="text-2xl font-bold">1,247</p>
+                <div className="flex items-center gap-1 text-sm text-green-600">
+                  <TrendingUp className="h-4 w-4" />
+                  +12.5%
+                </div>
+              </div>
+              <div className="p-3 rounded-full bg-blue-100">
+                <Activity className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Active Alerts</p>
+                <p className="text-2xl font-bold text-orange-600">23</p>
+                <div className="flex items-center gap-1 text-sm text-green-600">
+                  <TrendingDown className="h-4 w-4" />
+                  -8.2%
+                </div>
+              </div>
+              <div className="p-3 rounded-full bg-orange-100">
+                <AlertTriangle className="h-6 w-6 text-orange-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Prediction Accuracy</p>
+                <p className="text-2xl font-bold text-green-600">94.2%</p>
+                <div className="flex items-center gap-1 text-sm text-green-600">
+                  <TrendingUp className="h-4 w-4" />
+                  +2.1%
+                </div>
+              </div>
+              <div className="p-3 rounded-full bg-green-100">
+                <Target className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Affected Population</p>
+                <p className="text-2xl font-bold text-red-600">2.1M</p>
+                <div className="flex items-center gap-1 text-sm text-red-600">
+                  <TrendingUp className="h-4 w-4" />
+                  +15.3%
+                </div>
+              </div>
+              <div className="p-3 rounded-full bg-red-100">
+                <Users className="h-6 w-6 text-red-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="system">System</TabsTrigger>
-          <TabsTrigger value="alerts">Alerts</TabsTrigger>
-        </TabsList>
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Disaster Trends Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Disaster Trends</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={disasterTrendsData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="earthquakes"
+                  stroke="#3182CE"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="floods"
+                  stroke="#38B2AC"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="wildfires"
+                  stroke="#ED8936"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="storms"
+                  stroke="#805AD5"
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Real-time Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5" />
-                  Real-time Activity
-                </CardTitle>
-                <CardDescription>
-                  Live system activity and user interactions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { time: '2s ago', event: 'New prediction generated', user: 'User_123' },
-                    { time: '5s ago', event: 'Disaster alert triggered', user: 'System' },
-                    { time: '12s ago', event: 'Weather data updated', user: 'API' },
-                    { time: '18s ago', event: 'User login', user: 'User_456' },
-                    { time: '25s ago', event: 'Data export completed', user: 'User_789' }
-                  ].map((item, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                    >
+        {/* Prediction Accuracy Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Prediction Accuracy by Type</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <RechartsPieChart>
+                <Pie
+                  data={predictionAccuracyData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${value}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {predictionAccuracyData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </RechartsPieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tables Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Recent Events Table */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Recent Events</CardTitle>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Event
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Severity</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentEvents.map((event) => (
+                  <TableRow key={event.id}>
+                    <TableCell>
+                      <Badge variant="outline">{event.type}</Badge>
+                    </TableCell>
+                    <TableCell>
                       <div>
-                        <p className="font-medium">{item.event}</p>
-                        <p className="text-sm text-muted-foreground">{item.user}</p>
+                        <p className="text-sm font-medium">{event.location}</p>
+                        <p className="text-xs text-muted-foreground">{event.timestamp}</p>
                       </div>
-                      <span className="text-sm text-muted-foreground">{item.time}</span>
-                    </motion.div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* System Performance */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  System Performance
-                </CardTitle>
-                <CardDescription>
-                  Current system resource utilization
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { label: 'CPU Usage', value: systemMetrics.cpu, color: 'bg-blue-500' },
-                    { label: 'Memory Usage', value: systemMetrics.memory, color: 'bg-green-500' },
-                    { label: 'Network I/O', value: systemMetrics.network, color: 'bg-purple-500' },
-                    { label: 'Storage', value: systemMetrics.storage, color: 'bg-orange-500' }
-                  ].map((metric, index) => (
-                    <div key={index}>
-                      <div className="flex justify-between mb-2">
-                        <span className="text-sm font-medium">{metric.label}</span>
-                        <span className="text-sm text-muted-foreground">{metric.value.toFixed(1)}%</span>
-                      </div>
-                      <Progress value={metric.value} className="h-2" />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle>Disaster Trends</CardTitle>
-                <CardDescription>
-                  Monthly disaster occurrence patterns
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 flex items-center justify-center bg-muted/20 rounded-lg">
-                  <p className="text-muted-foreground">Chart component would go here</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Locations</CardTitle>
-                <CardDescription>
-                  Most affected areas this month
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { location: 'California, USA', count: 45, change: 12 },
-                    { location: 'Tokyo, Japan', count: 38, change: -5 },
-                    { location: 'Sydney, Australia', count: 32, change: 8 },
-                    { location: 'London, UK', count: 28, change: -2 },
-                    { location: 'Mumbai, India', count: 25, change: 15 }
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{item.location}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{item.count}</span>
-                        <Badge variant={item.change >= 0 ? "default" : "destructive"} className="text-xs">
-                          {item.change >= 0 ? '+' : ''}{item.change}%
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="system" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>System Status</CardTitle>
-                <CardDescription>
-                  Current status of all system components
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <SystemStatus status="operational" name="API Gateway" uptime="99.9%" />
-                  <SystemStatus status="operational" name="Database" uptime="99.8%" />
-                  <SystemStatus status="degraded" name="ML Prediction Service" uptime="98.5%" />
-                  <SystemStatus status="operational" name="Weather API" uptime="99.7%" />
-                  <SystemStatus status="operational" name="Monitoring System" uptime="100%" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Deployments</CardTitle>
-                <CardDescription>
-                  Latest system updates and deployments
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { version: 'v2.1.0', status: 'success', time: '2 hours ago', description: 'Performance optimizations' },
-                    { version: 'v2.0.5', status: 'success', time: '1 day ago', description: 'Bug fixes and security updates' },
-                    { version: 'v2.0.4', status: 'success', time: '3 days ago', description: 'New ML model deployment' },
-                    { version: 'v2.0.3', status: 'success', time: '1 week ago', description: 'UI improvements' }
-                  ].map((deployment, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{deployment.version}</p>
-                        <p className="text-sm text-muted-foreground">{deployment.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant="outline" className="text-green-600 border-green-600">
-                          {deployment.status}
-                        </Badge>
-                        <p className="text-sm text-muted-foreground mt-1">{deployment.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="alerts" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Active Alerts</CardTitle>
-              <CardDescription>
-                Current system alerts and notifications
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  { severity: 'high', title: 'High CPU Usage', description: 'CPU usage exceeded 85% threshold', time: '5 minutes ago' },
-                  { severity: 'medium', title: 'Database Connection Pool', description: 'Connection pool at 80% capacity', time: '15 minutes ago' },
-                  { severity: 'low', title: 'Weather API Latency', description: 'Response time increased by 200ms', time: '1 hour ago' }
-                ].map((alert, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className={`p-4 border-l-4 rounded-lg ${
-                      alert.severity === 'high' ? 'border-red-500 bg-red-50' :
-                      alert.severity === 'medium' ? 'border-yellow-500 bg-yellow-50' :
-                      'border-blue-500 bg-blue-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">{alert.title}</h4>
-                        <p className="text-sm text-muted-foreground">{alert.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <Badge 
-                          variant={alert.severity === 'high' ? 'destructive' : 
-                                  alert.severity === 'medium' ? 'default' : 'secondary'}
-                        >
-                          {alert.severity}
-                        </Badge>
-                        <p className="text-sm text-muted-foreground mt-1">{alert.time}</p>
-                      </div>
-                    </div>
-                  </motion.div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getSeverityColor(event.severity)}>
+                        {event.severity}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusColor(event.status)}>
+                        {event.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-600">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Sensor Data */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Sensor Readings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {sensorData.map((sensor, index) => (
+                <div key={index}>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">{sensor.name}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {sensor.value} {sensor.unit}
+                    </span>
+                  </div>
+                  <Progress value={sensor.value} className="h-2" />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Status: {sensor.status}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Additional Metrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Model Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm mb-2">Response Time</p>
+                <Progress value={85} className="h-2" />
+                <p className="text-xs text-muted-foreground">85% - Excellent</p>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <div>
+                <p className="text-sm mb-2">Data Processing</p>
+                <Progress value={92} className="h-2" />
+                <p className="text-xs text-muted-foreground">92% - Optimal</p>
+              </div>
+              <div>
+                <p className="text-sm mb-2">System Uptime</p>
+                <Progress value={99.8} className="h-2" />
+                <p className="text-xs text-muted-foreground">99.8% - Outstanding</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Geographic Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={disasterTrendsData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="earthquakes" fill="#3182CE" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Team Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+                             <div className="flex justify-between items-center">
+                 <span className="text-sm">Active Analysts</span>
+                 <div className="flex -space-x-2">
+                   <Avatar className="border-2 border-white">
+                     <AvatarImage src="https://github.com/shadcn.png" />
+                     <AvatarFallback>JD</AvatarFallback>
+                   </Avatar>
+                   <Avatar className="border-2 border-white">
+                     <AvatarImage src="https://github.com/shadcn.png" />
+                     <AvatarFallback>JS</AvatarFallback>
+                   </Avatar>
+                   <Avatar className="border-2 border-white">
+                     <AvatarImage src="https://github.com/shadcn.png" />
+                     <AvatarFallback>MJ</AvatarFallback>
+                   </Avatar>
+                 </div>
+               </div>
+              <div>
+                <p className="text-sm mb-2">Tasks Completed</p>
+                <Progress value={78} className="h-2" />
+                <p className="text-xs text-muted-foreground">78% - On Track</p>
+              </div>
+              <div>
+                <p className="text-sm mb-2">Alerts Responded</p>
+                <Progress value={95} className="h-2" />
+                <p className="text-xs text-muted-foreground">95% - Excellent</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
-
-export default EnterpriseDashboard;

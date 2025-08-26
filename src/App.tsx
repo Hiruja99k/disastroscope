@@ -22,6 +22,7 @@ import { Refine } from "@refinedev/core";
 import { dataProvider, liveProvider, notificationProvider } from "./lib/refine";
 
 
+
 const queryClient = new QueryClient();
 
 // Component to track page views
@@ -41,54 +42,54 @@ function PageViewTracker() {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        {(() => {
-          const useHash =
-            import.meta.env.VITE_HASH_ROUTER === 'true' ||
-            (typeof window !== 'undefined' && (
-              window.location.hostname === 'disastroscope.site' ||
-              window.location.hostname === 'www.disastroscope.site'
-            ));
-          const RouterImpl: any = useHash ? HashRouter : BrowserRouter;
-          return (
-            <RouterImpl>
-              <Refine
-                dataProvider={dataProvider}
-                liveProvider={liveProvider}
-                notificationProvider={notificationProvider}
-                resources={[
-                  { name: 'events' },
-                  { name: 'predictions' },
-                  { name: 'sensors' },
-                  { name: 'reports' },
-                ]}
-              >
-                <PerformanceMonitor />
-                <PageViewTracker />
-                <RealTimeBridge />
-                <Navigation />
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          {(() => {
+            const useHash =
+              import.meta.env.VITE_HASH_ROUTER === 'true' ||
+              (typeof window !== 'undefined' && (
+                window.location.hostname === 'disastroscope.site' ||
+                window.location.hostname === 'www.disastroscope.site'
+              ));
+            const RouterImpl: any = useHash ? HashRouter : BrowserRouter;
+            return (
+              <RouterImpl>
+                <Refine
+                  dataProvider={dataProvider}
+                  liveProvider={liveProvider}
+                  notificationProvider={notificationProvider}
+                  resources={[
+                    { name: 'events' },
+                    { name: 'predictions' },
+                    { name: 'sensors' },
+                    { name: 'reports' },
+                  ]}
+                >
+                  <PerformanceMonitor />
+                  <PageViewTracker />
+                  <RealTimeBridge />
+                  <Navigation />
 
-                <Routes>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/predictions" element={<Predictions />} />
-                  <Route path="/weather" element={<WeatherExplorer />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/dashboard-simple" element={<SimpleDashboard />} />
-                  <Route path="/insights" element={<Insights />} />
-                  <Route path="/map" element={<AdvancedMapPage />} />
-                  <Route path="/about" element={<About />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Refine>
-            </RouterImpl>
-          );
-        })()}
-      </TooltipProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
-);
+                  <Routes>
+                    <Route path="/" element={<Landing />} />
+                    <Route path="/predictions" element={<Predictions />} />
+                    <Route path="/weather" element={<WeatherExplorer />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dashboard-simple" element={<SimpleDashboard />} />
+                    <Route path="/insights" element={<Insights />} />
+                    <Route path="/map" element={<AdvancedMapPage />} />
+                    <Route path="/about" element={<About />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Refine>
+              </RouterImpl>
+            );
+          })()}
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
 
 export default App;

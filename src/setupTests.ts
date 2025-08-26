@@ -23,6 +23,7 @@ Object.defineProperty(global, 'import', {
         PROD: true,
         VITE_SENTRY_DSN: '',
         VITE_ANALYTICS_ID: '',
+        VITE_MAPTILER_API_KEY: 'test-maptiler-key',
       },
     },
   },
