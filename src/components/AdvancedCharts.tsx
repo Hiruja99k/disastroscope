@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,158 +17,195 @@ import {
   Eye,
   Settings
 } from 'lucide-react';
-// Temporarily comment out Nivo imports until they're installed
-// import { ResponsiveLine } from '@nivo/line';
-// import { ResponsiveBar } from '@nivo/bar';
-// import { ResponsivePie } from '@nivo/pie';
-// import { ResponsiveHeatMap } from '@nivo/heatmap';
-import { format, subDays, subHours } from 'date-fns';
+import { format, subDays } from 'date-fns';
 
 interface AdvancedChartsProps {
   type: 'trends' | 'analytics';
   data?: any;
 }
 
-const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type, data }) => {
-  const [chartType, setChartType] = useState<'line' | 'bar' | 'pie' | 'heatmap'>('line');
-  const [timeframe, setTimeframe] = useState('7d');
+// Helper: lazy load Nivo components safely
+const isClient = typeof window !== 'undefined';
 
-  // Generate advanced mock data
+function createLazyNivo<TProps>(
+  loader: () => Promise<{ default: React.ComponentType<TProps> }>
+) {
+  // Wrap in try/catch to avoid hard crashes if module missing
+  try {
+    return React.lazy(loader);
+  } catch (e) {
+    // Fallback dummy component
+    return React.lazy(async () => ({
+      default: (props: any) => null,
+    }));
+  }
+}
+
+const LazyLine = createLazyNivo<any>(async () => {
+  const m = await import('@nivo/line');
+  // @ts-ignore
+  return { default: m.ResponsiveLine };
+});
+
+const LazyBar = createLazyNivo<any>(async () => {
+  const m = await import('@nivo/bar');
+  // @ts-ignore
+  return { default: m.ResponsiveBar };
+});
+
+const LazyPie = createLazyNivo<any>(async () => {
+  const m = await import('@nivo/pie');
+  // @ts-ignore
+  return { default: m.ResponsivePie };
+});
+
+const LazyHeatmap = createLazyNivo<any>(async () => {
+  const m = await import('@nivo/heatmap');
+  // @ts-ignore
+  return { default: m.ResponsiveHeatMap };
+});
+
+const Placeholder: React.FC<{ icon: React.ReactNode; title: string; subtitle?: string }> = ({ icon, title, subtitle }) => (
+  <div className="flex items-center justify-center h-full bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+    <div className="text-center text-gray-500">
+      <div className="mx-auto mb-2">{icon}</div>
+      <p>{title}</p>
+      {subtitle && <p className="text-sm">{subtitle}</p>}
+    </div>
+  </div>
+);
+
+const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type }) => {
+  const [chartType, setChartType] = useState<'line' | 'bar' | 'pie' | 'heatmap'>('line');
+
   const generateTrendData = () => {
     const now = new Date();
-    const data = [];
-    
+    const data: any[] = [];
     for (let i = 30; i >= 0; i--) {
       const date = subDays(now, i);
-      data.push({
-        x: format(date, 'MMM dd'),
-        y: Math.floor(Math.random() * 50) + 10,
-        category: 'Earthquakes'
-      });
-      data.push({
-        x: format(date, 'MMM dd'),
-        y: Math.floor(Math.random() * 30) + 5,
-        category: 'Floods'
-      });
-      data.push({
-        x: format(date, 'MMM dd'),
-        y: Math.floor(Math.random() * 20) + 2,
-        category: 'Wildfires'
-      });
+      data.push({ x: format(date, 'MMM dd'), y: Math.floor(Math.random() * 50) + 10, category: 'Earthquakes' });
+      data.push({ x: format(date, 'MMM dd'), y: Math.floor(Math.random() * 30) + 5, category: 'Floods' });
+      data.push({ x: format(date, 'MMM dd'), y: Math.floor(Math.random() * 20) + 2, category: 'Wildfires' });
     }
-    
     return [
-      {
-        id: 'Earthquakes',
-        color: '#ff4444',
-        data: data.filter(d => d.category === 'Earthquakes')
-      },
-      {
-        id: 'Floods',
-        color: '#4444ff',
-        data: data.filter(d => d.category === 'Floods')
-      },
-      {
-        id: 'Wildfires',
-        color: '#ff8800',
-        data: data.filter(d => d.category === 'Wildfires')
-      }
+      { id: 'Earthquakes', color: '#ff4444', data: data.filter(d => d.category === 'Earthquakes') },
+      { id: 'Floods', color: '#4444ff', data: data.filter(d => d.category === 'Floods') },
+      { id: 'Wildfires', color: '#ff8800', data: data.filter(d => d.category === 'Wildfires') },
     ];
   };
 
-  const generateAnalyticsData = () => {
-    return [
-      {
-        id: 'Response Time',
-        label: 'Response Time',
-        value: 85,
-        color: '#10b981'
-      },
-      {
-        id: 'Accuracy',
-        label: 'Accuracy',
-        value: 94,
-        color: '#3b82f6'
-      },
-      {
-        id: 'Coverage',
-        label: 'Coverage',
-        value: 87,
-        color: '#f59e0b'
-      },
-      {
-        id: 'Efficiency',
-        label: 'Efficiency',
-        value: 92,
-        color: '#8b5cf6'
-      }
-    ];
-  };
+  const generateAnalyticsData = () => [
+    { id: 'Response Time', label: 'Response Time', value: 85, color: '#10b981' },
+    { id: 'Accuracy', label: 'Accuracy', value: 94, color: '#3b82f6' },
+    { id: 'Coverage', label: 'Coverage', value: 87, color: '#f59e0b' },
+    { id: 'Efficiency', label: 'Efficiency', value: 92, color: '#8b5cf6' },
+  ];
 
   const generateHeatmapData = () => {
-    const data = [];
     const regions = ['North America', 'Europe', 'Asia', 'Africa', 'South America', 'Oceania'];
     const metrics = ['Response Time', 'Accuracy', 'Coverage', 'Efficiency'];
-    
-    regions.forEach(region => {
-      metrics.forEach(metric => {
-        data.push({
-          x: region,
-          y: metric,
-          value: Math.floor(Math.random() * 100)
-        });
-      });
-    });
-    
-    return data;
+    return regions.map((region) => ({
+      id: region,
+      data: metrics.map((m) => ({ x: m, y: Math.floor(Math.random() * 100) }))
+    }));
   };
 
   const renderChart = () => {
+    const heightStyle = { height: '300px' } as const;
     switch (chartType) {
       case 'line':
-        return (
-          <div style={{ height: '300px' }} className="flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <div className="text-center text-gray-500">
-              <LineChart className="h-12 w-12 mx-auto mb-2" />
-              <p>Line Chart - Nivo library required</p>
-              <p className="text-sm">Install @nivo/line for full functionality</p>
-            </div>
+        return isClient ? (
+          <div style={heightStyle}>
+            <Suspense fallback={<Placeholder icon={<LineChart className="h-12 w-12" />} title="Loading line chart..." /> }>
+              <LazyLine
+                data={generateTrendData()}
+                margin={{ top: 20, right: 20, bottom: 50, left: 60 }}
+                xScale={{ type: 'point' }}
+                yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: false }}
+                axisTop={null}
+                axisRight={null}
+                axisBottom={{ tickSize: 5, tickPadding: 5, tickRotation: -45, legend: 'Date', legendOffset: 40, legendPosition: 'middle' }}
+                axisLeft={{ tickSize: 5, tickPadding: 5, tickRotation: 0, legend: 'Count', legendOffset: -40, legendPosition: 'middle' }}
+                pointSize={8}
+                pointColor={{ theme: 'background' }}
+                pointBorderWidth={2}
+                pointBorderColor={{ from: 'serieColor' }}
+                useMesh={true}
+              />
+            </Suspense>
           </div>
+        ) : (
+          <Placeholder icon={<LineChart className="h-12 w-12" />} title="Line Chart unavailable" />
         );
-
       case 'bar':
-        return (
-          <div style={{ height: '300px' }} className="flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <div className="text-center text-gray-500">
-              <BarChart3 className="h-12 w-12 mx-auto mb-2" />
-              <p>Bar Chart - Nivo library required</p>
-              <p className="text-sm">Install @nivo/bar for full functionality</p>
-            </div>
+        return isClient ? (
+          <div style={heightStyle}>
+            <Suspense fallback={<Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Loading bar chart..." /> }>
+              <LazyBar
+                data={[
+                  { region: 'North America', earthquakes: 45, floods: 23, wildfires: 12 },
+                  { region: 'Europe', earthquakes: 32, floods: 18, wildfires: 8 },
+                  { region: 'Asia', earthquakes: 67, floods: 34, wildfires: 15 },
+                  { region: 'Africa', earthquakes: 28, floods: 41, wildfires: 6 },
+                  { region: 'South America', earthquakes: 38, floods: 29, wildfires: 9 },
+                  { region: 'Oceania', earthquakes: 15, floods: 12, wildfires: 4 },
+                ]}
+                keys={['earthquakes', 'floods', 'wildfires']}
+                indexBy="region"
+                margin={{ top: 20, right: 20, bottom: 50, left: 60 }}
+                padding={0.3}
+                groupMode="grouped"
+                valueScale={{ type: 'linear' }}
+                indexScale={{ type: 'band', round: true }}
+                axisTop={null}
+                axisRight={null}
+                axisBottom={{ tickSize: 5, tickPadding: 5, tickRotation: -45, legend: 'Region', legendPosition: 'middle', legendOffset: 40 }}
+                axisLeft={{ tickSize: 5, tickPadding: 5, tickRotation: 0, legend: 'Count', legendPosition: 'middle', legendOffset: -40 }}
+                labelSkipWidth={12}
+                labelSkipHeight={12}
+              />
+            </Suspense>
           </div>
+        ) : (
+          <Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Bar Chart unavailable" />
         );
-
       case 'pie':
-        return (
-          <div style={{ height: '300px' }} className="flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <div className="text-center text-gray-500">
-              <PieChart className="h-12 w-12 mx-auto mb-2" />
-              <p>Pie Chart - Nivo library required</p>
-              <p className="text-sm">Install @nivo/pie for full functionality</p>
-            </div>
+        return isClient ? (
+          <div style={heightStyle}>
+            <Suspense fallback={<Placeholder icon={<PieChart className="h-12 w-12" />} title="Loading pie chart..." /> }>
+              <LazyPie
+                data={generateAnalyticsData()}
+                margin={{ top: 20, right: 80, bottom: 20, left: 80 }}
+                innerRadius={0.5}
+                padAngle={0.7}
+                cornerRadius={3}
+                activeOuterRadiusOffset={8}
+                borderWidth={1}
+                borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
+              />
+            </Suspense>
           </div>
+        ) : (
+          <Placeholder icon={<PieChart className="h-12 w-12" />} title="Pie Chart unavailable" />
         );
-
       case 'heatmap':
-        return (
-          <div style={{ height: '300px' }} className="flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <div className="text-center text-gray-500">
-              <BarChart3 className="h-12 w-12 mx-auto mb-2" />
-              <p>Heatmap - Nivo library required</p>
-              <p className="text-sm">Install @nivo/heatmap for full functionality</p>
-            </div>
+        return isClient ? (
+          <div style={heightStyle}>
+            <Suspense fallback={<Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Loading heatmap..." /> }>
+              <LazyHeatmap
+                data={generateHeatmapData()}
+                margin={{ top: 20, right: 20, bottom: 50, left: 60 }}
+                forceSquare={true}
+                axisTop={null}
+                axisRight={null}
+                axisBottom={{ tickSize: 5, tickPadding: 5, tickRotation: -45, legend: 'Region', legendPosition: 'middle', legendOffset: 40 }}
+                axisLeft={{ tickSize: 5, tickPadding: 5, tickRotation: 0, legend: 'Metric', legendPosition: 'middle', legendOffset: -40 }}
+              />
+            </Suspense>
           </div>
+        ) : (
+          <Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Heatmap unavailable" />
         );
-
       default:
         return null;
     }
@@ -179,21 +216,21 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type, data }) => {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Button
-              variant={chartType === 'line' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setChartType('line')}
-            >
+            <Button variant={chartType === 'line' ? 'default' : 'outline'} size="sm" onClick={() => setChartType('line')}>
               <LineChart className="h-4 w-4 mr-2" />
               Trends
             </Button>
-            <Button
-              variant={chartType === 'bar' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setChartType('bar')}
-            >
+            <Button variant={chartType === 'bar' ? 'default' : 'outline'} size="sm" onClick={() => setChartType('bar')}>
               <BarChart3 className="h-4 w-4 mr-2" />
               Distribution
+            </Button>
+            <Button variant={chartType === 'pie' ? 'default' : 'outline'} size="sm" onClick={() => setChartType('pie')}>
+              <PieChart className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+            <Button variant={chartType === 'heatmap' ? 'default' : 'outline'} size="sm" onClick={() => setChartType('heatmap')}>
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Heatmap
             </Button>
           </div>
           <div className="flex items-center gap-2">
@@ -215,7 +252,6 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type, data }) => {
   if (type === 'analytics') {
     return (
       <div className="space-y-6">
-        {/* Analytics Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4">
@@ -290,7 +326,6 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type, data }) => {
           </Card>
         </div>
 
-        {/* Advanced Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -301,13 +336,22 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type, data }) => {
             </CardHeader>
             <CardContent>
               <div style={{ height: '300px' }}>
-                <div className="flex items-center justify-center h-full bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <div className="text-center text-gray-500">
-                    <PieChart className="h-12 w-12 mx-auto mb-2" />
-                    <p>Performance Metrics Chart</p>
-                    <p className="text-sm">Nivo library required</p>
-                  </div>
-                </div>
+                {isClient ? (
+                  <Suspense fallback={<Placeholder icon={<PieChart className="h-12 w-12" />} title="Loading pie chart..." /> }>
+                    <LazyPie
+                      data={generateAnalyticsData()}
+                      margin={{ top: 20, right: 80, bottom: 20, left: 80 }}
+                      innerRadius={0.5}
+                      padAngle={0.7}
+                      cornerRadius={3}
+                      activeOuterRadiusOffset={8}
+                      borderWidth={1}
+                      borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
+                    />
+                  </Suspense>
+                ) : (
+                  <Placeholder icon={<PieChart className="h-12 w-12" />} title="Pie Chart unavailable" />
+                )}
               </div>
             </CardContent>
           </Card>
@@ -321,13 +365,21 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ type, data }) => {
             </CardHeader>
             <CardContent>
               <div style={{ height: '300px' }}>
-                <div className="flex items-center justify-center h-full bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <div className="text-center text-gray-500">
-                    <BarChart3 className="h-12 w-12 mx-auto mb-2" />
-                    <p>Regional Performance Heatmap</p>
-                    <p className="text-sm">Nivo library required</p>
-                  </div>
-                </div>
+                {isClient ? (
+                  <Suspense fallback={<Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Loading heatmap..." /> }>
+                    <LazyHeatmap
+                      data={generateHeatmapData()}
+                      margin={{ top: 20, right: 20, bottom: 50, left: 60 }}
+                      forceSquare={true}
+                      axisTop={null}
+                      axisRight={null}
+                      axisBottom={{ tickSize: 5, tickPadding: 5, tickRotation: -45, legend: 'Region', legendPosition: 'middle', legendOffset: 40 }}
+                      axisLeft={{ tickSize: 5, tickPadding: 5, tickRotation: 0, legend: 'Metric', legendPosition: 'middle', legendOffset: -40 }}
+                    />
+                  </Suspense>
+                ) : (
+                  <Placeholder icon={<BarChart3 className="h-12 w-12" />} title="Heatmap unavailable" />
+                )}
               </div>
             </CardContent>
           </Card>
