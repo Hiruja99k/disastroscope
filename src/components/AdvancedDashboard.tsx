@@ -781,6 +781,136 @@ const AdvancedDashboard = () => {
             </Card>
           </div>
 
+          {/* Global Precipitation Index */}
+          <div>
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Droplets className="h-5 w-5 text-blue-500" />
+                  Global Precipitation Index
+                </CardTitle>
+                <CardDescription>
+                  3-hour accumulated precipitation visualization (Ventusky)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="w-full rounded-lg overflow-hidden border" style={{ height: `600px` }}>
+                  <iframe
+                    src="https://www.ventusky.com/?p=8.3;82.8;4&l=rain-3h"
+                    title="Global Precipitation Index"
+                    className="w-full h-full"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Global Cloud Covering Measurement */}
+          <div>
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CloudRain className="h-5 w-5 text-sky-500" />
+                  Global Cloud Covering Measurement
+                </CardTitle>
+                <CardDescription>
+                  Total cloud cover visualization (Ventusky)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="w-full rounded-lg overflow-hidden border" style={{ height: `600px` }}>
+                  <iframe
+                    src="https://www.ventusky.com/?p=7.6;80.7;4&l=clouds-total"
+                    title="Global Cloud Covering Measurement"
+                    className="w-full h-full"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Global Hurricane Monitoring */}
+          <div>
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wind className="h-5 w-5 text-teal-500" />
+                  Global Hurricane Monitoring
+                </CardTitle>
+                <CardDescription>
+                  10m wind field visualization (Ventusky)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="w-full rounded-lg overflow-hidden border" style={{ height: `600px` }}>
+                  <iframe
+                    src="https://www.ventusky.com/?p=7.6;80.7;4&l=wind-10m"
+                    title="Global Hurricane Monitoring"
+                    className="w-full h-full"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Air Pressure Distribution */}
+          <div>
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Gauge className="h-5 w-5 text-amber-600" />
+                  Air Pressure Distribution
+                </CardTitle>
+                <CardDescription>
+                  Mean sea-level pressure visualization (Ventusky)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="w-full rounded-lg overflow-hidden border" style={{ height: `600px` }}>
+                  <iframe
+                    src="https://www.ventusky.com/?p=7.6;80.7;4&l=pressure"
+                    title="Air Pressure Distribution"
+                    className="w-full h-full"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Global Thunderstorm Monitoring */}
+          <div>
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lightning className="h-5 w-5 text-purple-600" />
+                  Global Thunderstorm Monitoring
+                </CardTitle>
+                <CardDescription>
+                  Convective Available Potential Energy (CAPE) visualization (Ventusky)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="w-full rounded-lg overflow-hidden border" style={{ height: `600px` }}>
+                  <iframe
+                    src="https://www.ventusky.com/?p=7.6;80.7;4&l=cape"
+                    title="Global Thunderstorm Monitoring"
+                    className="w-full h-full"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           
 
           
