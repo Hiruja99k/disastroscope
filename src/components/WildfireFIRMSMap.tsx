@@ -44,16 +44,22 @@ export default function WildfireFIRMSMap({ height = 600, className = "", hours =
         worldCopyJump: true,
       });
 
-      // Basemap via MapTiler (raster tiles, CORS-friendly)
-      const base = L.tileLayer(
+      // Basemap fallback: OpenStreetMap (reliable, no key required)
+      const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      });
+      osm.addTo(map);
+
+      // Optional basemap: MapTiler Streets
+      const mapTiler = L.tileLayer(
         `https://api.maptiler.com/maps/streets/256/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`,
         {
           attribution:
-            '<a href="https://www.maptiler.com/" target="_blank" rel="noreferrer">MapTiler</a> & <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>',
+            '<a href="https://www.maptiler.com/" target="_blank" rel="noreferrer">MapTiler</a>',
           maxZoom: 19,
         }
       );
-      base.addTo(map);
 
       // Add FIRMS overlays with partial transparency; use two layers for redundancy
       FIRMS_TILE_TEMPLATES.forEach((template) => {
@@ -64,6 +70,11 @@ export default function WildfireFIRMSMap({ height = 600, className = "", hours =
         });
         layer.addTo(map);
       });
+
+      // Ensure proper sizing after layout settles
+      setTimeout(() => {
+        try { map.invalidateSize(); } catch {}
+      }, 250);
     };
     document.body.appendChild(script);
 
