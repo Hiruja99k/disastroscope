@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
-import { gsap } from 'gsap';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -123,68 +121,12 @@ const AdvancedDashboard = () => {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [showParticles, setShowParticles] = useState(true);
   const dashboardRef = useRef(null);
 
   // Debug: Log active tab changes
   useEffect(() => {
     // Tab change logging removed to fix linter error
   }, [activeTab]);
-
-  // Advanced motion values for 3D effects
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const rotateX = useTransform(mouseY, [-300, 300], [15, -15]);
-  const rotateY = useTransform(mouseX, [-300, 300], [-15, 15]);
-
-  // GSAP animations with advanced effects
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Stagger animation for cards with bounce effect
-      gsap.from('.dashboard-card', {
-        duration: 1.2,
-        y: 100,
-        opacity: 0,
-        rotationX: 45,
-        stagger: 0.15,
-        ease: "back.out(1.7)",
-        clearProps: "all"
-      });
-
-      // Floating animation for key metrics with sine wave
-      gsap.to('.floating-metric', {
-        y: -15,
-        duration: 3,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-        stagger: 0.3
-      });
-
-      // Pulse effect for live indicators
-      gsap.to('.live-indicator', {
-        scale: 1.1,
-        duration: 1.5,
-        repeat: -1,
-        yoyo: true,
-        ease: "power2.inOut"
-      });
-
-      // Particle animation
-      if (showParticles) {
-        gsap.to('.particle', {
-          y: -100,
-          opacity: 0,
-          duration: 4,
-          repeat: -1,
-          stagger: 0.1,
-          ease: "power1.out"
-        });
-      }
-    }, dashboardRef);
-
-    return () => ctx.revert();
-  }, [showParticles]);
 
   // Auto-refresh data with enhanced feedback
   useEffect(() => {
@@ -268,150 +210,52 @@ const AdvancedDashboard = () => {
   };
 
   return (
-    <motion.div
+    <div
       ref={dashboardRef}
       className={`min-h-screen transition-all duration-500 ${
         isDarkMode 
           ? 'bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 text-white' 
           : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
       } ${isFullscreen ? 'fixed inset-0 z-50' : 'p-6'}`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.8 }}
-      onMouseMove={(e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        mouseX.set(e.clientX - rect.left - rect.width / 2);
-        mouseY.set(e.clientY - rect.top - rect.height / 2);
-      }}
-      onMouseLeave={() => {
-        mouseX.set(0);
-        mouseY.set(0);
-      }}
     >
-      {/* Enhanced Particle Effects */}
-      {showParticles && (
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          {[...Array(50)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="particle absolute rounded-full opacity-20"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                width: `${Math.random() * 4 + 1}px`,
-                height: `${Math.random() * 4 + 1}px`,
-                background: `hsl(${Math.random() * 360}, 70%, 60%)`,
-                boxShadow: `0 0 ${Math.random() * 10 + 5}px hsl(${Math.random() * 360}, 70%, 60%)`,
-              }}
-              animate={{
-                y: [-20, -200],
-                opacity: [0.3, 0],
-                scale: [1, 0.2],
-                rotate: [0, 360],
-              }}
-              transition={{
-                duration: Math.random() * 4 + 3,
-                repeat: Infinity,
-                delay: Math.random() * 3,
-              }}
-            />
-          ))}
-        </div>
-      )}
+       {/* Enhanced Particle Effects */}
+       {/* Particle effects removed for cleaner dashboard experience */}
 
-      {/* Floating geometric shapes */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={`shape-${i}`}
-            className="absolute opacity-10"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -50, 0],
-              rotate: [0, 180, 360],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              delay: i * 0.5,
-            }}
-          >
-            <div 
-              className="w-16 h-16 border-2 border-blue-400 rounded-lg"
-              style={{
-                transform: `rotate(${i * 45}deg)`,
-              }}
-            />
-          </motion.div>
-        ))}
-      </div>
+       {/* Floating geometric shapes */}
+       {/* Floating shapes removed for cleaner dashboard experience */}
 
       {/* Header with 3D effect */}
-      <motion.div 
+      <div 
         className="flex justify-between items-center mb-8"
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.8 }}
-        style={{
-          transformStyle: "preserve-3d",
-          rotateX,
-          rotateY,
-        }}
       >
         <div className="relative">
-          <motion.h1 
+          <h1 
             className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"
-            animate={{
-              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-            style={{
-              backgroundSize: "200% 200%",
-            }}
           >
             DisastroScope Enterprise
-          </motion.h1>
-          <motion.p 
+          </h1>
+          <p 
             className={`mt-2 text-lg ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
           >
             Advanced Disaster Monitoring & Response System
-          </motion.p>
-          <motion.div
+          </p>
+          <div
             className="absolute -top-2 -right-2"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           >
             <Crown className="h-6 w-6 text-yellow-500" />
-          </motion.div>
+          </div>
         </div>
         
         <div className="flex items-center gap-4">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <div
+            className="flex items-center gap-1 bg-gradient-to-r from-green-400 to-blue-500 text-white border-0"
           >
-            <Badge variant="outline" className="flex items-center gap-1 bg-gradient-to-r from-green-400 to-blue-500 text-white border-0">
-              <div className="live-indicator w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <Activity className="h-3 w-3" />
-              Live Monitoring
-            </Badge>
-          </motion.div>
+            <div className="live-indicator w-2 h-2 bg-green-400 rounded-full"></div>
+            <Activity className="h-3 w-3" />
+            Live Monitoring
+          </div>
           
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
+          <div>
             <Button 
               variant="outline" 
               size="sm" 
@@ -421,44 +265,33 @@ const AdvancedDashboard = () => {
               <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
               {autoRefresh ? 'Auto' : 'Manual'}
             </Button>
-          </motion.div>
+          </div>
           
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
+          <div>
             <Button variant="outline" onClick={handleExport} className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0">
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-          </motion.div>
+          </div>
 
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
+          <div>
             <Button variant="outline" size="icon" onClick={toggleDarkMode}>
               {isDarkMode ? <SunIcon className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
-          </motion.div>
+          </div>
           
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
+          <div>
             <Button variant="outline" size="icon" onClick={toggleFullscreen}>
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </Button>
-          </motion.div>
+          </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Main Dashboard Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
+        <div
+          className="grid w-full grid-cols-5 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg"
         >
           <TabsList className={`grid w-full grid-cols-5 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
             <TabsTrigger value="overview" className="flex items-center gap-2 hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300">
@@ -482,26 +315,16 @@ const AdvancedDashboard = () => {
               Analytics
             </TabsTrigger>
           </TabsList>
-        </motion.div>
+        </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          {/* Key Metrics with enhanced animations */}
-          <motion.div 
+          {/* Key Metrics with enhanced styling */}
+          <div 
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
           >
-            <motion.div
-              whileHover={{ 
-                scale: 1.05,
-                rotateY: 5,
-                boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
-              }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <Card className={`dashboard-card floating-metric ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+            <div>
+              <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
                 <CardContent className="p-6 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-red-400/10 to-red-600/10 rounded-lg"></div>
                   <div className="relative z-10 flex items-center justify-between">
@@ -513,27 +336,18 @@ const AdvancedDashboard = () => {
                         +2 today
                       </div>
                     </div>
-                    <motion.div 
+                    <div 
                       className="p-3 rounded-full bg-red-100"
-                      animate={{ rotate: [0, 360] }}
-                      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                     >
                       <AlertTriangle className="h-8 w-8 text-red-600" />
-                    </motion.div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
 
-            <motion.div
-              whileHover={{ 
-                scale: 1.05,
-                rotateY: 5,
-                boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
-              }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <Card className={`dashboard-card floating-metric ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+            <div>
+              <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
                 <CardContent className="p-6 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 to-green-600/10 rounded-lg"></div>
                   <div className="relative z-10 flex items-center justify-between">
@@ -545,27 +359,18 @@ const AdvancedDashboard = () => {
                         +5% this week
                       </div>
                     </div>
-                    <motion.div 
+                    <div 
                       className="p-3 rounded-full bg-green-100"
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
                     >
                       <Zap className="h-8 w-8 text-green-600" />
-                    </motion.div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
 
-            <motion.div
-              whileHover={{ 
-                scale: 1.05,
-                rotateY: 5,
-                boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
-              }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <Card className={`dashboard-card floating-metric ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+            <div>
+              <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
                 <CardContent className="p-6 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-blue-600/10 rounded-lg"></div>
                   <div className="relative z-10 flex items-center justify-between">
@@ -577,27 +382,18 @@ const AdvancedDashboard = () => {
                         +2.1% this month
                       </div>
                     </div>
-                    <motion.div 
+                    <div 
                       className="p-3 rounded-full bg-blue-100"
-                      animate={{ y: [-5, 5, -5] }}
-                      transition={{ duration: 3, repeat: Infinity }}
                     >
                       <Target className="h-8 w-8 text-blue-600" />
-                    </motion.div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
 
-            <motion.div
-              whileHover={{ 
-                scale: 1.05,
-                rotateY: 5,
-                boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
-              }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <Card className={`dashboard-card floating-metric ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+            <div>
+              <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
                 <CardContent className="p-6 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-purple-600/10 rounded-lg"></div>
                   <div className="relative z-10 flex items-center justify-between">
@@ -609,30 +405,22 @@ const AdvancedDashboard = () => {
                         Operational
                       </div>
                     </div>
-                    <motion.div 
+                    <div 
                       className="p-3 rounded-full bg-purple-100"
-                      animate={{ rotate: [0, 360] }}
-                      transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
                     >
                       <Server className="h-8 w-8 text-purple-600" />
-                    </motion.div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
           {/* Charts and Maps Grid with enhanced styling */}
-          <motion.div 
+          <div 
             className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
           >
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
+            <div>
               <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -644,12 +432,9 @@ const AdvancedDashboard = () => {
                   <AdvancedCharts type="trends" />
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
 
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
+            <div>
               <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -661,15 +446,11 @@ const AdvancedDashboard = () => {
                   <DisasterMap disasters={data.disasters} />
                 </CardContent>
               </Card>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
           {/* Earthquake Magnitude Map - Now visible in Overview tab */}
-          <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.7, duration: 0.8 }}
-          >
+          <div>
             <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -681,17 +462,13 @@ const AdvancedDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <EarthquakeMagnitudeMap height={400} />
+                <EarthquakeMagnitudeMap height={600} />
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          {/* Recent Disasters with enhanced animations */}
-          <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.7, duration: 0.8 }}
-          >
+          {/* Recent Disasters with enhanced styling */}
+          <div>
             <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -699,37 +476,27 @@ const AdvancedDashboard = () => {
                     <AlertTriangle className="h-5 w-5 text-red-600" />
                     Recent Disasters
                   </CardTitle>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
+                  <div>
                     <Button size="sm" variant="outline" className="bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0">
                       <Eye className="h-4 w-4 mr-2" />
                       View All
                     </Button>
-                  </motion.div>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {data.disasters.slice(0, 4).map((disaster, index) => (
-                    <motion.div
+                    <div
                       key={disaster.id}
-                      initial={{ x: -50, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ delay: 0.8 + index * 0.1 }}
                       className={`flex items-center justify-between p-4 border rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 ${isDarkMode ? 'border-gray-700 hover:from-gray-700 hover:to-gray-600' : 'hover:shadow-lg'}`}
-                      whileHover={{ scale: 1.02, x: 10 }}
-                      whileTap={{ scale: 0.98 }}
                     >
                       <div className="flex items-center gap-4">
-                        <motion.div 
+                        <div 
                           className="p-2 rounded-full bg-red-100"
-                          animate={{ scale: [1, 1.1, 1] }}
-                          transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
                         >
                           <AlertTriangle className="h-4 w-4 text-red-600" />
-                        </motion.div>
+                        </div>
                         <div>
                           <p className="font-medium">{disaster.type}</p>
                           <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-muted-foreground'}`}>{disaster.location}</p>
@@ -746,12 +513,12 @@ const AdvancedDashboard = () => {
                           {format(disaster.timestamp, 'MMM dd, HH:mm')}
                         </p>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         </TabsContent>
 
         {/* Monitoring Tab */}
@@ -805,7 +572,7 @@ const AdvancedDashboard = () => {
           <AdvancedCharts type="analytics" data={data} />
         </TabsContent>
       </Tabs>
-    </motion.div>
+    </div>
   );
 };
 
