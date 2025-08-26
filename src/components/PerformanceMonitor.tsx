@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { trackPerformance } from '@/utils/monitoring';
 
 /**
@@ -16,15 +16,11 @@ export function PerformanceMonitor() {
           }
           
           if (entry.entryType === 'first-input') {
-            const firstInputEntry = entry as any;
-            trackPerformance('FID', firstInputEntry.processingStart - firstInputEntry.startTime, 'ms');
+            trackPerformance('FID', entry.processingStart - entry.startTime, 'ms');
           }
           
-          if (entry.entryType === 'layout-shift') {
-            const layoutShiftEntry = entry as any;
-            if (!layoutShiftEntry.hadRecentInput) {
-              trackPerformance('CLS', layoutShiftEntry.value, 'score');
-            }
+          if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
+            trackPerformance('CLS', entry.value, 'score');
           }
         }
       });
@@ -37,7 +33,7 @@ export function PerformanceMonitor() {
       }
 
       // Track page load performance
-      const handleLoad = useCallback(() => {
+      window.addEventListener('load', () => {
         setTimeout(() => {
           const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
           
@@ -51,28 +47,26 @@ export function PerformanceMonitor() {
 
           // Track resource loading
           const resources = performance.getEntriesByType('resource');
-          const scripts = resources.filter((r: any) => r.name.includes('.js'));
-          const styles = resources.filter((r: any) => r.name.includes('.css'));
-          const images = resources.filter((r: any) => r.name.match(/\.(jpg|jpeg|png|gif|webp|svg)$/));
+          const scripts = resources.filter(r => r.name.includes('.js'));
+          const styles = resources.filter(r => r.name.includes('.css'));
+          const images = resources.filter(r => r.name.match(/\.(jpg|jpeg|png|gif|webp|svg)$/));
 
           if (scripts.length > 0) {
-            const totalScriptTime = scripts.reduce((sum: number, script: any) => sum + script.duration, 0);
+            const totalScriptTime = scripts.reduce((sum, script) => sum + script.duration, 0);
             trackPerformance('TotalScriptLoadTime', totalScriptTime, 'ms');
           }
 
           if (styles.length > 0) {
-            const totalStyleTime = styles.reduce((sum: number, style: any) => sum + style.duration, 0);
+            const totalStyleTime = styles.reduce((sum, style) => sum + style.duration, 0);
             trackPerformance('TotalStyleLoadTime', totalStyleTime, 'ms');
           }
 
           if (images.length > 0) {
-            const totalImageTime = images.reduce((sum: number, image: any) => sum + image.duration, 0);
+            const totalImageTime = images.reduce((sum, image) => sum + image.duration, 0);
             trackPerformance('TotalImageLoadTime', totalImageTime, 'ms');
           }
         }, 0);
-      }, []);
-
-      window.addEventListener('load', handleLoad);
+      });
 
       // Track memory usage if available
       if ('memory' in performance) {
@@ -85,7 +79,6 @@ export function PerformanceMonitor() {
       // Cleanup
       return () => {
         observer.disconnect();
-        window.removeEventListener('load', handleLoad);
       };
     }
   }, []);
