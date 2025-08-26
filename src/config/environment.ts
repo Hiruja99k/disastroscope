@@ -19,6 +19,7 @@ export const environment = {
   // External Services
   services: {
     mapboxToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '',
+    mapTilerKey: import.meta.env.VITE_MAPTILER_API_KEY || '',
     openWeatherKey: import.meta.env.VITE_OPENWEATHER_API_KEY || '',
   },
   

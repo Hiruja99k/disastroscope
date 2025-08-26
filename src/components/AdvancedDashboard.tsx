@@ -81,7 +81,7 @@ import AdvancedCharts from './AdvancedCharts';
 import RealTimeMonitor from './RealTimeMonitor';
 import AlertSystem from './AlertSystem';
 import EarthquakeMagnitudeMap from './EarthquakeMagnitudeMap';
-import FloodForecastMap from './FloodForecastMap';
+import FloodMonitoringMap from './FloodMonitoringMap';
 
 // Advanced mock data for enterprise dashboard
 const generateAdvancedData = () => {
@@ -728,23 +728,25 @@ const AdvancedDashboard = () => {
             </Card>
           </div>
 
-          {/* Flood Forecast Map - Embedded iframe */}
+          {/* Flood Monitoring Map (MapTiler + EONET floods) */}
           <div>
             <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CloudRain className="h-5 w-5 text-blue-600" />
-                  Current Flood Forecast (1–3 days)
+                  Real-time Flood Monitoring (EONET)
                 </CardTitle>
                 <CardDescription>
-                  Embedded from FloodMap.net showing forecasted flood probabilities
+                  Live flood events from NASA EONET displayed on MapTiler tiles
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <FloodForecastMap height={600} />
+                <FloodMonitoringMap height={600} />
               </CardContent>
             </Card>
           </div>
+
+          
 
           {/* Recent Disasters with enhanced styling */}
           <div>
@@ -839,21 +841,23 @@ const AdvancedDashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Flood Forecast Map */}
+            {/* Flood Monitoring Map */}
             <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CloudRain className="h-5 w-5" />
-                  Current Flood Forecast (1–3 days)
+                  Real-time Flood Monitoring (EONET)
                 </CardTitle>
                 <CardDescription>
-                  Embedded from FloodMap.net showing forecasted flood probabilities
+                  Live flood events from NASA EONET displayed on MapTiler tiles
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <FloodForecastMap height={500} />
+                <FloodMonitoringMap height={500} />
               </CardContent>
             </Card>
+
+            
           </div>
         </TabsContent>
 
