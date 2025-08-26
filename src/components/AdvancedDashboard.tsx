@@ -236,11 +236,7 @@ const AdvancedDashboard = () => {
   return (
     <div
       ref={dashboardRef}
-      className={`min-h-screen transition-all duration-500 ${
-        isDarkMode 
-          ? 'bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 text-white' 
-          : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
-      } ${isFullscreen ? 'fixed inset-0 z-50' : 'pt-20 p-6'}`}
+      className={`min-h-screen transition-all duration-500 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 bg-animated-minimal ${isFullscreen ? 'fixed inset-0 z-50' : 'pt-20 p-6'}`}
     >
        {/* Enhanced Particle Effects */}
        {/* Particle effects removed for cleaner dashboard experience */}
@@ -252,10 +248,10 @@ const AdvancedDashboard = () => {
       <div className="mb-8 pt-2">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between pb-4 gap-4">
           <div>
-            <h1 className={`text-3xl sm:text-4xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+            <h1 className={`text-3xl sm:text-4xl font-semibold text-slate-900 font-poppins`}>
               DisastroScope
             </h1>
-            <p className={`mt-2 text-sm sm:text-base ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}>
+            <p className={`mt-2 text-sm sm:text-base text-slate-600`}>
               Advanced Disaster Monitoring & Response System
             </p>
             {/* Subtle status chips */}
