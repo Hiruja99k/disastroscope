@@ -21,6 +21,10 @@ export const environment = {
     mapboxToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '',
     mapTilerKey: import.meta.env.VITE_MAPTILER_API_KEY || '',
     openWeatherKey: import.meta.env.VITE_OPENWEATHER_API_KEY || '',
+    // Optional Copernicus GloFAS WMS overlay config
+    glofasWmsUrl: import.meta.env.VITE_GLOFAS_WMS_URL || 'https://geoservices.copernicus.eu/maps/wms',
+    glofasWmsLayer: import.meta.env.VITE_GLOFAS_WMS_LAYER || 'EFAS_flood_hazard_rp100',
+    glofasWmsAttribution: import.meta.env.VITE_GLOFAS_WMS_ATTRIB || 'Copernicus Emergency Management Service (GloFAS/EFAS)',
   },
   
   // Application Settings
