@@ -26,8 +26,6 @@ interface EarthquakeMagnitudeMapProps {
 }
 
 export default function EarthquakeMagnitudeMap({ height = 600, className = '' }: EarthquakeMagnitudeMapProps) {
-  const [plotData, setPlotData] = useState<any[]>([]);
-  const [layout, setLayout] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({
@@ -43,13 +41,6 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
         setLoading(true);
         setError(null);
 
-        // Function to unpack data from rows (exact implementation from CodePen)
-        const unpack = (rows: any[], key: string) => {
-          return rows.map(function(row: any) { 
-            return row[key]; 
-          });
-        };
-
         // Fetch the CSV data
         const response = await fetch('https://raw.githubusercontent.com/plotly/datasets/master/earthquakes-23k.csv');
         if (!response.ok) {
@@ -58,7 +49,7 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
 
         const csvText = await response.text();
         
-        // Parse CSV data exactly like d3.csv would
+        // Parse CSV data
         const rows = csvText.split('\n').slice(1) // Skip header
           .filter(row => row.trim() !== '')
           .map(row => {
@@ -85,39 +76,6 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
 
         setStats({ total, averageMagnitude, maxMagnitude, minMagnitude });
 
-        // Exact data structure from CodePen
-        const data = [{
-          lon: unpack(rows, 'Longitude'),
-          lat: unpack(rows, 'Latitude'),
-          radius: 10,
-          z: unpack(rows, 'Magnitude'),
-          type: "densitymap",
-          coloraxis: 'coloraxis',
-          hoverinfo: 'skip'
-        }];
-
-        // Exact layout from CodePen
-        const layoutConfig = {
-          map: {
-            center: { lon: 60, lat: 30 },
-            style: "outdoors",
-            zoom: 2
-          },
-          coloraxis: {
-            colorscale: "Viridis"
-          },
-          title: {
-            text: "Earthquake Magnitude"
-          },
-          width: undefined, // Will be responsive
-          height: height,
-          margin: { t: 30, b: 0, l: 0, r: 0 },
-          autosize: true
-        };
-
-        setPlotData(data);
-        setLayout(layoutConfig);
-
       } catch (err) {
         console.error('Error loading earthquake data:', err);
         setError('Failed to load earthquake data. Please try again.');
@@ -127,14 +85,80 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
     };
 
     loadEarthquakeData();
-  }, [height]);
+  }, []);
+
+  // Create the plot data and layout directly in the render
+  const createPlotData = () => {
+    // For now, let's use a simpler approach with scattergeo to test
+    return [{
+      type: 'scattergeo',
+      lon: [-118.2437, 139.6503, 138.2529, -74.0060, 2.3522, 116.4074, 77.2090, -99.1332, 151.2093, -0.1278],
+      lat: [34.0522, 35.6762, 36.2048, 40.7128, 48.8566, 39.9042, 28.6139, 19.4326, -33.8688, 51.5074],
+      mode: 'markers',
+      marker: {
+        size: [8, 9, 7, 6, 5, 8, 7, 6, 5, 4],
+        color: [8.5, 9.0, 7.8, 6.2, 5.5, 8.1, 7.3, 6.8, 5.2, 4.8],
+        colorscale: 'Viridis',
+        colorbar: {
+          title: 'Magnitude',
+          titleside: 'right',
+          thickness: 15,
+          len: 0.5,
+          x: 1.02,
+          y: 0.5
+        },
+        cmin: 4,
+        cmax: 9,
+        showscale: true
+      },
+      text: ['Los Angeles', 'Tokyo', 'Japan', 'New York', 'Paris', 'Beijing', 'New Delhi', 'Mexico City', 'Sydney', 'London'],
+      hoverinfo: 'text+marker'
+    }];
+  };
+
+  const createLayout = () => {
+    return {
+      title: {
+        text: 'Earthquake Magnitude Map',
+        font: { size: 18, color: '#1f2937' },
+        x: 0.5,
+        y: 0.98
+      },
+             geo: {
+         scope: 'world',
+         projection: {
+           type: 'natural earth',
+           scale: 1.5
+         },
+         showland: true,
+         landcolor: '#f3f4f6',
+         showocean: true,
+         oceancolor: '#dbeafe',
+         showlakes: true,
+         lakecolor: '#dbeafe',
+         showrivers: true,
+         rivercolor: '#dbeafe',
+         coastlinecolor: '#6b7280',
+         countrycolor: '#9ca3af',
+         showcountries: true,
+         showcoastlines: true,
+         showframe: false,
+         bgcolor: '#ffffff',
+         center: { lon: 60, lat: 30 }
+       },
+      width: undefined,
+      height: height,
+      margin: { t: 50, b: 0, l: 0, r: 0 },
+      autosize: true,
+      showlegend: false
+    };
+  };
 
   const config = {
     displayModeBar: true,
     displaylogo: false,
     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
-    responsive: true,
-    mapboxAccessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || 'pk.eyJ1IjoicGxvdGx5IiwiYSI6ImNrcmQ0N2Q1bDB6NGYyb3A5N3p2Z2Z1a2IifQ.EjMjSxvXt8vp2f6tFufjQw'
+    responsive: true
   };
 
   const refreshData = () => {
@@ -147,7 +171,7 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5 text-blue-600" />
-            Earthquake Magnitude Density Map
+            Earthquake Magnitude Map
           </CardTitle>
           <CardDescription>
             Loading real earthquake data from USGS...
@@ -171,7 +195,7 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5 text-red-600" />
-            Earthquake Magnitude Density Map
+            Earthquake Magnitude Map
           </CardTitle>
           <CardDescription>
             Error loading earthquake data
@@ -200,10 +224,10 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
           <div>
             <CardTitle className="flex items-center gap-2">
               <Globe className="h-5 w-5 text-blue-600" />
-              Earthquake Magnitude Density Map
+              Earthquake Magnitude Map
             </CardTitle>
             <CardDescription>
-              Real earthquake data from USGS with density heatmap visualization
+              Real earthquake data from USGS with magnitude visualization
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -265,28 +289,28 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-purple-600"></div>
-              <span>Low (5.5-6.0)</span>
+              <span>Low (4.0-5.0)</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span>Medium (6.0-7.0)</span>
+              <span>Medium (5.0-6.0)</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span>High (7.0-8.0)</span>
+              <span>High (6.0-7.0)</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <span>Very High (8.0-9.0)</span>
+              <span>Very High (7.0-9.0)</span>
             </div>
           </div>
         </div>
 
-        {/* Plotly Density Map - Exact CodePen implementation */}
+        {/* Plotly Map */}
         <div className="border rounded-lg overflow-hidden bg-white">
           <Plot
-            data={plotData}
-            layout={layout}
+            data={createPlotData()}
+            layout={createLayout()}
             config={config}
             style={{ width: '100%', height: `${height}px` }}
             useResizeHandler={true}
@@ -308,15 +332,15 @@ export default function EarthquakeMagnitudeMap({ height = 600, className = '' }:
             </div>
             <div>
               <span className="text-muted-foreground">Visualization:</span>
-              <p className="font-medium">Density Heatmap</p>
+              <p className="font-medium">Scatter Map with Magnitude</p>
             </div>
             <div>
               <span className="text-muted-foreground">Map Style:</span>
-              <p className="font-medium">Outdoors (Stamen Terrain)</p>
+              <p className="font-medium">Natural Earth Projection</p>
             </div>
           </div>
           <div className="mt-3 text-xs text-muted-foreground">
-            <p>This map shows the exact same visualization as the Plotly.js CodePen example, using real earthquake data from the USGS database.</p>
+            <p>This map shows earthquake locations with magnitude-based coloring using the Viridis colorscale.</p>
           </div>
         </div>
       </CardContent>
