@@ -81,6 +81,7 @@ import AdvancedCharts from './AdvancedCharts';
 import RealTimeMonitor from './RealTimeMonitor';
 import AlertSystem from './AlertSystem';
 import EarthquakeMagnitudeMap from './EarthquakeMagnitudeMap';
+import FloodForecastMap from './FloodForecastMap';
 
 // Advanced mock data for enterprise dashboard
 const generateAdvancedData = () => {
@@ -727,6 +728,24 @@ const AdvancedDashboard = () => {
             </Card>
           </div>
 
+          {/* Flood Forecast Map - Embedded iframe */}
+          <div>
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CloudRain className="h-5 w-5 text-blue-600" />
+                  Current Flood Forecast (1–3 days)
+                </CardTitle>
+                <CardDescription>
+                  Embedded from FloodMap.net showing forecasted flood probabilities
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FloodForecastMap height={600} />
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Recent Disasters with enhanced styling */}
           <div>
             <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
@@ -817,6 +836,22 @@ const AdvancedDashboard = () => {
               </CardHeader>
               <CardContent>
                 <EarthquakeMagnitudeMap height={500} />
+              </CardContent>
+            </Card>
+
+            {/* Flood Forecast Map */}
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CloudRain className="h-5 w-5" />
+                  Current Flood Forecast (1–3 days)
+                </CardTitle>
+                <CardDescription>
+                  Embedded from FloodMap.net showing forecasted flood probabilities
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FloodForecastMap height={500} />
               </CardContent>
             </Card>
           </div>
