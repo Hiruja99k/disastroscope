@@ -240,7 +240,7 @@ const AdvancedDashboard = () => {
         isDarkMode 
           ? 'bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 text-white' 
           : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
-      } ${isFullscreen ? 'fixed inset-0 z-50' : 'p-6'}`}
+      } ${isFullscreen ? 'fixed inset-0 z-50' : 'pt-20 p-6'}`}
     >
        {/* Enhanced Particle Effects */}
        {/* Particle effects removed for cleaner dashboard experience */}
@@ -902,6 +902,32 @@ const AdvancedDashboard = () => {
                   <iframe
                     src="https://www.ventusky.com/?p=7.6;80.7;4&l=cape"
                     title="Global Thunderstorm Monitoring"
+                    className="w-full h-full"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Ocean Wave Height Measurement */}
+          <div>
+            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Droplets className="h-5 w-5 text-cyan-600" />
+                  Ocean Wave Height Measurement
+                </CardTitle>
+                <CardDescription>
+                  Global ocean wave height visualization (Ventusky)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="w-full rounded-lg overflow-hidden border" style={{ height: `600px` }}>
+                  <iframe
+                    src="https://www.ventusky.com/?p=7.6;80.7;4&l=wave"
+                    title="Ocean Wave Height Measurement"
                     className="w-full h-full"
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
