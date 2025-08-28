@@ -52,9 +52,11 @@ export default function WeatherExplorer() {
       const w = await apiService.getCurrentWeatherByCoords(place.lat, place.lon, displayName, units);
       const f = await apiService.getForecast(place.lat, place.lon, 5);
       setWeather(w);
-      setForecast(f || []);
+      setForecast(Array.isArray(f) ? f : []);
     } catch (e: any) {
-      setError('Failed to load weather.');
+      console.error('Weather loading error:', e);
+      setError('Failed to load weather data. Please try again.');
+      setForecast([]); // Ensure forecast is always an array
     } finally {
       setLoading(false);
     }
@@ -72,7 +74,7 @@ export default function WeatherExplorer() {
         setWeather(w);
         setSelected({ name: `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}` as any, lat: coords.lat, lon: coords.lon });
         const f = await apiService.getForecast(coords.lat, coords.lon, 5);
-        setForecast(f || []);
+        setForecast(Array.isArray(f) ? f : []);
         setResults([]);
         return;
       }
@@ -87,7 +89,7 @@ export default function WeatherExplorer() {
         if (res[0]) {
           setSelected(res[0]);
           const f = await apiService.getForecast(res[0].lat, res[0].lon, 5);
-          setForecast(f || []);
+          setForecast(Array.isArray(f) ? f : []);
         } else {
           setSelected(null);
           setForecast([]);
@@ -210,8 +212,8 @@ export default function WeatherExplorer() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {forecast.length === 0 ? (
-                <div className="text-muted-foreground">No forecast data.</div>
+              {!forecast || !Array.isArray(forecast) || forecast.length === 0 ? (
+                <div className="text-muted-foreground">No forecast data available.</div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {forecast.slice(0, 18).map((f: any, idx: number) => {
