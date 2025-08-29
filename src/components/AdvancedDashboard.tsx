@@ -535,20 +535,22 @@ const AdvancedDashboard = () => {
             
             const address = locationParts.join(', ');
             const detailedAddress = locationParts.join(' • ');
-        
-        setCurrentLocation({
-          lat,
-          lng,
-          address,
-          detailedAddress,
-          accuracy,
-          locationParts
-        });
-        
-        toast.success(`📍 Precise location detected: ${detailedAddress}`, {
-          icon: '📍',
-          style: { borderRadius: '10px', background: '#333', color: '#fff' },
-        });
+            
+            setCurrentLocation({
+              lat,
+              lng,
+              address,
+              detailedAddress,
+              accuracy,
+              locationParts
+            });
+            
+            toast.success(`📍 Precise location detected: ${detailedAddress}`, {
+              icon: '📍',
+              style: { borderRadius: '10px', background: '#333', color: '#fff' },
+            });
+          }
+        }
         
       } catch (geocodingError) {
         console.error('Reverse geocoding failed:', geocodingError);
