@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import ReactApexChart from 'react-apexcharts';
+import type { ApexOptions } from 'apexcharts';
 
 interface DisasterChartProps {
   type: 'line' | 'bar' | 'pie';
@@ -56,7 +57,6 @@ export default function DisasterChart({ type, data, title, dataKey = 'value', na
   const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
-    // Use provided data or generate sample data
     if (data && data.length > 0) {
       setChartData(data);
     } else {
@@ -66,111 +66,50 @@ export default function DisasterChart({ type, data, title, dataKey = 'value', na
 
   const renderChart = () => {
     switch (type) {
-      case 'line':
-        return (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                dataKey="date" 
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-              />
-              <YAxis 
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-              />
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
-              />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="earthquakes" 
-                stroke={COLORS[0]} 
-                strokeWidth={2}
-                dot={{ fill: COLORS[0], strokeWidth: 2 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="wildfires" 
-                stroke={COLORS[1]} 
-                strokeWidth={2}
-                dot={{ fill: COLORS[1], strokeWidth: 2 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="floods" 
-                stroke={COLORS[2]} 
-                strokeWidth={2}
-                dot={{ fill: COLORS[2], strokeWidth: 2 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        );
-
-      case 'bar':
-        return (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                dataKey="region" 
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-              />
-              <YAxis 
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-              />
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
-              />
-              <Legend />
-              <Bar dataKey="high" stackId="a" fill={COLORS[3]} />
-              <Bar dataKey="medium" stackId="a" fill={COLORS[4]} />
-              <Bar dataKey="low" stackId="a" fill={COLORS[5]} />
-            </BarChart>
-          </ResponsiveContainer>
-        );
-
-      case 'pie':
-        return (
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey={dataKey}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        );
-
+      case 'line': {
+        const categories = chartData.map((d) => d.date);
+        const series = [
+          { name: 'earthquakes', data: chartData.map((d) => d.earthquakes) },
+          { name: 'wildfires', data: chartData.map((d) => d.wildfires) },
+          { name: 'floods', data: chartData.map((d) => d.floods) },
+        ];
+        const options: ApexOptions = {
+          chart: { type: 'line', toolbar: { show: false } },
+          stroke: { curve: 'smooth', width: 2 },
+          xaxis: { categories },
+          colors: COLORS,
+          legend: { position: 'top' },
+          grid: { borderColor: 'rgba(0,0,0,0.1)' },
+        };
+        return <ReactApexChart options={options} series={series} type="line" height={300} />;
+      }
+      case 'bar': {
+        const categories = chartData.map((d) => d.region);
+        const options: ApexOptions = {
+          chart: { type: 'bar', toolbar: { show: false } },
+          plotOptions: { bar: { horizontal: false, columnWidth: '50%' } },
+          xaxis: { categories },
+          colors: COLORS,
+          grid: { borderColor: 'rgba(0,0,0,0.1)' },
+          legend: { position: 'top' },
+        };
+        const series = [
+          { name: 'high', data: chartData.map((d) => d.high) },
+          { name: 'medium', data: chartData.map((d) => d.medium) },
+          { name: 'low', data: chartData.map((d) => d.low) },
+        ];
+        return <ReactApexChart options={options} series={series} type="bar" height={300} />;
+      }
+      case 'pie': {
+        const options: ApexOptions = {
+          chart: { type: 'donut', toolbar: { show: false } },
+          labels: chartData.map((d) => d[nameKey]),
+          colors: chartData.map((d, i) => d.color || COLORS[i % COLORS.length]),
+          legend: { position: 'bottom' },
+        };
+        const series = chartData.map((d) => d[dataKey]);
+        return <ReactApexChart options={options} series={series} type="donut" height={300} />;
+      }
       default:
         return (
           <div className="flex items-center justify-center h-full">

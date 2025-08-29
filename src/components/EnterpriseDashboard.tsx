@@ -46,23 +46,8 @@ import {
   Gauge
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart as RechartsPieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from 'recharts';
+import ReactApexChart from 'react-apexcharts';
+import type { ApexOptions } from 'apexcharts';
 import EarthquakeMagnitudeMap from './EarthquakeMagnitudeMap';
 
 // Mock data for charts and tables
@@ -303,39 +288,24 @@ export default function EnterpriseDashboard() {
             <CardTitle>Disaster Trends</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={disasterTrendsData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="earthquakes"
-                  stroke="#3182CE"
-                  strokeWidth={2}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="floods"
-                  stroke="#38B2AC"
-                  strokeWidth={2}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="wildfires"
-                  stroke="#ED8936"
-                  strokeWidth={2}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="storms"
-                  stroke="#805AD5"
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <ReactApexChart
+              options={{
+                chart: { type: 'line', toolbar: { show: false } },
+                stroke: { curve: 'smooth', width: 2 },
+                xaxis: { categories: disasterTrendsData.map(d => d.month) },
+                legend: { position: 'top' },
+                colors: ['#3182CE', '#38B2AC', '#ED8936', '#805AD5'],
+                grid: { borderColor: 'rgba(0,0,0,0.1)' },
+              } as ApexOptions}
+              series={[
+                { name: 'earthquakes', data: disasterTrendsData.map(d => d.earthquakes) },
+                { name: 'floods', data: disasterTrendsData.map(d => d.floods) },
+                { name: 'wildfires', data: disasterTrendsData.map(d => d.wildfires) },
+                { name: 'storms', data: disasterTrendsData.map(d => d.storms) },
+              ]}
+              type="line"
+              height={300}
+            />
           </CardContent>
         </Card>
 
@@ -345,25 +315,17 @@ export default function EnterpriseDashboard() {
             <CardTitle>Prediction Accuracy by Type</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <RechartsPieChart>
-                <Pie
-                  data={predictionAccuracyData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {predictionAccuracyData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </RechartsPieChart>
-            </ResponsiveContainer>
+            <ReactApexChart
+              options={{
+                chart: { type: 'donut', toolbar: { show: false } },
+                labels: predictionAccuracyData.map(d => d.name),
+                legend: { position: 'bottom' },
+                colors: predictionAccuracyData.map(d => d.color),
+              } as ApexOptions}
+              series={predictionAccuracyData.map(d => d.value)}
+              type="donut"
+              height={300}
+            />
           </CardContent>
         </Card>
       </div>
@@ -507,15 +469,12 @@ export default function EnterpriseDashboard() {
             <CardTitle>Geographic Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={disasterTrendsData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="earthquakes" fill="#3182CE" />
-              </BarChart>
-            </ResponsiveContainer>
+            <ReactApexChart
+              options={{ chart: { type: 'bar', toolbar: { show: false } }, xaxis: { categories: disasterTrendsData.map(d => d.month) }, grid: { borderColor: 'rgba(0,0,0,0.1)' } } as ApexOptions}
+              series={[{ name: 'earthquakes', data: disasterTrendsData.map(d => d.earthquakes) }]}
+              type="bar"
+              height={200}
+            />
           </CardContent>
         </Card>
 

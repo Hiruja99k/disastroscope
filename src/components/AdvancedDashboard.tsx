@@ -402,14 +402,46 @@ const AdvancedDashboard = () => {
   }, []);
 
   // Location Detection and Risk Analysis Functions
+  const testGeolocation = () => {
+    console.log('🧪 Testing geolocation API...');
+    if (!navigator.geolocation) {
+      console.error('❌ Geolocation not supported');
+      return;
+    }
+    
+    console.log('✅ Geolocation API available');
+    console.log('📍 Testing getCurrentPosition...');
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        console.log('✅ Geolocation test successful:', position);
+        console.log('📍 Coordinates:', position.coords.latitude, position.coords.longitude);
+        console.log('📍 Accuracy:', position.coords.accuracy);
+      },
+      (error) => {
+        console.error('❌ Geolocation test failed:', error);
+        console.error('❌ Error code:', error.code);
+        console.error('❌ Error message:', error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
   const detectUserLocation = async () => {
+    console.log('🚀 detectUserLocation function started');
     setIsDetectingLocation(true);
     setAnalysisError(null);
     
     try {
+      console.log('🔍 Checking if geolocation is supported...');
       if (!navigator.geolocation) {
         throw new Error('Geolocation is not supported by this browser');
       }
+      console.log('✅ Geolocation is supported');
 
       // Use extremely high accuracy settings for precise location with multiple attempts
       let bestPosition: GeolocationPosition | null = null;
@@ -421,6 +453,7 @@ const AdvancedDashboard = () => {
           console.log(`📍 GPS Attempt ${attempt}/3 - Getting high accuracy location...`);
           
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            console.log(`📍 Starting getCurrentPosition for attempt ${attempt}`);
             navigator.geolocation.getCurrentPosition(resolve, reject, {
               enableHighAccuracy: true,  // Maximum accuracy - uses GPS, cellular, and WiFi
               timeout: 60000,           // 60 seconds for maximum accuracy
@@ -446,6 +479,7 @@ const AdvancedDashboard = () => {
           
           // Wait a bit before the next attempt to let GPS settle
           if (attempt < 3) {
+            console.log(`⏳ Waiting 2 seconds before next attempt...`);
             await new Promise(resolve => setTimeout(resolve, 2000));
           }
           
@@ -466,12 +500,15 @@ const AdvancedDashboard = () => {
       
       // Get detailed address using Mapbox Geocoding API with improved accuracy
       try {
+        console.log('🗺️ Starting Mapbox geocoding...');
         const mapboxToken = 'pk.eyJ1IjoiaGlydWpha2wiLCJhIjoiY21lczA2ZTdsMGQ0czJxcTFjYzI4bDJvMiJ9.NvKvNXcT-gqoNomkWFeouw';
         
         // Use a more comprehensive geocoding request to get the most accurate location
         const response = await fetch(
           `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&types=address,poi,neighborhood,place,locality,district,region,country&limit=3`
         );
+        
+        console.log('🗺️ Mapbox response status:', response.status);
         
         if (response.ok) {
           const data = await response.json();
@@ -536,6 +573,8 @@ const AdvancedDashboard = () => {
             const address = locationParts.join(', ');
             const detailedAddress = locationParts.join(' • ');
             
+            console.log('📍 Setting current location with address:', { lat, lng, address, detailedAddress });
+            
             setCurrentLocation({
               lat,
               lng,
@@ -556,6 +595,7 @@ const AdvancedDashboard = () => {
         console.error('Reverse geocoding failed:', geocodingError);
         
         // Fallback to coordinates
+        console.log('📍 Using fallback coordinates display');
         setCurrentLocation({
           lat,
           lng,
@@ -595,6 +635,7 @@ const AdvancedDashboard = () => {
         style: { borderRadius: '10px', background: '#dc2626', color: '#fff' },
       });
     } finally {
+      console.log('🏁 detectUserLocation function completed');
       setIsDetectingLocation(false);
     }
   };
@@ -2219,7 +2260,10 @@ const AdvancedDashboard = () => {
                         <Button 
                           size="lg" 
                           className="flex items-center gap-2 mx-auto"
-                          onClick={detectUserLocation}
+                          onClick={() => {
+                            console.log('🔘 Detect My Location button clicked');
+                            detectUserLocation();
+                          }}
                           disabled={isDetectingLocation}
                         >
                           {isDetectingLocation ? (
@@ -2228,6 +2272,18 @@ const AdvancedDashboard = () => {
                             <MapPin className="h-4 w-4" />
                           )}
                           {isDetectingLocation ? 'Detecting Location...' : 'Detect My Location'}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="flex items-center gap-2 mx-auto mt-2"
+                          onClick={() => {
+                            console.log('🧪 Test Geolocation button clicked');
+                            testGeolocation();
+                          }}
+                        >
+                          <Settings className="h-4 w-4" />
+                          Test Geolocation API
                         </Button>
                   </div>
                   </div>

@@ -9,8 +9,10 @@ const inferredBase = (() => {
       // Default to your Railway backend when running on Vercel or any non-local domain
       return 'https://web-production-47673.up.railway.app';
     }
+    // For local development, always use Railway since local backend isn't running
+    return 'https://web-production-47673.up.railway.app';
   }
-  return 'http://localhost:5000';
+  return 'https://web-production-47673.up.railway.app';
 })();
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || inferredBase).replace(/\/$/, '');
@@ -298,8 +300,8 @@ class ApiService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          lat,
-          lon,
+          latitude: lat,
+          longitude: lon,
           location_name: locationName
         }),
       });
