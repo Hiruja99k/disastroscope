@@ -452,8 +452,8 @@ const AdvancedDashboard = () => {
   };
 
   const analyzeLocation = async () => {
-    if (!currentLocation && !locationQuery) {
-      setAnalysisError('Please detect your location or enter a location to analyze');
+    if (!currentLocation) {
+      setAnalysisError('Please detect your location first');
       return;
     }
 
@@ -462,28 +462,8 @@ const AdvancedDashboard = () => {
     setRiskAnalysis(null);
 
     try {
-      let coordinates: { lat: number; lng: number };
-      let locationName: string | undefined;
-
-      if (currentLocation) {
-        coordinates = currentLocation;
-        locationName = currentLocation.address;
-      } else {
-        // Parse location query (assuming format: "lat,lng" or city name)
-        const coordsMatch = locationQuery.match(/(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/);
-        if (coordsMatch) {
-          coordinates = { lat: parseFloat(coordsMatch[1]), lng: parseFloat(coordsMatch[2]) };
-        } else {
-          // Try to geocode the city name
-          const geocodeResult = await apiService.geocode(locationQuery, 1);
-          if (geocodeResult.length > 0) {
-            coordinates = { lat: geocodeResult[0].lat, lng: geocodeResult[0].lon };
-            locationName = geocodeResult[0].name;
-          } else {
-            throw new Error('Could not find coordinates for the specified location');
-          }
-        }
-      }
+      const coordinates = currentLocation;
+      const locationName = currentLocation.address;
 
       console.log('🔍 Starting risk analysis for coordinates:', coordinates);
 
@@ -2311,7 +2291,7 @@ const AdvancedDashboard = () => {
                     <div className="mt-2 text-2xl font-semibold">
                       {riskAnalysis?.composite_risk || 'N/A'}
                     </div>
-                    <div className="mt-1 text-xs text-slate-500">{timeframe} Horizon</div>
+                    <div className="mt-1 text-xs text-slate-500">Risk Horizon</div>
                   </div>
                   <div className="p-4 rounded-lg border bg-gradient-to-br from-amber-50 to-yellow-50">
                     <div className="text-xs uppercase tracking-wide text-slate-500">Exposure</div>
