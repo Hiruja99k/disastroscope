@@ -961,9 +961,12 @@ const AdvancedDashboard = () => {
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
-      case 'up': return <TrendingUp className="h-4 w-4 text-green-600" />;
-      case 'down': return <TrendingDown className="h-4 w-4 text-red-600" />;
-      default: return <Activity className="h-4 w-4 text-blue-600" />;
+      case 'up': 
+        return <TrendingUp className="h-4 w-4 text-green-600" />;
+      case 'down': 
+        return <TrendingDown className="h-4 w-4 text-red-600" />;
+      default: 
+        return <Activity className="h-4 w-4 text-blue-600" />;
     }
   };
 
@@ -2278,7 +2281,6 @@ const AdvancedDashboard = () => {
                       </div>
                   </div>
                   ) : (
-                    {/* Location Detection Prompt */}
                     <div className="text-center space-y-6 py-10">
                       {/* Animated location icon */}
                       <div className="relative mx-auto w-20 h-20">
@@ -2328,7 +2330,7 @@ const AdvancedDashboard = () => {
                       </div>
                     </div>
                   )}
-                    </div>
+                </div>
 
                 {/* Risk Analysis Results */}
                 {riskAnalysis && (
@@ -2345,10 +2347,10 @@ const AdvancedDashboard = () => {
                         <CardContent>
                           <div className="text-2xl font-bold text-blue-700">
                             {riskAnalysis.flood?.risk_level || 'N/A'}
-                  </div>
+                          </div>
                           <div className="text-xs text-blue-600 mt-1">
                             Probability: {riskAnalysis.flood?.probability || 0}%
-                </div>
+                          </div>
                           <div className="text-xs text-muted-foreground mt-2">
                             {riskAnalysis.flood?.description || 'No flood risk data available'}
                           </div>
