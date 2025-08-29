@@ -505,90 +505,98 @@ const AdvancedDashboard = () => {
         
         // Use a more comprehensive geocoding request to get the most accurate location
         const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&types=address,poi,neighborhood,place,locality,district,region,country&limit=3`
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lat},${lng}.json?access_token=${mapboxToken}&types=address,poi,neighborhood,place,locality,district,region,country&limit=3`
         );
         
         console.log('🗺️ Mapbox response status:', response.status);
         
-        if (response.ok) {
-          const data = await response.json();
-          console.log('🗺️ Mapbox Geocoding Response:', data);
+        if (!response.ok) {
+          console.error('🗺️ Mapbox API error:', response.status, response.statusText);
+          const errorText = await response.text();
+          console.error('🗺️ Mapbox error details:', errorText);
+          throw new Error(`Mapbox API error: ${response.status} - ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('🗺️ Mapbox Geocoding Response:', data);
+        
+        if (data.features && data.features.length > 0) {
+          // Get the most relevant feature (usually the first one)
+          const primaryFeature = data.features[0];
+          const context = primaryFeature.context || [];
           
-          if (data.features && data.features.length > 0) {
-            // Get the most relevant feature (usually the first one)
-            const primaryFeature = data.features[0];
-            const context = primaryFeature.context || [];
-            
-            // Extract location components with better logic
-            const placeName = primaryFeature.text || '';
-            const locality = context.find((c: any) => c.id.startsWith('locality'))?.text || '';
-            const district = context.find((c: any) => c.id.startsWith('district'))?.text || '';
-            const region = context.find((c: any) => c.id.startsWith('region'))?.text || '';
-            const country = context.find((c: any) => c.id.startsWith('country'))?.text || '';
-            
-            // Build a clean, accurate location string
-            const locationParts = [];
-            
-            // Add the most specific location first (place name or address)
-            if (placeName && placeName !== locality && placeName !== district) {
-              locationParts.push(placeName);
-            }
-            
-            // Add locality (city/town) if different from place name
-            if (locality && !locationParts.includes(locality)) {
-              locationParts.push(locality);
-            }
-            
-            // Add district if different from locality
-            if (district && !locationParts.includes(district) && district !== locality) {
-              locationParts.push(district);
-            }
-            
-            // Add region if different from district
-            if (region && !locationParts.includes(region) && region !== district) {
-              locationParts.push(region);
-            }
-            
-            // Add country if not already included
-            if (country && !locationParts.includes(country)) {
-              locationParts.push(country);
-            }
-            
-            // If we don't have enough meaningful parts, use the full place name
-            if (locationParts.length < 2) {
-              const fullPlaceName = primaryFeature.place_name || '';
-              if (fullPlaceName) {
-                // Split by comma and take the most relevant parts
-                const parts = fullPlaceName.split(',').map(p => p.trim()).filter(p => p);
-                locationParts.length = 0; // Clear existing parts
-                locationParts.push(...parts.slice(0, 3)); // Take first 3 meaningful parts
-              }
-            }
-            
-            // Ensure we have at least 2 meaningful parts
-            if (locationParts.length < 2) {
-              locationParts.push('Location Detected');
-            }
-            
-            const address = locationParts.join(', ');
-            const detailedAddress = locationParts.join(' • ');
-            
-            console.log('📍 Setting current location with address:', { lat, lng, address, detailedAddress });
-            
-            setCurrentLocation({
-              lat,
-              lng,
-              address,
-              detailedAddress,
-              accuracy,
-              locationParts
-            });
-            
-            toast.success(`📍 Precise location detected: ${detailedAddress}`, {
-              icon: '📍',
-              style: { borderRadius: '10px', background: '#333', color: '#fff' },
-            });
+          // Extract location components with better logic
+          const placeName = primaryFeature.text || '';
+          const locality = context.find((c: any) => c.id.startsWith('locality'))?.text || '';
+          const district = context.find((c: any) => c.id.startsWith('district'))?.text || '';
+          const region = context.find((c: any) => c.id.startsWith('region'))?.text || '';
+          const country = context.find((c: any) => c.id.startsWith('country'))?.text || '';
+          
+          // Build a clean, accurate location string
+          const locationParts = [];
+          
+          // Add the most specific location first (place name or address)
+          if (placeName && placeName !== locality && placeName !== district) {
+            locationParts.push(placeName);
           }
+          
+          // Add locality (city/town) if different from place name
+          if (locality && !locationParts.includes(locality)) {
+            locationParts.push(locality);
+          }
+          
+          // Add district if different from locality
+          if (district && !locationParts.includes(district) && district !== locality) {
+            locationParts.push(district);
+          }
+          
+          // Add region if different from district
+          if (region && !locationParts.includes(region) && region !== district) {
+            locationParts.push(region);
+          }
+          
+          // Add country if not already included
+          if (country && !locationParts.includes(country)) {
+            locationParts.push(country);
+          }
+          
+          // If we don't have enough meaningful parts, use the full place name
+          if (locationParts.length < 2) {
+            const fullPlaceName = primaryFeature.place_name || '';
+            if (fullPlaceName) {
+              // Split by comma and take the most relevant parts
+              const parts = fullPlaceName.split(',').map(p => p.trim()).filter(p => p);
+              locationParts.length = 0; // Clear existing parts
+              locationParts.push(...parts.slice(0, 3)); // Take first 3 meaningful parts
+            }
+          }
+          
+          // Ensure we have at least 2 meaningful parts
+          if (locationParts.length < 2) {
+            locationParts.push('Location Detected');
+          }
+          
+          const address = locationParts.join(', ');
+          const detailedAddress = locationParts.join(' • ');
+          
+          console.log('📍 Setting current location with address:', { lat, lng, address, detailedAddress });
+          
+          setCurrentLocation({
+            lat,
+            lng,
+            address,
+            detailedAddress,
+            accuracy,
+            locationParts
+          });
+          
+          toast.success(`📍 Precise location detected: ${detailedAddress}`, {
+            icon: '📍',
+            style: { borderRadius: '10px', background: '#333', color: '#fff' },
+          });
+        } else {
+          // No features found, use fallback
+          throw new Error('No location features found in Mapbox response');
         }
         
       } catch (geocodingError) {
