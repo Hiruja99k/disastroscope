@@ -2218,30 +2218,44 @@ const AdvancedDashboard = () => {
                   {currentLocation ? (
                     <div className="space-y-3">
                       {/* Enhanced Location Display Box */}
-                      <div className="relative overflow-hidden rounded-xl border-2 border-blue-200 dark:border-blue-700 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 p-4 shadow-lg">
+                      <div className="relative overflow-hidden rounded-xl border-2 border-blue-200 dark:border-blue-700 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 p-5 shadow-xl">
                         {/* Decorative background elements */}
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-blue-200/30 dark:bg-blue-700/30 rounded-full -translate-y-10 translate-x-10"></div>
-                        <div className="absolute bottom-0 left-0 w-16 h-16 bg-indigo-200/30 dark:bg-indigo-700/30 rounded-full translate-y-8 -translate-x-8"></div>
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-200/30 dark:bg-blue-700/30 rounded-full -translate-y-12 translate-x-12"></div>
+                        <div className="absolute bottom-0 left-0 w-20 h-20 bg-indigo-200/30 dark:bg-indigo-700/30 rounded-full translate-y-10 -translate-x-10"></div>
+                        <div className="absolute top-1/2 right-8 w-12 h-12 bg-purple-200/20 dark:bg-purple-700/20 rounded-full"></div>
                         
                         {/* Location content */}
                         <div className="relative z-10">
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full">
-                              <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          {/* Header with icon */}
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full shadow-lg">
+                              <MapPin className="h-5 w-5 text-white" />
                             </div>
-                            <span className="font-semibold text-blue-800 dark:text-blue-200 text-sm">📍 Your Location</span>
+                            <div>
+                              <span className="font-bold text-lg text-blue-800 dark:text-blue-200">📍 Your Precise Location</span>
+                              <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">GPS Accuracy: {currentLocation.accuracy ? `${Math.round(currentLocation.accuracy)}m` : 'High'}</div>
+                            </div>
                           </div>
                           
-                          {/* Location in words */}
-                          <div className="mb-2">
-                            <div className="text-base font-medium text-gray-800 dark:text-gray-200 leading-tight">
+                          {/* Location in words - PROMINENT */}
+                          <div className="mb-4 p-3 bg-white/70 dark:bg-gray-800/70 rounded-lg border border-blue-200 dark:border-blue-600">
+                            <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wide">📍 Location Address</div>
+                            <div className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">
                               {currentLocation.detailedAddress || currentLocation.address || 'Location detected'}
                             </div>
                           </div>
                           
-                          {/* Coordinates */}
-                          <div className="text-xs text-blue-600 dark:text-blue-400 font-mono bg-white/50 dark:bg-gray-800/50 px-2 py-1 rounded">
-                            {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
+                          {/* Coordinates - PROMINENT */}
+                          <div className="p-3 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-800/50 dark:to-indigo-800/50 rounded-lg border border-blue-300 dark:border-blue-500">
+                            <div className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-2 uppercase tracking-wide">🌐 GPS Coordinates</div>
+                            <div className="text-lg font-bold font-mono text-blue-800 dark:text-blue-200 bg-white/80 dark:bg-gray-800/80 px-3 py-2 rounded border border-blue-200 dark:border-blue-600">
+                              {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
+                            </div>
+                            <div className="text-xs text-blue-600 dark:text-blue-400 mt-2 flex items-center gap-2">
+                              <span>Latitude: {currentLocation.lat.toFixed(6)}</span>
+                              <span>•</span>
+                              <span>Longitude: {currentLocation.lng.toFixed(6)}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -2276,7 +2290,7 @@ const AdvancedDashboard = () => {
                           ) : (
                             <Sparkles className="h-5 w-5" />
                           )}
-                          {isAnalyzing ? 'Analyzing Location...' : '🔍 Analyze Disaster Risk'}
+                          {isAnalyzing ? 'Analyzing Location...' : 'Analyze Disaster Risk'}
                         </Button>
                       </div>
                   </div>
@@ -2291,7 +2305,7 @@ const AdvancedDashboard = () => {
                       </div>
                       
                       <div className="space-y-3">
-                        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">📍 Location Detection Required</h3>
+                        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">Location Detection Required</h3>
                         <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
                           We need your precise location to provide accurate disaster risk analysis using AI-powered prediction models.
                         </p>
@@ -2311,7 +2325,7 @@ const AdvancedDashboard = () => {
                             ) : (
                               <MapPin className="h-5 w-5" />
                             )}
-                            {isDetectingLocation ? 'Detecting Location...' : '🚀 Detect My Location'}
+                            {isDetectingLocation ? 'Detecting Location...' : 'Detect My Location'}
                           </Button>
                           
                           <Button 
