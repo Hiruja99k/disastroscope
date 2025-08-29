@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactApexChart from 'react-apexcharts';
+import type { ApexOptions } from 'apexcharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,7 +18,6 @@ import {
   Clock,
   Users,
   Shield,
-  Zap,
   Target,
   Database,
   Server,
@@ -32,7 +35,6 @@ import {
   Settings,
   Download,
   Filter,
-  Search,
   Plus,
   Eye,
   Edit,
@@ -75,14 +77,16 @@ import {
   FileText
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { format, subDays, subHours } from 'date-fns';
+import { format, subDays, subHours, formatDistanceToNow } from 'date-fns';
 import DisasterMap from './DisasterMap';
 import AdvancedCharts from './AdvancedCharts';
 import RealTimeMonitor from './RealTimeMonitor';
 import AlertSystem from './AlertSystem';
 import EarthquakeMagnitudeMap from './EarthquakeMagnitudeMap';
-
-// Advanced mock data for enterprise dashboard
+import LocationMap from './LocationMap';
+import { useGSAPAnimations } from '@/hooks/useGSAPAnimations';
+import { fetchAllDisasterData, getMockDisasterData, type DisasterEvent, type NotificationItem, type TimelineEvent } from '@/services/disasterDataService';
+import { apiService } from '@/services/api';
 const generateAdvancedData = () => {
   const now = new Date();
   const disasters = [
@@ -124,6 +128,7 @@ const AdvancedDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [dashboardRef] = useState(useRef(null));
+  const riskAnimRef = useGSAPAnimations();
   
   // Advanced Enterprise Features
   const [criticalAlerts, setCriticalAlerts] = useState(3);
@@ -136,6 +141,53 @@ const AdvancedDashboard = () => {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [aiPredictions, setAiPredictions] = useState(89.2);
   const [threatLevel, setThreatLevel] = useState('medium');
+  // Live operational metrics for realism
+  const [opsOpen, setOpsOpen] = useState(14);
+  const [opsTriage, setOpsTriage] = useState(5);
+  const [opsAwaiting, setOpsAwaiting] = useState(3);
+  const [slaP1, setSlaP1] = useState(92);
+  const [slaP2, setSlaP2] = useState(88);
+  const [slaP3, setSlaP3] = useState(96);
+  const [serviceTimes, setServiceTimes] = useState({
+    usgs: new Date(),
+    noaa: new Date(),
+    firms: new Date(),
+    fema: new Date(),
+  });
+  const [timeline, setTimeline] = useState<Array<{title:string, source:string, at: Date}>>([
+    { title: 'M6.1 aftershock recorded', source: 'Sensor hub', at: new Date() },
+    { title: 'Flash flood warning expanded', source: 'NOAA', at: new Date() },
+    { title: 'Satellite hotspot cluster detected', source: 'FIRMS', at: new Date() },
+  ]);
+  const [notif, setNotif] = useState<string[]>([
+    'USGS issued aftershock advisory',
+    'Satellite hotspot surge detected',
+    'Rainband moving inland within 6h',
+  ]);
+  // Executive mini-charts
+  const [sparkAlerts, setSparkAlerts] = useState<number[]>([10,12,9,14,11,15,13]);
+  const [distIncidents, setDistIncidents] = useState<number[]>([45,30,25]); // EQ, Flood, Wildfire
+  const [healthScore, setHealthScore] = useState<number>(94);
+  const [capacityTrend, setCapacityTrend] = useState<number[]>([70,72,71,73,74,75,74,76]);
+  const [latencyTrend, setLatencyTrend] = useState<number[]>([48,46,50,47,45,44,46,43]);
+  // Multi-hazard risk series (simulated next 24 intervals)
+  const seedSeries = (base:number) => Array.from({length: 24}, (_,i)=> Math.max(0, Math.round(base + Math.sin(i/3)*3 + (Math.random()-0.5)*2)));
+  const [riskDrought, setRiskDrought] = useState<number[]>(seedSeries(20));
+  const [riskStorm, setRiskStorm] = useState<number[]>(seedSeries(35));
+  const [riskLandslide, setRiskLandslide] = useState<number[]>(seedSeries(15));
+  const [riskTsunami, setRiskTsunami] = useState<number[]>(seedSeries(8));
+  const [riskWildfire, setRiskWildfire] = useState<number[]>(seedSeries(28));
+  const [hazardMix, setHazardMix] = useState<number[]>([22, 34, 12, 6, 26]); // Drought, Storm, Landslide, Tsunami, Wildfire
+  // ML Model performance (dynamic updating series)
+  const initialPerf = Array.from({ length: 20 }, (_, i) => 88 + Math.round(Math.sin(i / 2) * 3 + (Math.random() - 0.5) * 2));
+  const [mlPerf, setMlPerf] = useState<number[]>(initialPerf);
+  
+  // Real disaster data state
+  const [realDisasters, setRealDisasters] = useState<DisasterEvent[]>([]);
+  const [realNotifications, setRealNotifications] = useState<NotificationItem[]>([]);
+  const [realTimeline, setRealTimeline] = useState<TimelineEvent[]>([]);
+  const [isLoadingDisasterData, setIsLoadingDisasterData] = useState(true);
+  const [lastDataUpdate, setLastDataUpdate] = useState(new Date());
   
   // Advanced Filtering & Data Management
   const [selectedDisasterTypes, setSelectedDisasterTypes] = useState<string[]>([]);
@@ -147,10 +199,108 @@ const AdvancedDashboard = () => {
   const [dataRefreshInterval, setDataRefreshInterval] = useState(30000);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
+  // Location-based Risk Analysis State
+  const [currentLocation, setCurrentLocation] = useState<{
+    lat: number;
+    lng: number;
+    address?: string;
+  } | null>(null);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [riskAnalysis, setRiskAnalysis] = useState<any>(null);
+
   // Debug: Log active tab changes
   useEffect(() => {
     // Tab change logging removed to fix linter error
   }, [activeTab]);
+
+  // Fetch real disaster data (prefer backend when healthy)
+  useEffect(() => {
+    const fetchDisasterData = async () => {
+      setIsLoadingDisasterData(true);
+      try {
+        const backendHealthy = await apiService.healthCheck();
+        if (backendHealthy) {
+          // Retrieve events/predictions from backend and adapt to dashboard structures
+          const [events, predictions, models] = await Promise.all([
+            apiService.getEvents(),
+            apiService.getPredictions(),
+            apiService.getModels()
+          ]);
+
+          const mappedDisasters: DisasterEvent[] = (events || []).map((e: any) => ({
+            id: e.id || `event-${Math.random().toString(36).slice(2)}`,
+            type: e.event_type || 'Event',
+            title: e.name || e.description || 'Disaster Event',
+            location: e.location || 'Unknown',
+            coordinates: [e.coordinates?.lat ?? 0, e.coordinates?.lng ?? 0],
+            severity: (e.severity || 'Medium') as DisasterEvent['severity'],
+            status: (e.status || 'Active') as DisasterEvent['status'],
+            timestamp: new Date(e.updated_at || e.created_at || Date.now()),
+            magnitude: e.magnitude,
+            affected: e.affected_population,
+            source: e.source || 'Backend',
+            description: e.description
+          }));
+
+          const notifications: NotificationItem[] = mappedDisasters.slice(0, 5).map(d => ({
+            id: `notif-${d.id}`,
+            message: `${d.type}: ${d.title} in ${d.location}`,
+            type: (d.severity === 'Critical' ? 'critical' : 'alert'),
+            timestamp: d.timestamp,
+            source: d.source,
+            action: d.severity === 'Critical' ? 'Immediate Action Required' : 'Investigate',
+            severity: d.severity
+          }));
+
+          const timeline: TimelineEvent[] = mappedDisasters.slice(0, 5).map(d => ({
+            id: `timeline-${d.id}`,
+            title: d.title,
+            source: d.source,
+            timestamp: d.timestamp,
+            type: d.type,
+            severity: d.severity
+          }));
+
+          setRealDisasters(mappedDisasters);
+          setRealNotifications(notifications);
+          setRealTimeline(timeline);
+          setLastDataUpdate(new Date());
+          toast.success('🌍 Connected to backend and updated data', {
+            icon: '⚡',
+            style: { borderRadius: '10px', background: '#333', color: '#fff' },
+          });
+        } else {
+        const disasterData = await fetchAllDisasterData();
+        setRealDisasters(disasterData.disasters);
+        setRealNotifications(disasterData.notifications);
+        setRealTimeline(disasterData.timeline);
+        setLastDataUpdate(new Date());
+          toast.success('🌍 Updated data from public sources', {
+          icon: '⚡',
+            style: { borderRadius: '10px', background: '#333', color: '#fff' },
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching disaster data:', error);
+        const mockData = getMockDisasterData();
+        setRealDisasters(mockData.disasters);
+        setRealNotifications(mockData.notifications);
+        setRealTimeline(mockData.timeline);
+        toast.error('⚠️ Using fallback data - API unavailable', {
+          icon: '⚠️',
+          style: { borderRadius: '10px', background: '#dc2626', color: '#fff' },
+        });
+      } finally {
+        setIsLoadingDisasterData(false);
+      }
+    };
+
+    fetchDisasterData();
+    const interval = setInterval(fetchDisasterData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Auto-refresh data with enhanced feedback
   useEffect(() => {
@@ -170,6 +320,413 @@ const AdvancedDashboard = () => {
 
     return () => clearInterval(interval);
   }, [autoRefresh]);
+
+  // Subtle drift to make values feel live
+  useEffect(() => {
+    const clamp = (v:number, min:number, max:number)=> Math.max(min, Math.min(max, v));
+    const id = setInterval(() => {
+      setOpsOpen(v => clamp(v + Math.round((Math.random()-0.5)*3), 8, 26));
+      setOpsTriage(v => clamp(v + Math.round((Math.random()-0.5)*2), 2, 10));
+      setOpsAwaiting(v => clamp(v + Math.round((Math.random()-0.5)*2), 1, 8));
+      setSlaP1(v => clamp(Math.round(v + (Math.random()-0.5)*2), 85, 98));
+      setSlaP2(v => clamp(Math.round(v + (Math.random()-0.5)*2), 80, 96));
+      setSlaP3(v => clamp(Math.round(v + (Math.random()-0.5)*2), 90, 99));
+      setServiceTimes({
+        usgs: new Date(),
+        noaa: new Date(Date.now() - (2+Math.floor(Math.random()*4))*60*1000),
+        firms: new Date(Date.now() - (3+Math.floor(Math.random()*4))*60*1000),
+        fema: new Date(Date.now() - (5+Math.floor(Math.random()*6))*60*1000),
+      });
+      setTimeline(list => [{ title: 'Telemetry sync complete', source: 'Ingest', at: new Date() }, ...list].slice(0,5));
+      setNotif(list => {
+        const pool = ['New station calibration applied', 'Wind field shift expected in 3h', 'Crowdsourced report burst nearby'];
+        return [pool[Math.floor(Math.random()*pool.length)], ...list].slice(0,3);
+      });
+      // small charts drift
+      setSparkAlerts(arr => {
+        const next = [...arr.slice(1), Math.max(5, Math.min(20, Math.round(arr[arr.length-1] + (Math.random()-0.5)*4)) )];
+        return next;
+      });
+      setDistIncidents(([a,b,c]) => {
+        const da = Math.max(20, Math.min(60, a + Math.round((Math.random()-0.5)*4)));
+        const db = Math.max(15, Math.min(45, b + Math.round((Math.random()-0.5)*3)));
+        const dc = Math.max(10, Math.min(40, c + Math.round((Math.random()-0.5)*3)));
+        return [da, db, dc];
+      });
+      setHealthScore(v => Math.max(85, Math.min(99, Math.round(v + (Math.random()-0.5)*2))));
+      setCapacityTrend(arr => {
+        const last = arr[arr.length-1] ?? 74;
+        const next = Math.max(60, Math.min(90, Math.round(last + (Math.random()-0.5)*3)));
+        return [...arr.slice(1), next];
+      });
+      setLatencyTrend(arr => {
+        const last = arr[arr.length-1] ?? 44;
+        const next = Math.max(30, Math.min(70, Math.round(last + (Math.random()-0.5)*5)));
+        return [...arr.slice(1), next];
+      });
+      // risk series drift
+      const drift = (arr:number[], min:number, max:number, step:number) => {
+        const last = arr[arr.length-1] ?? (min+max)/2;
+        const next = Math.max(min, Math.min(max, Math.round(last + (Math.random()-0.5)*step)));
+        return [...arr.slice(1), next];
+      };
+      setRiskDrought(arr => drift(arr, 5, 45, 3));
+      setRiskStorm(arr => drift(arr, 10, 60, 4));
+      setRiskLandslide(arr => drift(arr, 5, 35, 3));
+      setRiskTsunami(arr => drift(arr, 0, 20, 2));
+      setRiskWildfire(arr => drift(arr, 10, 55, 4));
+      setHazardMix(([d,s,l,t,w]) => [
+        Math.max(10, Math.min(40, d + Math.round((Math.random()-0.5)*3))),
+        Math.max(20, Math.min(50, s + Math.round((Math.random()-0.5)*3))),
+        Math.max(8, Math.min(30, l + Math.round((Math.random()-0.5)*2))),
+        Math.max(3, Math.min(15, t + Math.round((Math.random()-0.5)*2))),
+        Math.max(15, Math.min(45, w + Math.round((Math.random()-0.5)*3)))
+      ]);
+    }, 20000);
+    return () => clearInterval(id);
+  }, []);
+
+  // ML model performance: dynamic updating every 2s
+  useEffect(() => {
+    const perfTimer = setInterval(() => {
+      setMlPerf(arr => {
+        const last = arr[arr.length - 1] ?? 90;
+        const next = Math.max(80, Math.min(98, Math.round(last + (Math.random() - 0.5) * 2)));
+        return [...arr.slice(1), next];
+      });
+    }, 2000);
+    return () => clearInterval(perfTimer);
+  }, []);
+
+  // Location Detection and Risk Analysis Functions
+  const detectUserLocation = async () => {
+    setIsDetectingLocation(true);
+    setAnalysisError(null);
+    
+    try {
+      if (!navigator.geolocation) {
+        throw new Error('Geolocation is not supported by this browser');
+      }
+
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        });
+      });
+
+      const { latitude: lat, longitude: lng } = position.coords;
+      
+      // Get address from coordinates using reverse geocoding
+      try {
+        const response = await fetch(
+          `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=YOUR_OPENCAGE_KEY&no_annotations=1`
+        );
+        const data = await response.json();
+        const address = data.results?.[0]?.formatted || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        
+        setCurrentLocation({ lat, lng, address });
+        toast.success('📍 Location detected successfully', {
+          icon: '📍',
+          style: { borderRadius: '10px', background: '#333', color: '#fff' },
+        });
+      } catch (error) {
+        // Fallback to coordinates if reverse geocoding fails
+        setCurrentLocation({ lat, lng });
+        toast.success('📍 Location detected (coordinates only)', {
+          icon: '📍',
+          style: { borderRadius: '10px', background: '#333', color: '#fff' },
+        });
+      }
+    } catch (error) {
+      console.error('Location detection failed:', error);
+      setAnalysisError('Failed to detect location. Please check your browser permissions or enter location manually.');
+      toast.error('❌ Location detection failed', {
+        icon: '❌',
+        style: { borderRadius: '10px', background: '#dc2626', color: '#fff' },
+      });
+    } finally {
+      setIsDetectingLocation(false);
+    }
+  };
+
+  const analyzeLocation = async () => {
+    if (!currentLocation && !locationQuery) {
+      setAnalysisError('Please detect your location or enter a location to analyze');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    setRiskAnalysis(null);
+
+    try {
+      let coordinates: { lat: number; lng: number };
+      let locationName: string | undefined;
+
+      if (currentLocation) {
+        coordinates = currentLocation;
+        locationName = currentLocation.address;
+      } else {
+        // Parse location query (assuming format: "lat,lng" or city name)
+        const coordsMatch = locationQuery.match(/(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/);
+        if (coordsMatch) {
+          coordinates = { lat: parseFloat(coordsMatch[1]), lng: parseFloat(coordsMatch[2]) };
+        } else {
+          // Try to geocode the city name
+          const geocodeResult = await apiService.geocode(locationQuery, 1);
+          if (geocodeResult.length > 0) {
+            coordinates = { lat: geocodeResult[0].lat, lng: geocodeResult[0].lon };
+            locationName = geocodeResult[0].name;
+          } else {
+            throw new Error('Could not find coordinates for the specified location');
+          }
+        }
+      }
+
+      console.log('🔍 Starting risk analysis for coordinates:', coordinates);
+
+      // First, test backend connectivity
+      const backendHealthy = await apiService.healthCheck();
+      if (!backendHealthy) {
+        throw new Error('Backend is not responding. Please check if the Railway service is running.');
+      }
+
+      console.log('✅ Backend health check passed');
+
+      // Get AI prediction from backend
+      console.log('🤖 Fetching AI prediction...');
+      const aiPrediction = await apiService.predictDisaster(coordinates.lat, coordinates.lng, locationName);
+      
+      if (!aiPrediction) {
+        throw new Error('Failed to get AI prediction from backend. The prediction endpoint may not be implemented yet.');
+      }
+
+      console.log('✅ AI prediction received:', aiPrediction);
+
+      // Get current weather data for the location
+      console.log('🌤️ Fetching weather data...');
+      const weatherData = await apiService.getCurrentWeatherByCoords(coordinates.lat, coordinates.lng, locationName);
+      console.log('✅ Weather data received:', weatherData);
+      
+      // Get location analysis from backend
+      console.log('📍 Fetching location analysis...');
+      const locationAnalysis = await apiService.analyzeCoords(coordinates.lat, coordinates.lng);
+      console.log('✅ Location analysis received:', locationAnalysis);
+
+      // Process and structure the risk analysis data
+      const analysis = {
+        location: {
+          coordinates,
+          address: locationName,
+          elevation: locationAnalysis?.elevation,
+          soil_type: locationAnalysis?.soil_type,
+          land_use: locationAnalysis?.land_use,
+          historical_events: locationAnalysis?.historical_events
+        },
+        weather: weatherData ? {
+          temperature: weatherData.temperature,
+          humidity: weatherData.humidity,
+          pressure: weatherData.pressure,
+          wind_speed: weatherData.wind_speed,
+          precipitation: weatherData.precipitation
+        } : null,
+        flood: {
+          risk_level: getRiskLevel(aiPrediction.predictions?.flood || 0),
+          probability: Math.round((aiPrediction.predictions?.flood || 0) * 100),
+          description: aiPrediction.summaries?.flood || 'Flood risk assessment based on current conditions'
+        },
+        earthquake: {
+          risk_level: getRiskLevel(aiPrediction.predictions?.earthquake || 0),
+          probability: Math.round((aiPrediction.predictions?.earthquake || 0) * 100),
+          description: aiPrediction.summaries?.earthquake || 'Earthquake risk assessment based on seismic data'
+        },
+        drought: {
+          risk_level: getRiskLevel(aiPrediction.predictions?.drought || 0),
+          probability: Math.round((aiPrediction.predictions?.drought || 0) * 100),
+          description: aiPrediction.summaries?.drought || 'Drought risk assessment based on climate data'
+        },
+        composite_risk: getCompositeRiskLevel(aiPrediction.predictions),
+        exposure_level: getExposureLevel(locationAnalysis?.population_density),
+        confidence_level: getConfidenceLevel(aiPrediction.predictions),
+        insights: generateInsights(aiPrediction, weatherData),
+        scenarios: generateScenarios(aiPrediction, locationAnalysis),
+        resources: generateResources(aiPrediction, locationAnalysis),
+        timestamp: new Date().toISOString()
+      };
+
+      setRiskAnalysis(analysis);
+      toast.success('🔍 Risk analysis completed', {
+        icon: '🔍',
+        style: { borderRadius: '10px', background: '#333', color: '#fff' },
+      });
+
+    } catch (error) {
+      console.error('❌ Risk analysis failed:', error);
+      
+      let errorMessage = 'Risk analysis failed';
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'Cannot connect to backend. Please check your internet connection and try again.';
+        } else if (error.message.includes('Backend is not responding')) {
+          errorMessage = 'Backend service is unavailable. Please try again later.';
+        } else if (error.message.includes('Failed to get AI prediction')) {
+          errorMessage = 'AI prediction service is not available. Please check backend implementation.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setAnalysisError(errorMessage);
+      toast.error(`❌ ${errorMessage}`, {
+        icon: '❌',
+        style: { borderRadius: '10px', background: '#dc2626', color: '#fff' },
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // Helper functions for risk analysis
+  const getRiskLevel = (probability: number): string => {
+    if (probability >= 0.7) return 'Critical';
+    if (probability >= 0.5) return 'High';
+    if (probability >= 0.3) return 'Medium';
+    if (probability >= 0.1) return 'Low';
+    return 'Very Low';
+  };
+
+  const getCompositeRiskLevel = (predictions: any): string => {
+    const values = Object.values(predictions || {}).filter(v => typeof v === 'number') as number[];
+    if (values.length === 0) return 'Unknown';
+    
+    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    return getRiskLevel(avg);
+  };
+
+  const getExposureLevel = (populationDensity?: number): string => {
+    if (!populationDensity) return 'Unknown';
+    if (populationDensity > 1000) return 'Very High';
+    if (populationDensity > 500) return 'High';
+    if (populationDensity > 100) return 'Moderate';
+    if (populationDensity > 10) return 'Low';
+    return 'Very Low';
+  };
+
+  const getConfidenceLevel = (predictions: any): string => {
+    // Simple confidence calculation based on prediction consistency
+    const values = Object.values(predictions || {}).filter(v => typeof v === 'number') as number[];
+    if (values.length === 0) return 'Unknown';
+    
+    const variance = values.reduce((acc, val) => acc + Math.pow(val - (values.reduce((a, b) => a + b, 0) / values.length), 2), 0) / values.length;
+    if (variance < 0.01) return 'Very High';
+    if (variance < 0.05) return 'High';
+    if (variance < 0.1) return 'Medium';
+    return 'Low';
+  };
+
+  const generateInsights = (prediction: any, weather: any): Array<{title: string, description: string}> => {
+    const insights = [];
+    
+    if (prediction.predictions?.flood > 0.5) {
+      insights.push({
+        title: 'High Flood Risk Detected',
+        description: 'Current weather conditions and historical data suggest elevated flood risk in this area.'
+      });
+    }
+    
+    if (prediction.predictions?.earthquake > 0.3) {
+      insights.push({
+        title: 'Seismic Activity Warning',
+        description: 'Seismic sensors indicate increased earthquake probability in this region.'
+      });
+    }
+    
+    if (prediction.predictions?.drought > 0.6) {
+      insights.push({
+        title: 'Drought Conditions',
+        description: 'Climate patterns suggest developing drought conditions with potential water scarcity.'
+      });
+    }
+    
+    if (weather && weather.precipitation > 50) {
+      insights.push({
+        title: 'Heavy Precipitation Alert',
+        description: 'High rainfall detected which may contribute to flood risk.'
+      });
+    }
+    
+    return insights.length > 0 ? insights : [{
+      title: 'Low Risk Conditions',
+      description: 'Current conditions indicate low disaster risk in this area.'
+    }];
+  };
+
+  const generateScenarios = (prediction: any, location: any): Array<{name: string, severity: string, description: string}> => {
+    const scenarios = [];
+    
+    if (prediction.predictions?.flood > 0.3) {
+      scenarios.push({
+        name: 'Flash Flood Scenario',
+        severity: prediction.predictions.flood > 0.7 ? 'High' : 'Medium',
+        description: 'Rapid flooding due to heavy rainfall and poor drainage conditions.'
+      });
+    }
+    
+    if (prediction.predictions?.earthquake > 0.2) {
+      scenarios.push({
+        name: 'Seismic Event',
+        severity: prediction.predictions.earthquake > 0.6 ? 'High' : 'Medium',
+        description: 'Potential earthquake with varying magnitude based on fault line proximity.'
+      });
+    }
+    
+    if (prediction.predictions?.drought > 0.4) {
+      scenarios.push({
+        name: 'Water Scarcity',
+        severity: prediction.predictions.drought > 0.7 ? 'High' : 'Medium',
+        description: 'Extended dry period leading to water shortages and agricultural impacts.'
+      });
+    }
+    
+    return scenarios;
+  };
+
+  const generateResources = (prediction: any, location: any): Array<{name: string, type: string, description: string}> => {
+    const resources = [];
+    
+    if (prediction.predictions?.flood > 0.3) {
+      resources.push({
+        name: 'Emergency Response Teams',
+        type: 'Response',
+        description: 'Flood response teams and evacuation coordination.'
+      });
+    }
+    
+    if (prediction.predictions?.earthquake > 0.2) {
+      resources.push({
+        name: 'Structural Assessment',
+        type: 'Assessment',
+        description: 'Building safety evaluation and structural integrity checks.'
+      });
+    }
+    
+    if (prediction.predictions?.drought > 0.4) {
+      resources.push({
+        name: 'Water Management',
+        type: 'Mitigation',
+        description: 'Water conservation measures and alternative water sources.'
+      });
+    }
+    
+    return resources;
+  };
+
+  // Auto-detect location when component mounts
+  useEffect(() => {
+    detectUserLocation();
+  }, []);
 
   const handleExport = () => {
     toast.success('📊 Exporting dashboard data...', {
@@ -248,12 +805,20 @@ const AdvancedDashboard = () => {
       <div className="mb-8 pt-2">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between pb-4 gap-4">
           <div>
-            <h1 className={`text-3xl sm:text-4xl font-semibold font-poppins bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent`}>
+            <h1 className={`flex items-center gap-2 text-3xl sm:text-4xl font-semibold font-poppins bg-gradient-to-r from-blue-600 via-indigo-600 to-fuchsia-600 bg-clip-text text-transparent`}>
+              <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow">
+                <Sparkles className="h-4 w-4" />
+              </span>
               DisastroScope
             </h1>
-            <p className={`mt-2 text-sm sm:text-base text-slate-600`}>
-              Advanced Disaster Monitoring & Response System
+            <div className="h-1 w-36 mt-2 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-fuchsia-500" />
+            <p className={`mt-3 text-sm sm:text-base text-slate-600`}>
+              AI-Powered Multi-Hazard Command Center for Prediction, Monitoring & Response
             </p>
+            <div className="mt-2 inline-flex items-center gap-2 text-xs px-2 py-1 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-indigo-200 text-indigo-700">
+              <Rocket className="h-3 w-3" />
+              <span>Real-time Intelligence • Predictive Analytics • Executive Insights</span>
+            </div>
             {/* Subtle status chips */}
             <div className="flex flex-wrap items-center gap-2 mt-3">
               <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full border text-xs ${isDarkMode ? 'border-gray-700 text-gray-200' : 'border-gray-300 text-slate-700'}`}>
@@ -594,10 +1159,13 @@ const AdvancedDashboard = () => {
                         +2 today
                       </div>
                     </div>
-                    <div 
-                      className="p-3 rounded-full bg-red-100"
-                    >
-                      <AlertTriangle className="h-8 w-8 text-red-600" />
+                    <div className="w-24 h-14">
+                      <ReactApexChart
+                        options={{ chart: { type: 'line', sparkline: { enabled: true } }, stroke: { curve: 'smooth', width: 2 }, colors: ['#ef4444'] } as ApexOptions}
+                        series={[{ data: sparkAlerts }]}
+                        type="line"
+                        height={56}
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -617,10 +1185,13 @@ const AdvancedDashboard = () => {
                         +5% this week
                       </div>
                     </div>
-                    <div 
-                      className="p-3 rounded-full bg-green-100"
-                    >
-                      <Zap className="h-8 w-8 text-green-600" />
+                    <div className="w-24 h-14">
+                      <ReactApexChart
+                        options={{ chart: { type: 'radialBar', sparkline: { enabled: true } }, plotOptions: { radialBar: { hollow: { size: '60%' }, dataLabels: { show: false } } }, colors:['#22c55e'] } as ApexOptions}
+                        series={[healthScore]}
+                        type="radialBar"
+                        height={56}
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -640,10 +1211,13 @@ const AdvancedDashboard = () => {
                         +2.1% this month
                       </div>
                     </div>
-                    <div 
-                      className="p-3 rounded-full bg-blue-100"
-                    >
-                      <Target className="h-8 w-8 text-blue-600" />
+                    <div className="w-24 h-14">
+                      <ReactApexChart
+                        options={{ chart: { type: 'bar', sparkline: { enabled: true } }, plotOptions: { bar: { columnWidth: '50%' } }, colors:['#3b82f6','#f59e0b','#ef4444'], legend: { show: false } } as ApexOptions}
+                        series={[{ data: distIncidents }]}
+                        type="bar"
+                        height={56}
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -937,54 +1511,822 @@ const AdvancedDashboard = () => {
 
           
 
-          {/* Recent Disasters with enhanced styling */}
-          <div>
-            <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl hover:shadow-2xl transition-all duration-300`}>
+          {/* Post-maps: 2-column balanced layout with 8 sections */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Disasters */}
+              <Card className={`dashboard-card ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl transition-all duration-300`}>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-red-600" />
+                       <span className="bg-gradient-to-r from-red-600 to-rose-500 bg-clip-text text-transparent">All Recent Disasters & Federal Declarations</span>
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="text-xs"
+                        onClick={async () => {
+                          setIsLoadingDisasterData(true);
+                          try {
+                            const disasterData = await fetchAllDisasterData();
+                            setRealDisasters(disasterData.disasters);
+                            setRealNotifications(disasterData.notifications);
+                            setRealTimeline(disasterData.timeline);
+                            setLastDataUpdate(new Date());
+                            toast.success('🌍 Disaster data refreshed', {
+                              icon: '⚡',
+                              style: {
+                                borderRadius: '10px',
+                                background: '#333',
+                                color: '#fff',
+                              },
+                            });
+                          } catch (error) {
+                            toast.error('⚠️ Failed to refresh data', {
+                              icon: '⚠️',
+                              style: {
+                                borderRadius: '10px',
+                                background: '#dc2626',
+                                color: '#fff',
+                              },
+                            });
+                          } finally {
+                            setIsLoadingDisasterData(false);
+                          }
+                        }}
+                        disabled={isLoadingDisasterData}
+                      >
+                        <RefreshCw className={`h-3 w-3 mr-1 ${isLoadingDisasterData ? 'animate-spin' : ''}`} />
+                        Refresh
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-xs">
+                        <Eye className="h-3 w-3 mr-1" />View All
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingDisasterData ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      <span className="ml-2 text-sm text-muted-foreground">Loading real disaster data...</span>
+                          </div>
+                  ) : realDisasters.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>No recent disasters detected</p>
+                          </div>
+                                     ) : (
+                     <div className="max-h-96 overflow-y-auto space-y-3 pr-2">
+                       {(() => {
+                         console.log('🔍 Recent Disasters - realDisasters array:', JSON.stringify(realDisasters, null, 2));
+                         console.log('🔍 Recent Disasters - disaster types:', realDisasters.map(d => d.type));
+                         console.log('🔍 Recent Disasters - all disasters:', realDisasters.map(d => ({ type: d.type, title: d.title, source: d.source })));
+                         return realDisasters.map((disaster) => {
+                           console.log('🔍 Rendering disaster:', { type: disaster.type, title: disaster.title, source: disaster.source });
+                           return (
+                           <div key={disaster.id} className={`group flex items-center justify-between p-4 border rounded-xl backdrop-blur bg-white/60 dark:bg-gray-900/40 ${isDarkMode ? 'border-gray-700' : ''}`}>
+                        <div className="flex items-center gap-4">
+                               <div className={`h-10 w-10 rounded-full grid place-items-center shadow-inner ${disaster.severity==='Critical' ? 'bg-rose-100' : disaster.severity==='High' ? 'bg-amber-100' : 'bg-emerald-100'}`}>
+                                 <AlertTriangle className={`h-5 w-5 ${disaster.severity==='Critical' ? 'text-rose-600' : disaster.severity==='High' ? 'text-amber-600' : 'text-emerald-600'}`} />
+                        </div>
+                               <div>
+                                 <div className="flex items-center gap-2">
+                                   <p className="font-medium">{disaster.title}</p>
+                      </div>
+                                 <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-slate-500'}`}>{disaster.location}</p>
+                                 <p className="text-xs text-blue-600">{disaster.source}</p>
+                  </div>
+            </div>
+                             <div className="flex items-center gap-2">
+                               <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-muted-foreground'}`}>{(() => {
+                                 try {
+                                   return format(disaster.timestamp, 'MMM dd, HH:mm');
+                                 } catch (error) {
+                                   return 'Unknown time';
+                                 }
+                               })()}</p>
+                               <Button size="sm" variant="outline" className="text-xs hidden sm:inline-flex">Details</Button>
+                               <Button size="sm" className="text-xs bg-gradient-to-r from-blue-600 to-indigo-600 text-white">Acknowledge</Button>
+                    </div>
+                    </div>
+                         );
+                           });
+                        })()}
+                    </div>
+                   )}
+                  <div className="mt-4 text-xs text-muted-foreground text-center">
+                    Last updated: {(() => {
+                      try {
+                        return format(lastDataUpdate, 'HH:mm:ss');
+                      } catch (error) {
+                        return 'Unknown';
+                      }
+                    })()}
+                  </div>
+                </CardContent>
+              </Card>
+
+            {/* AI Risk Forecast */}
+              <Card ref={riskAnimRef} className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-purple-600" />
+                    <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">AI Risk Forecast (Next 24 intervals)</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div style={{ height: '420px' }}>
+                    <ReactApexChart
+                      key="risk-forecast-line"
+                      options={{
+                        chart: { type: 'line', toolbar: { show: false }, animations: { enabled: false } },
+                        stroke: { curve: 'smooth', width: 2 },
+                        legend: { position: 'bottom' },
+                        xaxis: { categories: Array.from({length: 24}, (_,i)=> `${i}`), tickAmount: 6, labels: { show: true } },
+                        yaxis: { min: 0, max: 70 },
+                        colors: ['#f59e0b','#0ea5e9','#8b5cf6','#06b6d4','#ef4444'],
+                        tooltip: { shared: true, intersect: false }
+                      } as ApexOptions}
+                      series={[
+                        { name: 'Drought', data: riskDrought },
+                        { name: 'Storm', data: riskStorm },
+                        { name: 'Landslide', data: riskLandslide },
+                        { name: 'Tsunami', data: riskTsunami },
+                        { name: 'Wildfire', data: riskWildfire },
+                      ]}
+                      type="line"
+                      height={420}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Notifications */}
+              <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center gap-2">
+                    <Bell className="h-5 w-5 text-rose-600" />
+                    Notifications
+                  </CardTitle>
+                                         <div className="text-xs text-muted-foreground">
+                       Real-time from USGS, FIRMS, GDACS, NOAA, OpenFEMA
+                  </div>
+                  </div>
+              </CardHeader>
+                <CardContent className="space-y-3">
+                  {isLoadingDisasterData ? (
+                    <div className="flex items-center justify-center py-6">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-rose-600"></div>
+                      <span className="ml-2 text-sm text-muted-foreground">Loading notifications...</span>
+                  </div>
+                  ) : realNotifications.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <Bell className="h-6 w-6 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No active notifications</p>
+                  </div>
+                  ) : (
+                    realNotifications.map((notification) => (
+                      <div key={notification.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <span className={`h-2 w-2 rounded-full ${
+                            notification.severity === 'Critical' ? 'bg-red-500' :
+                            notification.severity === 'High' ? 'bg-orange-500' :
+                            notification.severity === 'Medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                          }`} />
+                          <div>
+                            <span className={`text-sm ${
+                              notification.severity === 'Critical' ? 'text-red-600' :
+                              notification.severity === 'High' ? 'text-orange-600' :
+                              notification.severity === 'Medium' ? 'text-yellow-600' : 'text-blue-600'
+                            }`}>{notification.message}</span>
+                            <p className="text-xs text-muted-foreground">{notification.source} • {(() => {
+                              try {
+                                return formatDistanceToNow(notification.timestamp, { addSuffix: true });
+                              } catch (error) {
+                                return 'recently';
+                              }
+                            })()}</p>
+                    </div>
+                  </div>
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="outline" className="text-xs">{notification.action}</Button>
+                    </div>
+                  </div>
+                    ))
+                  )}
+              </CardContent>
+            </Card>
+            {/* Live Incident Timeline */}
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-red-600" />
-                    Recent Disasters
-                  </CardTitle>
-                  <div>
-                    <Button size="sm" variant="outline" className="bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0">
-                      <Eye className="h-4 w-4 mr-2" />
-                      View All
-                    </Button>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-slate-600" />
+                  Live Incident Timeline
+                </CardTitle>
+                  <div className="text-xs text-muted-foreground">
+                    Live from multiple sources
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {data.disasters.slice(0, 4).map((disaster, index) => (
-                    <div
-                      key={disaster.id}
-                      className={`flex items-center justify-between p-4 border rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 ${isDarkMode ? 'border-gray-700 hover:from-gray-700 hover:to-gray-600' : 'hover:shadow-lg'}`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div 
-                          className="p-2 rounded-full bg-red-100"
-                        >
-                          <AlertTriangle className="h-4 w-4 text-red-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{disaster.type}</p>
-                          <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-muted-foreground'}`}>{disaster.location}</p>
-                        </div>
+                {isLoadingDisasterData ? (
+                  <div className="flex items-center justify-center py-6">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-600"></div>
+                    <span className="ml-2 text-sm text-muted-foreground">Loading timeline...</span>
+                    </div>
+                ) : realTimeline.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <Clock className="h-6 w-6 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No recent incidents</p>
+                  </div>
+                ) : (
+                  <div className="relative pl-4">
+                    <div className="absolute left-1 top-0 bottom-0 w-0.5 bg-gradient-to-b from-purple-400 via-blue-400 to-emerald-400" />
+                    <div className="space-y-3">
+                      {realTimeline.map((event, index) => (
+                        <div key={event.id} className="relative p-3 rounded-lg border bg-background/50 backdrop-blur-sm hover:bg-background transition-colors duration-200">
+                          <div className={`absolute -left-1 top-4 h-2 w-2 rounded-full ${
+                            event.source === 'USGS' ? 'bg-red-500' :
+                            event.source === 'FIRMS' ? 'bg-orange-500' :
+                            event.source === 'GDACS' ? 'bg-purple-500' :
+                            event.source === 'OpenWeather' ? 'bg-blue-500' : 'bg-gray-500'
+                          }`} />
+                          <div className="flex items-start justify-between">
+                    <div>
+                              <div className="font-medium text-foreground">{event.title}</div>
+                              <div className="text-muted-foreground text-xs">{event.source} • {(() => {
+                                try {
+                                  return formatDistanceToNow(event.timestamp, { addSuffix: true });
+                                } catch (error) {
+                                  return 'recently';
+                                }
+                              })()}</div>
+                    </div>
+                  </div>
+                    </div>
+                      ))}
+                  </div>
+                </div>
+                )}
+              </CardContent>
+            </Card>
+            {/* Geo Risk Matrix */}
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-emerald-600" />
+                  Geo Risk Matrix
+                </CardTitle>
+                <CardDescription>Live regional risk intensity across zones</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const regions = ['West','Central','East'];
+                  const riskBands = ['Low','Medium','High'];
+                  const values = riskBands.map((band, idx) => ({
+                    name: band,
+                    data: regions.map((reg, j) => ({ x: reg, y: Math.max(0, Math.min(100, Math.round((hazardMix[j % hazardMix.length] || 20) + (idx*15) + (Math.random()-0.5)*10))) }))
+                  }));
+                  const options: ApexOptions = {
+                    chart: { type: 'heatmap', toolbar: { show: false } },
+                    dataLabels: { enabled: true, style: { colors: ['#111'] } },
+                    xaxis: { categories: regions },
+                    plotOptions: {
+                      heatmap: {
+                        shadeIntensity: 0.4,
+                        colorScale: {
+                          ranges: [
+                            { from: 0, to: 25, color: '#dcfce7' },
+                            { from: 26, to: 50, color: '#fde68a' },
+                            { from: 51, to: 75, color: '#fdba74' },
+                            { from: 76, to: 100, color: '#fecaca' }
+                          ]
+                        }
+                      }
+                    },
+                    legend: { position: 'bottom' }
+                  };
+                  return (
+                    <ReactApexChart
+                      key="geo-risk-heatmap"
+                      options={options}
+                      series={values as any}
+                      type="heatmap"
+                      height={320}
+                    />
+                  );
+                })()}
+              </CardContent>
+            </Card>
+            {/* ML Model Performance - Dynamic Updating Chart */}
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-emerald-600" />
+                  ML Model Performance Update 
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const optionsPerf: ApexOptions = {
+                    chart: { type: 'line', animations: { enabled: true, dynamicAnimation: { speed: 800 } }, toolbar: { show: false } },
+                    stroke: { curve: 'smooth', width: 2 },
+                    dataLabels: { enabled: false },
+                    yaxis: [
+                      { min: 70, max: 100, labels: { formatter: (v) => `${v}%` }, title: { text: 'Accuracy / F1' } },
+                      { opposite: true, title: { text: 'Latency (ms)' } }
+                    ],
+                    xaxis: { labels: { show: false } },
+                    colors: ['#10b981','#6366f1','#f59e0b'],
+                    legend: { position: 'bottom' },
+                    tooltip: { shared: true, intersect: false }
+                  };
+                  const f1 = mlPerf.map(v => Math.max(70, Math.min(99, v - 2 + Math.round((Math.random()-0.5)*2))));
+                  const latency = mlPerf.map((_,i) => Math.max(120, Math.min(260, 220 - Math.round((mlPerf[i]-80)*3))));
+                  const seriesPerf = [
+                    { name: 'Accuracy', data: mlPerf, type: 'line' as const },
+                    { name: 'F1 Score', data: f1, type: 'line' as const },
+                    { name: 'Latency (ms)', data: latency, type: 'line' as const }
+                  ];
+                  return <ReactApexChart key="ml-perf" options={optionsPerf} series={seriesPerf as any} type="line" height={300} />;
+                })()}
+              </CardContent>
+            </Card>
+
+            {/* Top 5 Ongoing Disasters - Dynamic Loaded Chart style */}
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  Top 5 Ongoing Disasters
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const ongoing = data.disasters
+                    .filter(d => String(d.status).toLowerCase() !== 'resolved')
+                    .sort((a, b) => (b.affected || 0) - (a.affected || 0))
+                    .slice(0, 5);
+                  const categoriesTop = ongoing.map(d => d.type);
+                  const quarter = ['Q1','Q2','Q3','Q4'];
+                  const seriesTop = [
+                    { name: 'Q1', data: ongoing.map(() => Math.round(Math.random()*25+50)) },
+                    { name: 'Q2', data: ongoing.map(() => Math.round(Math.random()*25+60)) },
+                    { name: 'Q3', data: ongoing.map(() => Math.round(Math.random()*25+70)) },
+                    { name: 'Q4', data: ongoing.map(() => Math.round(Math.random()*25+80)) },
+                  ];
+                  const optionsTop: ApexOptions = {
+                    chart: { type: 'bar', toolbar: { show: false } },
+                    plotOptions: { bar: { columnWidth: '45%', } },
+                    dataLabels: { enabled: true },
+                    xaxis: { categories: categoriesTop },
+                    legend: { position: 'bottom' },
+                    colors: ['#f472b6','#60a5fa','#34d399','#fbbf24']
+                  };
+                  return <ReactApexChart key="top5-dynamic" options={optionsTop} series={seriesTop} type="bar" height={300} />;
+                })()}
+              </CardContent>
+            </Card>
+
+            {/* Severity Levels across categories - 100% Stacked Bar */}
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-amber-600" />
+                  Disaster Severity Composition
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const categories = ['Earthquake','Flood','Wildfire','Storm','Tsunami','Volcano'];
+                  const low = categories.map(() => Math.round(Math.random()*20+10));
+                  const medium = categories.map(() => Math.round(Math.random()*25+20));
+                  const high = categories.map(() => Math.round(Math.random()*25+15));
+                  const critical = categories.map((_,i) => 100 - low[i] - medium[i] - high[i]);
+                  const series = [
+                    { name: 'Low', data: low },
+                    { name: 'Medium', data: medium },
+                    { name: 'High', data: high },
+                    { name: 'Critical', data: critical },
+                  ];
+                  const options: ApexOptions = {
+                    chart: { type: 'bar', stacked: true, stackType: '100%', toolbar: { show: false } },
+                    xaxis: { categories },
+                    legend: { position: 'bottom' },
+                    colors: ['#86efac','#fde68a','#fbbf24','#ef4444']
+                  };
+                  return <ReactApexChart key="severity-100" options={options} series={series} type="bar" height={260} />;
+                })()}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Bottom Sections: Location Based Analysis & Advanced Analysis */}
+          <div className="space-y-6 mt-6">
+            {/* Location Based Analysis */}
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-blue-600" />
+                  Location Based Analysis
+                </CardTitle>
+                <CardDescription>
+                  Explore risk indicators, recent incidents and local readiness by region.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Toolbar */}
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <select className="text-sm border rounded px-2 py-1">
+                      <option>Current Location</option>
+                      <option>North America</option>
+                      <option>Europe</option>
+                      <option>Asia Pacific</option>
+                    </select>
+                    <select className="text-sm border rounded px-2 py-1">
+                      <option>Last 7d</option>
+                      <option>Last 30d</option>
+                      <option>Last 90d</option>
+                    </select>
+                    <Badge variant="outline" className="hidden md:inline-flex">Updated {format(new Date(), 'HH:mm')}</Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="flex items-center gap-2"><Download className="h-4 w-4" />Export</Button>
+                    <Button variant="outline" size="sm" className="flex items-center gap-2"><Settings className="h-4 w-4" />Configure</Button>
+                  </div>
+                </div>
+
+                {/* Tabs */}
+                <Tabs defaultValue="summary" className="w-full">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="summary">Region Summary</TabsTrigger>
+                    <TabsTrigger value="hazards">Hazard Mix</TabsTrigger>
+                    <TabsTrigger value="resources">Resources</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="summary">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                        <span>Normal</span>
+                        <span className="inline-flex h-2 w-2 rounded-full bg-amber-500 ml-3" />
+                        <span>Elevated</span>
+                        <span className="inline-flex h-2 w-2 rounded-full bg-rose-500 ml-3" />
+                        <span>Critical</span>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <Badge variant={getSeverityColor(disaster.severity)}>
-                          {disaster.severity}
-                        </Badge>
-                        <Badge variant={getStatusColor(disaster.status)}>
-                          {disaster.status}
-                        </Badge>
-                        <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-muted-foreground'}`}>
-                          {format(disaster.timestamp, 'MMM dd, HH:mm')}
-                        </p>
+                      <div className="text-xs text-muted-foreground">Interactive preview only</div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                      <div className="p-4 rounded-lg border bg-gradient-to-br from-blue-50 to-indigo-50 text-slate-700">
+                        <div className="text-xs uppercase tracking-wide text-slate-500">Risk Index</div>
+                        <div className="mt-2 text-3xl font-bold">78</div>
+                        <div className="mt-1 text-xs text-slate-500">Composite (0-100)</div>
+                      </div>
+                      <div className="p-4 rounded-lg border bg-gradient-to-br from-emerald-50 to-teal-50 text-slate-700">
+                        <div className="text-xs uppercase tracking-wide text-slate-500">Readiness</div>
+                        <div className="mt-2 text-3xl font-bold">High</div>
+                        <div className="mt-1 text-xs text-slate-500">Resource & Response</div>
+                      </div>
+                      <div className="p-4 rounded-lg border bg-gradient-to-br from-amber-50 to-yellow-50 text-slate-700">
+                        <div className="text-xs uppercase tracking-wide text-slate-500">Population</div>
+                        <div className="mt-2 text-3xl font-bold">2.4M</div>
+                        <div className="mt-1 text-xs text-slate-500">At Risk</div>
+                      </div>
+                      <div className="p-4 rounded-lg border bg-gradient-to-br from-rose-50 to-red-50 text-slate-700">
+                        <div className="text-xs uppercase tracking-wide text-slate-500">Critical Sites</div>
+                        <div className="mt-2 text-3xl font-bold">5</div>
+                        <div className="mt-1 text-xs text-slate-500">Hospitals, Power</div>
                       </div>
                     </div>
-                  ))}
+                    <div className="mt-4 rounded-xl border bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900/40 dark:to-gray-800/40 h-[360px] grid place-items-center text-sm text-muted-foreground">
+                      Regional trend visualization placeholder
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="hazards">
+                    <div className="rounded-xl border bg-gradient-to-br from-blue-50/70 to-indigo-50/70 dark:from-gray-900/40 dark:to-gray-800/40 h-[360px] grid place-items-center text-sm text-muted-foreground">
+                      Hazard composition chart placeholder
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="resources">
+                    <div className="rounded-xl border bg-gradient-to-br from-emerald-50/70 to-green-50/70 dark:from-gray-900/40 dark:to-gray-800/40 h-[360px] grid place-items-center text-sm text-muted-foreground">
+                      Resource readiness & logistics map placeholder
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+
+            {/* Advanced Analysis - Location-Based Risk Assessment */}
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5 text-purple-600" />
+                  Location-Based Risk Analysis
+                </CardTitle>
+                <CardDescription>
+                  Real-time disaster risk assessment using your location and AI-powered prediction models.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {/* Location Detection & Display */}
+                <div className="flex flex-col gap-4">
+                  {/* Location Display */}
+                  {currentLocation ? (
+                    <div className="space-y-3">
+                      {/* Location in Words */}
+                      <div className="p-4 rounded-lg border bg-blue-50 dark:bg-blue-900/20">
+                        <div className="flex items-center gap-2 text-sm mb-2">
+                          <MapPin className="h-4 w-4 text-blue-600" />
+                          <span className="font-medium">Your Location:</span>
+                          <Badge variant="outline" className="text-xs">GPS Detected</Badge>
+                        </div>
+                        <div className="text-lg font-semibold text-blue-800 dark:text-blue-200">
+                          {currentLocation.address || 'Location detected'}
+                        </div>
+                        <div className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                          Coordinates: {currentLocation.lat.toFixed(4)}, {currentLocation.lng.toFixed(4)}
+                        </div>
+                      </div>
+
+                      {/* Location Map */}
+                      <LocationMap 
+                        latitude={currentLocation.lat}
+                        longitude={currentLocation.lng}
+                        address={currentLocation.address}
+                        height={200}
+                      />
+
+                      {/* Analyze Button */}
+                      <div className="flex justify-center">
+                        <Button 
+                          size="lg" 
+                          className="flex items-center gap-2 px-8"
+                          onClick={analyzeLocation}
+                          disabled={isAnalyzing}
+                        >
+                          {isAnalyzing ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-4 w-4" />
+                          )}
+                          {isAnalyzing ? 'Analyzing...' : 'Analyze Risk'}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Location Detection Prompt */
+                    <div className="text-center space-y-4 py-8">
+                      <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                        <MapPin className="h-8 w-8 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">Location Detection Required</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          We need your location to provide accurate disaster risk analysis
+                        </p>
+                        <Button 
+                          size="lg" 
+                          className="flex items-center gap-2 mx-auto"
+                          onClick={detectUserLocation}
+                          disabled={isDetectingLocation}
+                        >
+                          {isDetectingLocation ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <MapPin className="h-4 w-4" />
+                          )}
+                          {isDetectingLocation ? 'Detecting Location...' : 'Detect My Location'}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Risk Analysis Results */}
+                {riskAnalysis && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Flood Risk */}
+                      <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <CloudRain className="h-4 w-4 text-blue-600" />
+                            Flood Risk
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-blue-700">
+                            {riskAnalysis.flood?.risk_level || 'N/A'}
+                          </div>
+                          <div className="text-xs text-blue-600 mt-1">
+                            Probability: {riskAnalysis.flood?.probability || 0}%
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-2">
+                            {riskAnalysis.flood?.description || 'No flood risk data available'}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Earthquake Risk */}
+                      <Card className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Activity className="h-4 w-4 text-orange-600" />
+                            Earthquake Risk
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-orange-700">
+                            {riskAnalysis.earthquake?.risk_level || 'N/A'}
+                          </div>
+                          <div className="text-xs text-orange-600 mt-1">
+                            Probability: {riskAnalysis.earthquake?.probability || 0}%
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-2">
+                            {riskAnalysis.earthquake?.description || 'No earthquake risk data available'}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Drought Risk */}
+                      <Card className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Sun className="h-4 w-4 text-amber-600" />
+                            Drought Risk
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-amber-700">
+                            {riskAnalysis.drought?.risk_level || 'N/A'}
+                          </div>
+                          <div className="text-xs text-amber-600 mt-1">
+                            Probability: {riskAnalysis.drought?.probability || 0}%
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-2">
+                            {riskAnalysis.drought?.description || 'No drought risk data available'}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Detailed Analysis */}
+                    <Card className="border bg-gray-50 dark:bg-gray-900/40">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">AI Model Analysis</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <div className="text-xs font-medium text-muted-foreground mb-2">Weather Conditions</div>
+                            <div className="space-y-1 text-xs">
+                              <div>Temperature: {riskAnalysis.weather?.temperature || 'N/A'}°C</div>
+                              <div>Humidity: {riskAnalysis.weather?.humidity || 'N/A'}%</div>
+                              <div>Pressure: {riskAnalysis.weather?.pressure || 'N/A'} hPa</div>
+                              <div>Wind Speed: {riskAnalysis.weather?.wind_speed || 'N/A'} km/h</div>
+                              <div>Precipitation: {riskAnalysis.weather?.precipitation || 'N/A'} mm</div>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs font-medium text-muted-foreground mb-2">Risk Factors</div>
+                            <div className="space-y-1 text-xs">
+                              <div>Elevation: {riskAnalysis.location?.elevation || 'N/A'} m</div>
+                              <div>Soil Type: {riskAnalysis.location?.soil_type || 'N/A'}</div>
+                              <div>Land Use: {riskAnalysis.location?.land_use || 'N/A'}</div>
+                              <div>Historical Events: {riskAnalysis.location?.historical_events || 'N/A'}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
+                {/* Loading State */}
+                {isAnalyzing && (
+                  <div className="flex items-center justify-center p-8">
+                    <div className="text-center">
+                      <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-600" />
+                      <div className="text-sm text-muted-foreground">Analyzing location with AI models...</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error State */}
+                {analysisError && (
+                  <div className="p-4 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20">
+                    <div className="flex items-center gap-2 text-red-700">
+                      <AlertCircle className="h-4 w-4" />
+                      <span className="text-sm font-medium">Analysis Error</span>
+                    </div>
+                    <div className="text-sm text-red-600 mt-1">{analysisError}</div>
+                  </div>
+                )}
+
+
+
+
+
+                {/* Tabs for content sections */}
+                <Tabs defaultValue="insights" className="w-full">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="insights">Insights</TabsTrigger>
+                    <TabsTrigger value="scenarios">Scenarios</TabsTrigger>
+                    <TabsTrigger value="resources">Resources</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="insights">
+                    {riskAnalysis ? (
+                      <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/40 p-4">
+                        <div className="text-sm font-medium mb-3">AI-Generated Risk Insights</div>
+                        <div className="space-y-2 text-sm">
+                          {riskAnalysis.insights?.map((insight: any, index: number) => (
+                            <div key={index} className="p-2 bg-white dark:bg-gray-800 rounded border">
+                              <div className="font-medium text-blue-600">{insight.title}</div>
+                              <div className="text-muted-foreground">{insight.description}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                    <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/40 h-[360px] grid place-items-center text-sm text-muted-foreground">
+                        Run location analysis to see AI insights
+                    </div>
+                    )}
+                  </TabsContent>
+                  <TabsContent value="scenarios">
+                    {riskAnalysis ? (
+                      <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/40 p-4">
+                        <div className="text-sm font-medium mb-3">Risk Scenarios</div>
+                        <div className="space-y-2 text-sm">
+                          {riskAnalysis.scenarios?.map((scenario: any, index: number) => (
+                            <div key={index} className="p-2 bg-white dark:bg-gray-800 rounded border">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">{scenario.name}</span>
+                                <Badge variant={scenario.severity === 'High' ? 'destructive' : 'secondary'}>
+                                  {scenario.severity}
+                                </Badge>
+                              </div>
+                              <div className="text-muted-foreground text-xs mt-1">{scenario.description}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                    <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/40 h-[360px] grid place-items-center text-sm text-muted-foreground">
+                        Run location analysis to see risk scenarios
+                    </div>
+                    )}
+                  </TabsContent>
+                  <TabsContent value="resources">
+                    {riskAnalysis ? (
+                      <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/40 p-4">
+                        <div className="text-sm font-medium mb-3">Response Resources</div>
+                        <div className="space-y-2 text-sm">
+                          {riskAnalysis.resources?.map((resource: any, index: number) => (
+                            <div key={index} className="p-2 bg-white dark:bg-gray-800 rounded border">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">{resource.name}</span>
+                                <Badge variant="outline">{resource.type}</Badge>
+                              </div>
+                              <div className="text-muted-foreground text-xs mt-1">{resource.description}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                    <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/40 h-[360px] grid place-items-center text-sm text-muted-foreground">
+                        Run location analysis to see response resources
+                    </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-lg border bg-gradient-to-br from-fuchsia-50 to-pink-50">
+                    <div className="text-xs uppercase tracking-wide text-slate-500">Projected Risk</div>
+                    <div className="mt-2 text-2xl font-semibold">
+                      {riskAnalysis?.composite_risk || 'N/A'}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">{timeframe} Horizon</div>
+                  </div>
+                  <div className="p-4 rounded-lg border bg-gradient-to-br from-amber-50 to-yellow-50">
+                    <div className="text-xs uppercase tracking-wide text-slate-500">Exposure</div>
+                    <div className="mt-2 text-2xl font-semibold">
+                      {riskAnalysis?.exposure_level || 'N/A'}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">Population & Assets</div>
+                  </div>
+                  <div className="p-4 rounded-lg border bg-gradient-to-br from-sky-50 to-cyan-50">
+                    <div className="text-xs uppercase tracking-wide text-slate-500">Confidence</div>
+                    <div className="text-2xl font-semibold">
+                      {riskAnalysis?.confidence_level || 'N/A'}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">Model Agreement</div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
