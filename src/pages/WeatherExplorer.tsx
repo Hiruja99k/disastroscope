@@ -343,7 +343,7 @@ export default function WeatherExplorer() {
                   {/* Header */}
                   <div className="flex justify-between items-center mb-6">
                     <div>
-                      <h3 className="text-xl font-semibold text-gray-900">Welcome back Isabella!</h3>
+                      <h3 className="text-xl font-semibold text-gray-900">Welcome Back</h3>
                       <p className="text-gray-600">Check out today's weather information.</p>
                     </div>
                     <div className="flex items-center gap-3">
