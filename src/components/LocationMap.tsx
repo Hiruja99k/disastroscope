@@ -7,13 +7,15 @@ interface LocationMapProps {
   longitude: number;
   address?: string;
   height?: number;
+  accuracy?: number;
 }
 
 const LocationMap: React.FC<LocationMapProps> = ({ 
   latitude, 
   longitude, 
   address, 
-  height = 200 
+  height = 200,
+  accuracy
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<any>(null);
@@ -84,8 +86,9 @@ const LocationMap: React.FC<LocationMapProps> = ({
         new mapboxgl.Popup({ offset: 25 })
           .setHTML(`
             <div class="p-2">
-              <div class="font-medium text-sm">Your Location</div>
-              <div class="text-xs text-gray-600">${address || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`}</div>
+              <div class="font-medium text-sm">📍 Your Location</div>
+              <div class="text-xs text-gray-600">${address || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`}</div>
+              ${accuracy ? `<div class="text-xs text-blue-600 mt-1">GPS Accuracy: ±${accuracy}m</div>` : ''}
             </div>
           `)
       )

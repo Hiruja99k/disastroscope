@@ -204,6 +204,8 @@ const AdvancedDashboard = () => {
     lat: number;
     lng: number;
     address?: string;
+    detailedAddress?: string;
+    accuracy?: number;
   } | null>(null);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -408,40 +410,107 @@ const AdvancedDashboard = () => {
         throw new Error('Geolocation is not supported by this browser');
       }
 
+      // Use extremely high accuracy settings for precise location
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
+          enableHighAccuracy: true,  // Maximum accuracy
+          timeout: 15000,           // Longer timeout for high accuracy
+          maximumAge: 0             // Always get fresh location
         });
       });
 
-      const { latitude: lat, longitude: lng } = position.coords;
+      const { latitude: lat, longitude: lng, accuracy } = position.coords;
       
-      // Get address from coordinates using reverse geocoding
+      console.log('📍 GPS Coordinates:', { lat, lng, accuracy: `${accuracy}m accuracy` });
+      
+      // Get detailed address using Mapbox Geocoding API
       try {
+        const mapboxToken = 'pk.eyJ1IjoiaGlydWpha2wiLCJhIjoiY21lczA2ZTdsMGQ0czJxcTFjYzI4bDJvMiJ9.NvKvNXcT-gqoNomkWFeouw';
         const response = await fetch(
-          `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=YOUR_OPENCAGE_KEY&no_annotations=1`
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&types=poi,address,neighborhood,place,locality,district,region,country&limit=1`
         );
-        const data = await response.json();
-        const address = data.results?.[0]?.formatted || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
         
-        setCurrentLocation({ lat, lng, address });
-        toast.success('📍 Location detected successfully', {
+        if (!response.ok) {
+          throw new Error(`Mapbox API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('🗺️ Mapbox Geocoding Response:', data);
+        
+        let address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`; // Fallback to precise coordinates
+        let detailedAddress = '';
+        
+        if (data.features && data.features.length > 0) {
+          const feature = data.features[0];
+          const context = feature.context || [];
+          
+          // Build detailed address from Mapbox response
+          const placeName = feature.place_name || feature.text || '';
+          const locality = context.find((c: any) => c.id.startsWith('locality'))?.text || '';
+          const district = context.find((c: any) => c.id.startsWith('district'))?.text || '';
+          const region = context.find((c: any) => c.id.startsWith('region'))?.text || '';
+          const country = context.find((c: any) => c.id.startsWith('country'))?.text || '';
+          
+          // Create human-readable address
+          const addressParts = [placeName, locality, district, region, country].filter(Boolean);
+          address = addressParts.join(', ');
+          
+          // Create detailed address for display
+          detailedAddress = feature.place_name || address;
+          
+          console.log('📍 Resolved Address:', { address, detailedAddress, accuracy: `${accuracy}m` });
+        }
+        
+        setCurrentLocation({ 
+          lat, 
+          lng, 
+          address: address,
+          detailedAddress: detailedAddress || address,
+          accuracy: accuracy
+        });
+        
+        toast.success(`📍 Location detected with ${accuracy}m accuracy`, {
           icon: '📍',
           style: { borderRadius: '10px', background: '#333', color: '#fff' },
         });
-      } catch (error) {
-        // Fallback to coordinates if reverse geocoding fails
-        setCurrentLocation({ lat, lng });
-        toast.success('📍 Location detected (coordinates only)', {
+        
+      } catch (geocodingError) {
+        console.error('Reverse geocoding failed:', geocodingError);
+        
+        // Fallback to coordinates with accuracy info
+        setCurrentLocation({ 
+          lat, 
+          lng, 
+          address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+          detailedAddress: `Precise coordinates (${accuracy}m accuracy)`,
+          accuracy: accuracy
+        });
+        
+        toast.success(`📍 Location detected (${accuracy}m accuracy)`, {
           icon: '📍',
           style: { borderRadius: '10px', background: '#333', color: '#fff' },
         });
       }
+      
     } catch (error) {
       console.error('Location detection failed:', error);
-      setAnalysisError('Failed to detect location. Please check your browser permissions or enter location manually.');
+      
+      let errorMessage = 'Failed to detect location. Please check your browser permissions.';
+      if (error instanceof GeolocationPositionError) {
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Location permission denied. Please enable location access in your browser settings.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information unavailable. Please try again.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Location request timed out. Please try again.';
+            break;
+        }
+      }
+      
+      setAnalysisError(errorMessage);
       toast.error('❌ Location detection failed', {
         icon: '❌',
         style: { borderRadius: '10px', background: '#dc2626', color: '#fff' },
@@ -2017,28 +2086,36 @@ const AdvancedDashboard = () => {
                   {/* Location Display */}
                   {currentLocation ? (
                     <div className="space-y-3">
-                      {/* Location in Words */}
-                      <div className="p-4 rounded-lg border bg-blue-50 dark:bg-blue-900/20">
-                        <div className="flex items-center gap-2 text-sm mb-2">
-                          <MapPin className="h-4 w-4 text-blue-600" />
-                          <span className="font-medium">Your Location:</span>
-                          <Badge variant="outline" className="text-xs">GPS Detected</Badge>
-                        </div>
-                        <div className="text-lg font-semibold text-blue-800 dark:text-blue-200">
-                          {currentLocation.address || 'Location detected'}
-                        </div>
-                        <div className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                          Coordinates: {currentLocation.lat.toFixed(4)}, {currentLocation.lng.toFixed(4)}
-                        </div>
-                      </div>
+                                             {/* Location in Words */}
+                       <div className="p-4 rounded-lg border bg-blue-50 dark:bg-blue-900/20">
+                         <div className="flex items-center gap-2 text-sm mb-2">
+                           <MapPin className="h-4 w-4 text-blue-600" />
+                           <span className="font-medium">Your Location:</span>
+                           <Badge variant="outline" className="text-xs">
+                             {currentLocation.accuracy ? `${currentLocation.accuracy}m accuracy` : 'GPS Detected'}
+                           </Badge>
+                         </div>
+                         <div className="text-lg font-semibold text-blue-800 dark:text-blue-200">
+                           {currentLocation.detailedAddress || currentLocation.address || 'Location detected'}
+                         </div>
+                         <div className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                           Precise coordinates: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
+                         </div>
+                         {currentLocation.accuracy && (
+                           <div className="text-xs text-blue-500 dark:text-blue-400 mt-1">
+                             📍 GPS Accuracy: ±{currentLocation.accuracy} meters
+                           </div>
+                         )}
+                       </div>
 
-                      {/* Location Map */}
-                      <LocationMap 
-                        latitude={currentLocation.lat}
-                        longitude={currentLocation.lng}
-                        address={currentLocation.address}
-                        height={200}
-                      />
+                                             {/* Location Map */}
+                       <LocationMap 
+                         latitude={currentLocation.lat}
+                         longitude={currentLocation.lng}
+                         address={currentLocation.detailedAddress || currentLocation.address}
+                         height={200}
+                         accuracy={currentLocation.accuracy}
+                       />
 
                       {/* Analyze Button */}
                       <div className="flex justify-center">
