@@ -17,6 +17,7 @@ const inferredBase = (() => {
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || inferredBase).replace(/\/$/, '');
 const SOCKET_URL = (import.meta.env.VITE_SOCKET_URL || API_BASE_URL).replace(/\/$/, '');
+const OPENWEATHER_KEY = (import.meta.env.VITE_OPENWEATHER_API_KEY || '').trim();
 
 // Debug logging to see which URLs are being used
 console.log('🔧 API Configuration:', {
@@ -43,6 +44,9 @@ export interface WeatherData {
   weather_condition: string;
   timestamp: string;
   forecast_data?: any[];
+  uv_index?: number;
+  feels_like?: number;
+  pop?: number; // Probability of precipitation
 }
 
 export interface DisasterEvent {
@@ -156,6 +160,7 @@ export interface GlobalRiskAnalysis {
 class ApiService {
   private socket: Socket | null = null;
   private eventListeners: Map<string, Function[]> = new Map();
+  private geocodeCache: Map<string, Array<{ name: string; lat: number; lon: number; country?: string; state?: string }>> = new Map();
 
   constructor() {
     this.initializeSocket();
@@ -163,17 +168,99 @@ class ApiService {
 
   // Worldwide Weather Search
   async geocode(query: string, limit: number = 5): Promise<Array<{ name: string; lat: number; lon: number; country?: string; state?: string }>> {
+    const key = `${query}\n${limit}`.toLowerCase();
+    const cached = this.geocodeCache.get(key);
+    if (cached && cached.length) return cached;
+
+    // Strategy: OpenWeather (if key) -> Open-Meteo (no key) -> Nominatim -> Backend
+    if (OPENWEATHER_KEY) {
+      try {
+        const url = new URL('https://api.openweathermap.org/geo/1.0/direct');
+        url.searchParams.set('q', query);
+        url.searchParams.set('limit', String(limit));
+        url.searchParams.set('appid', OPENWEATHER_KEY);
+        const ow = await fetch(url.toString());
+        if (ow.ok) {
+          const arr = await ow.json();
+          const mapped = (arr || []).map((x: any) => ({
+            name: x?.name || [x?.name, x?.state, x?.country].filter(Boolean).join(', '),
+            lat: x?.lat,
+            lon: x?.lon,
+            country: x?.country,
+            state: x?.state,
+          }));
+          this.geocodeCache.set(key, mapped);
+          if (mapped.length) return mapped;
+        }
+      } catch (e) {
+        console.warn('OpenWeather geocode attempt failed:', e);
+      }
+    }
+
+    // Open-Meteo free geocoding (no key)
+    try {
+      const url = new URL('https://geocoding-api.open-meteo.com/v1/search');
+      url.searchParams.set('name', query);
+      url.searchParams.set('count', String(limit));
+      url.searchParams.set('language', 'en');
+      url.searchParams.set('format', 'json');
+      const om = await fetch(url.toString());
+      if (om.ok) {
+        const data = await om.json();
+        const results = Array.isArray(data?.results) ? data.results : [];
+        const mapped = results.map((x: any) => ({
+          name: [x?.name, x?.admin1, x?.country].filter(Boolean).join(', '),
+          lat: x?.latitude,
+          lon: x?.longitude,
+          country: x?.country_code,
+          state: x?.admin1,
+        }));
+        this.geocodeCache.set(key, mapped);
+        if (mapped.length) return mapped;
+      }
+    } catch (e) {
+      console.warn('Open-Meteo geocode attempt failed:', e);
+    }
+
     try {
       const url = new URL(`${API_BASE_URL}/api/geocode`);
       url.searchParams.set('query', query);
       url.searchParams.set('limit', String(limit));
       const response = await fetch(url.toString());
-      if (!response.ok) throw new Error('Failed to geocode');
-      return await response.json();
+      if (response.ok) {
+        const data = await response.json();
+        this.geocodeCache.set(key, data);
+        return data;
+      }
+      console.warn(`Backend geocode failed (${response.status})`);
     } catch (error) {
-      console.error('Error during geocoding:', error);
-      return [];
+      console.warn('Backend geocoding error:', error);
     }
+
+    // Nominatim fallback
+    try {
+      const url = new URL('https://nominatim.openstreetmap.org/search');
+      url.searchParams.set('q', query);
+      url.searchParams.set('format', 'json');
+      url.searchParams.set('limit', String(limit));
+      const nm = await fetch(url.toString(), { headers: { 'Accept-Language': 'en', 'User-Agent': 'DisastroScope/1.0' } as any });
+      if (nm.ok) {
+        const arr = await nm.json();
+        const mapped = (arr || []).map((x: any) => ({
+          name: x?.display_name || query,
+          lat: parseFloat(x?.lat),
+          lon: parseFloat(x?.lon),
+          country: undefined,
+          state: undefined,
+        }));
+        this.geocodeCache.set(key, mapped);
+        return mapped;
+      }
+    } catch (e) {
+      console.warn('Nominatim geocode attempt failed:', e);
+    }
+
+    return [];
   }
 
   async getCurrentWeatherByCoords(lat: number, lon: number, name?: string, units: 'metric' | 'imperial' | 'standard' = 'metric'): Promise<WeatherData | null> {
@@ -184,11 +271,54 @@ class ApiService {
       if (name) url.searchParams.set('name', name);
       if (units) url.searchParams.set('units', units);
       const response = await fetch(url.toString());
-      if (!response.ok) throw new Error('Failed to fetch current weather');
-      return await response.json();
+      if (response.ok) {
+        const data = await response.json();
+        // Ensure all required fields are present and properly formatted
+        return this.normalizeWeatherData(data, lat, lon, name);
+      }
+      throw new Error(`Backend current weather failed (${response.status})`);
     } catch (error) {
       console.error('Error fetching current weather:', error);
-      return null;
+      // Enhanced fallback: OpenWeather direct call with comprehensive data
+      try {
+        if (!OPENWEATHER_KEY) return null;
+        const url = new URL('https://api.openweathermap.org/data/2.5/weather');
+        url.searchParams.set('lat', String(lat));
+        url.searchParams.set('lon', String(lon));
+        url.searchParams.set('appid', OPENWEATHER_KEY);
+        url.searchParams.set('units', units === 'standard' ? 'standard' : units);
+        const ow = await fetch(url.toString());
+        if (!ow.ok) return null;
+        const d = await ow.json();
+        
+        // Enhanced data extraction with better accuracy
+        const visibilityKm = typeof d?.visibility === 'number' ? Math.round((d.visibility / 1000) * 10) / 10 : null;
+        const precipitation = d?.rain?.['1h'] ?? d?.snow?.['1h'] ?? 0;
+        const feelsLike = d?.main?.feels_like ?? d?.main?.temp;
+        
+        const mapped: WeatherData = {
+          location: name || d?.name || 'Selected location',
+          coordinates: { lat, lng: lon },
+          temperature: Number(d?.main?.temp ?? 0),
+          humidity: Number(d?.main?.humidity ?? 0),
+          pressure: Number(d?.main?.pressure ?? 0),
+          wind_speed: Number(d?.wind?.speed ?? 0),
+          wind_direction: Number(d?.wind?.deg ?? 0),
+          precipitation: Number(precipitation ?? 0),
+          visibility: visibilityKm ?? 0,
+          cloud_cover: Number(d?.clouds?.all ?? 0),
+          weather_condition: d?.weather?.[0]?.main || '—',
+          timestamp: new Date((d?.dt ?? Date.now()) * 1000).toISOString(),
+          forecast_data: undefined,
+          uv_index: undefined, // Will be fetched separately
+          feels_like: Number(feelsLike ?? 0),
+          pop: undefined // Will be available in forecast
+        };
+        return mapped;
+      } catch (e) {
+        console.warn('OpenWeather current weather fallback failed:', e);
+        return null;
+      }
     }
   }
 
@@ -220,10 +350,34 @@ class ApiService {
       if (units) url.searchParams.set('units', units);
       const response = await fetch(url.toString());
       if (!response.ok) throw new Error('Failed to fetch forecast');
-      return await response.json();
+      const data = await response.json();
+      
+      // Enhanced normalization with better data processing
+      let forecastArray: any[] = [];
+      if (Array.isArray(data)) forecastArray = data;
+      else if (Array.isArray(data?.list)) forecastArray = data.list;
+      else if (Array.isArray(data?.forecast)) forecastArray = data.forecast;
+      
+      // Process and enhance forecast data
+      return forecastArray.map(item => this.enhanceForecastItem(item, units));
     } catch (error) {
       console.error('Error fetching forecast:', error);
-      return [];
+      // Enhanced fallback: OpenWeather 5-day / 3-hour forecast with better processing
+      try {
+        if (!OPENWEATHER_KEY) return [];
+        const url = new URL('https://api.openweathermap.org/data/2.5/forecast');
+        url.searchParams.set('lat', String(lat));
+        url.searchParams.set('lon', String(lon));
+        url.searchParams.set('appid', OPENWEATHER_KEY);
+        url.searchParams.set('units', units === 'standard' ? 'standard' : units);
+        const ow = await fetch(url.toString());
+        if (!ow.ok) return [];
+        const d = await ow.json();
+        return Array.isArray(d?.list) ? d.list : [];
+      } catch (e) {
+        console.warn('OpenWeather forecast fallback failed:', e);
+        return [];
+      }
     }
   }
 
@@ -530,6 +684,96 @@ class ApiService {
       return await response.json();
     } catch (error) {
       console.error('Error creating prediction:', error);
+      return null;
+    }
+  }
+
+  // Helper method to normalize weather data
+  private normalizeWeatherData(data: any, lat: number, lon: number, name?: string): WeatherData {
+    return {
+      location: data.location || name || 'Selected location',
+      coordinates: data.coordinates || { lat, lng: lon },
+      temperature: Number(data.temperature ?? 0),
+      humidity: Number(data.humidity ?? 0),
+      pressure: Number(data.pressure ?? 0),
+      wind_speed: Number(data.wind_speed ?? 0),
+      wind_direction: Number(data.wind_direction ?? 0),
+      precipitation: Number(data.precipitation ?? 0),
+      visibility: Number(data.visibility ?? 0),
+      cloud_cover: Number(data.cloud_cover ?? 0),
+      weather_condition: data.weather_condition || '—',
+      timestamp: data.timestamp || new Date().toISOString(),
+      forecast_data: data.forecast_data,
+      uv_index: Number(data.uv_index) || undefined,
+      feels_like: Number(data.feels_like) || undefined,
+      pop: Number(data.pop) || undefined
+    };
+  }
+
+  // Helper method to enhance forecast items with additional data
+  private enhanceForecastItem(item: any, units: string): any {
+    const enhanced = { ...item };
+    
+    // Ensure temperature data is properly formatted
+    if (enhanced.main) {
+      enhanced.main.temp = Number(enhanced.main.temp ?? 0);
+      enhanced.main.feels_like = Number(enhanced.main.feels_like ?? enhanced.main.temp);
+      enhanced.main.humidity = Number(enhanced.main.humidity ?? 0);
+      enhanced.main.pressure = Number(enhanced.main.pressure ?? 0);
+    }
+    
+    // Ensure wind data is properly formatted
+    if (enhanced.wind) {
+      enhanced.wind.speed = Number(enhanced.wind.speed ?? 0);
+      enhanced.wind.deg = Number(enhanced.wind.deg ?? 0);
+    }
+    
+    // Ensure precipitation probability is properly formatted
+    enhanced.pop = Number(enhanced.pop ?? 0);
+    
+    // Add weather condition if missing
+    if (enhanced.weather && enhanced.weather.length > 0) {
+      enhanced.weather[0].main = enhanced.weather[0].main || 'Clear';
+      enhanced.weather[0].description = enhanced.weather[0].description || 'Clear sky';
+    }
+    
+    return enhanced;
+  }
+
+  // Method to fetch UV index data
+  async getUVIndex(lat: number, lon: number): Promise<number | null> {
+    try {
+      if (!OPENWEATHER_KEY) return null;
+      
+      // Try OpenWeather UV index endpoint first
+      const url = new URL('https://api.openweathermap.org/data/2.5/air_pollution');
+      url.searchParams.set('lat', String(lat));
+      url.searchParams.set('lon', String(lon));
+      url.searchParams.set('appid', OPENWEATHER_KEY);
+      
+      const response = await fetch(url.toString());
+      if (!response.ok) return null;
+      
+      const data = await response.json();
+      const uvi = data?.list?.[0]?.main?.uvi;
+      
+      if (uvi !== null && uvi !== undefined) {
+        return Number(uvi);
+      }
+      
+      // Fallback: try to get UV index from current weather data
+      const weatherUrl = new URL('https://api.openweathermap.org/data/2.5/weather');
+      weatherUrl.searchParams.set('lat', String(lat));
+      weatherUrl.searchParams.set('lon', String(lon));
+      weatherUrl.searchParams.set('appid', OPENWEATHER_KEY);
+      
+      const weatherResponse = await fetch(weatherUrl.toString());
+      if (!weatherResponse.ok) return null;
+      
+      const weatherData = await weatherResponse.json();
+      return weatherData?.uvi ?? null;
+    } catch (error) {
+      console.error('Error fetching UV index:', error);
       return null;
     }
   }
