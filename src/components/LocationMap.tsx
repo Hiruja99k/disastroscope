@@ -88,7 +88,6 @@ const LocationMap: React.FC<LocationMapProps> = ({
             <div class="p-2">
               <div class="font-medium text-sm">📍 Your Location</div>
               <div class="text-xs text-gray-600">${address || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`}</div>
-              ${accuracy ? `<div class="text-xs text-blue-600 mt-1">GPS Accuracy: ±${accuracy}m</div>` : ''}
             </div>
           `)
       )

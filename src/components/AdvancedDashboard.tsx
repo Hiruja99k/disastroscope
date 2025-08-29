@@ -413,8 +413,8 @@ const AdvancedDashboard = () => {
       // Use extremely high accuracy settings for precise location
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,  // Maximum accuracy
-          timeout: 15000,           // Longer timeout for high accuracy
+          enableHighAccuracy: true,  // Maximum accuracy - uses GPS, cellular, and WiFi
+          timeout: 30000,           // 30 seconds for maximum accuracy
           maximumAge: 0             // Always get fresh location
         });
       });
@@ -422,6 +422,28 @@ const AdvancedDashboard = () => {
       const { latitude: lat, longitude: lng, accuracy } = position.coords;
       
       console.log('📍 GPS Coordinates:', { lat, lng, accuracy: `${accuracy}m accuracy` });
+      
+      // If accuracy is poor (>100m), try to get better accuracy
+      if (accuracy > 100) {
+        console.log('⚠️ Poor GPS accuracy detected, attempting to improve...');
+        try {
+          const betterPosition = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 45000,  // Even longer timeout for better accuracy
+              maximumAge: 0
+            });
+          });
+          
+          const betterCoords = betterPosition.coords;
+          if (betterCoords.accuracy < accuracy) {
+            console.log(`✅ Improved accuracy: ${accuracy}m → ${betterCoords.accuracy}m`);
+            Object.assign(position.coords, betterCoords);
+          }
+        } catch (retryError) {
+          console.log('⚠️ Accuracy improvement failed, using original position');
+        }
+      }
       
       // Get detailed address using Mapbox Geocoding API
       try {
@@ -2090,22 +2112,14 @@ const AdvancedDashboard = () => {
                        <div className="p-4 rounded-lg border bg-blue-50 dark:bg-blue-900/20">
                          <div className="flex items-center gap-2 text-sm mb-2">
                            <MapPin className="h-4 w-4 text-blue-600" />
-                           <span className="font-medium">Your Location:</span>
-                           <Badge variant="outline" className="text-xs">
-                             {currentLocation.accuracy ? `${currentLocation.accuracy}m accuracy` : 'GPS Detected'}
-                           </Badge>
+                           <span className="font-medium">Your Location</span>
                          </div>
                          <div className="text-lg font-semibold text-blue-800 dark:text-blue-200">
                            {currentLocation.detailedAddress || currentLocation.address || 'Location detected'}
                          </div>
                          <div className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                           Precise coordinates: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
+                           {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
                          </div>
-                         {currentLocation.accuracy && (
-                           <div className="text-xs text-blue-500 dark:text-blue-400 mt-1">
-                             📍 GPS Accuracy: ±{currentLocation.accuracy} meters
-                           </div>
-                         )}
                        </div>
 
                                              {/* Location Map */}
