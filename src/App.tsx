@@ -16,7 +16,6 @@ import RealTimeBridge from "./components/RealTimeBridge";
 import WeatherExplorer from "./pages/WeatherExplorer";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PerformanceMonitor from "./components/PerformanceMonitor";
-import AdvancedMapPage from "./pages/AdvancedMapPage";
 import { trackPageView } from "./utils/monitoring";
 import { Refine } from "@refinedev/core";
 import { dataProvider, liveProvider, notificationProvider } from "./lib/refine";
@@ -78,7 +77,6 @@ const App = () => (
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/dashboard-simple" element={<SimpleDashboard />} />
                     <Route path="/insights" element={<Insights />} />
-                    <Route path="/map" element={<AdvancedMapPage />} />
                     <Route path="/about" element={<About />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />

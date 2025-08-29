@@ -74,7 +74,10 @@ import {
   Moon,
   Sun as SunIcon,
   Brain,
-  FileText
+  FileText,
+  Bug,
+  Phone,
+  Search
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { format, subDays, subHours, formatDistanceToNow } from 'date-fns';
@@ -86,7 +89,7 @@ import EarthquakeMagnitudeMap from './EarthquakeMagnitudeMap';
 import LocationMap from './LocationMap';
 import { useGSAPAnimations } from '@/hooks/useGSAPAnimations';
 import { fetchAllDisasterData, getMockDisasterData, type DisasterEvent, type NotificationItem, type TimelineEvent } from '@/services/disasterDataService';
-import { apiService } from '@/services/api';
+import { apiService, type GlobalRiskAnalysis } from '@/services/api';
 const generateAdvancedData = () => {
   const now = new Date();
   const disasters = [
@@ -212,6 +215,12 @@ const AdvancedDashboard = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [riskAnalysis, setRiskAnalysis] = useState<any>(null);
+
+  // Global Risk Analysis State
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [isAnalyzingGlobal, setIsAnalyzingGlobal] = useState(false);
+  const [globalAnalysisError, setGlobalAnalysisError] = useState<string | null>(null);
+  const [globalRiskData, setGlobalRiskData] = useState<GlobalRiskAnalysis | null>(null);
 
   // Debug: Log active tab changes
   useEffect(() => {
@@ -415,8 +424,12 @@ const AdvancedDashboard = () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         console.log('✅ Geolocation test successful:', position);
-        console.log('📍 Coordinates:', position.coords.latitude, position.coords.longitude);
-        console.log('📍 Accuracy:', position.coords.accuracy);
+        const { latitude, longitude, accuracy } = position.coords;
+        console.log('📍 Coordinates:', { latitude, longitude, accuracy });
+        console.log('📍 Coordinate validation - Lat valid:', latitude >= -90 && latitude <= 90, 'Lng valid:', longitude >= -180 && longitude <= 180);
+        
+        // Test Mapbox API directly
+        testMapboxAPI(latitude, longitude);
       },
       (error) => {
         console.error('❌ Geolocation test failed:', error);
@@ -429,6 +442,93 @@ const AdvancedDashboard = () => {
         maximumAge: 0
       }
     );
+  };
+
+  const testMapboxAPI = async (lat: number, lng: number) => {
+    console.log('🧪 Testing Mapbox API with coordinates:', { lat, lng });
+    const mapboxToken = 'pk.eyJ1IjoiaGlydWpha2wiLCJhIjoiY21lczA2ZTdsMGQ0czJxcTFjYzI4bDJvMiJ9.NvKvNXcT-gqoNomkWFeouw';
+    
+    try {
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&limit=1`;
+      console.log('🧪 Mapbox test URL:', url);
+      
+      const response = await fetch(url);
+      console.log('🧪 Mapbox test response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('🧪 Mapbox test response:', data);
+        
+        if (data.features && data.features.length > 0) {
+          const feature = data.features[0];
+          console.log('🧪 Mapbox test feature:', feature);
+          toast.success('✅ Mapbox API test successful', {
+            icon: '✅',
+            style: { borderRadius: '10px', background: '#059669', color: '#fff' },
+          });
+        } else {
+          console.log('🧪 Mapbox test: No features found');
+          toast.error('⚠️ Mapbox API test: No features found', {
+            icon: '⚠️',
+            style: { borderRadius: '10px', background: '#d97706', color: '#fff' },
+          });
+        }
+      } else {
+        const errorText = await response.text();
+        console.error('🧪 Mapbox test error:', response.status, errorText);
+        toast.error('❌ Mapbox API test failed', {
+          icon: '❌',
+          style: { borderRadius: '10px', background: '#dc2626', color: '#fff' },
+        });
+      }
+    } catch (error) {
+      console.error('🧪 Mapbox test exception:', error);
+      toast.error('❌ Mapbox API test exception', {
+        icon: '❌',
+        style: { borderRadius: '10px', background: '#dc2626', color: '#fff' },
+      });
+    }
+  };
+
+  const handleGlobalRiskAnalysis = async () => {
+    if (!globalSearchQuery.trim()) {
+      toast.error('Please enter a location to analyze', {
+        icon: '⚠️',
+        style: { borderRadius: '10px', background: '#d97706', color: '#fff' },
+      });
+      return;
+    }
+
+    setIsAnalyzingGlobal(true);
+    setGlobalAnalysisError(null);
+    setGlobalRiskData(null);
+
+    try {
+      console.log('🌍 Starting global risk analysis for:', globalSearchQuery);
+      
+      const analysis = await apiService.analyzeGlobalRisk(globalSearchQuery);
+      
+      if (analysis) {
+        setGlobalRiskData(analysis);
+        toast.success('✅ Global risk analysis completed', {
+          icon: '✅',
+          style: { borderRadius: '10px', background: '#059669', color: '#fff' },
+        });
+        console.log('🌍 Global risk analysis result:', analysis);
+      } else {
+        throw new Error('Failed to get risk analysis data');
+      }
+    } catch (error) {
+      console.error('🌍 Global risk analysis error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to analyze global risk';
+      setGlobalAnalysisError(errorMessage);
+      toast.error(`❌ ${errorMessage}`, {
+        icon: '❌',
+        style: { borderRadius: '10px', background: '#dc2626', color: '#fff' },
+      });
+    } finally {
+      setIsAnalyzingGlobal(false);
+    }
   };
 
   const detectUserLocation = async () => {
@@ -504,16 +604,64 @@ const AdvancedDashboard = () => {
         const mapboxToken = 'pk.eyJ1IjoiaGlydWpha2wiLCJhIjoiY21lczA2ZTdsMGQ0czJxcTFjYzI4bDJvMiJ9.NvKvNXcT-gqoNomkWFeouw';
         
         // Use a more comprehensive geocoding request to get the most accurate location
-        const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lat},${lng}.json?access_token=${mapboxToken}&types=address,poi,neighborhood,place,locality,district,region,country&limit=3`
-        );
+        // Note: Mapbox expects coordinates in the format "longitude,latitude" (lng,lat)
+        const geocodingUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&types=address,poi,neighborhood,place,locality,district,region,country&limit=3`;
+        console.log('🗺️ Mapbox API URL:', geocodingUrl);
+        console.log('🗺️ Coordinates being sent - Lat:', lat, 'Lng:', lng);
+        console.log('🗺️ Coordinate validation - Lat valid:', lat >= -90 && lat <= 90, 'Lng valid:', lng >= -180 && lng <= 180);
+        
+        const response = await fetch(geocodingUrl);
         
         console.log('🗺️ Mapbox response status:', response.status);
+        console.log('🗺️ Mapbox response headers:', Object.fromEntries(response.headers.entries()));
         
         if (!response.ok) {
           console.error('🗺️ Mapbox API error:', response.status, response.statusText);
           const errorText = await response.text();
           console.error('🗺️ Mapbox error details:', errorText);
+          
+          // Try a simpler geocoding request as fallback
+          console.log('🗺️ Trying simpler geocoding request...');
+          const simpleUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&limit=1`;
+          const simpleResponse = await fetch(simpleUrl);
+          
+          if (simpleResponse.ok) {
+            console.log('🗺️ Simple geocoding request succeeded');
+            const simpleData = await simpleResponse.json();
+            console.log('🗺️ Simple geocoding response:', simpleData);
+            
+            if (simpleData.features && simpleData.features.length > 0) {
+              const feature = simpleData.features[0];
+              const placeName = feature.place_name || feature.text || '';
+              
+              // Use the place name directly
+              const locationParts = placeName.split(',').map(p => p.trim()).filter(p => p).slice(0, 3);
+              
+              const address = locationParts.join(', ');
+              const detailedAddress = locationParts.join(' • ');
+              
+              console.log('📍 Setting current location with simple address:', { lat, lng, address, detailedAddress });
+              
+              setCurrentLocation({
+                lat,
+                lng,
+                address,
+                detailedAddress,
+                accuracy,
+                locationParts
+              });
+              
+              console.log('✅ Location successfully set with simple address');
+              
+              toast.success(`📍 Location detected: ${detailedAddress}`, {
+                icon: '📍',
+                style: { borderRadius: '10px', background: '#333', color: '#fff' },
+              });
+              
+              return; // Exit early since we got a successful response
+            }
+          }
+          
           throw new Error(`Mapbox API error: ${response.status} - ${response.statusText}`);
         }
         
@@ -580,6 +728,7 @@ const AdvancedDashboard = () => {
           const detailedAddress = locationParts.join(' • ');
           
           console.log('📍 Setting current location with address:', { lat, lng, address, detailedAddress });
+          console.log('📍 Location parts:', locationParts);
           
           setCurrentLocation({
             lat,
@@ -589,6 +738,8 @@ const AdvancedDashboard = () => {
             accuracy,
             locationParts
           });
+          
+          console.log('✅ Location successfully set with address');
           
           toast.success(`📍 Precise location detected: ${detailedAddress}`, {
             icon: '📍',
@@ -602,18 +753,21 @@ const AdvancedDashboard = () => {
       } catch (geocodingError) {
         console.error('Reverse geocoding failed:', geocodingError);
         
-        // Fallback to coordinates
+        // Fallback to coordinates with better formatting
         console.log('📍 Using fallback coordinates display');
+        const fallbackAddress = `GPS Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        const fallbackDetailed = `Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        
         setCurrentLocation({
           lat,
           lng,
-          address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
-          detailedAddress: `Precise coordinates`,
+          address: fallbackAddress,
+          detailedAddress: fallbackDetailed,
           accuracy,
-          locationParts: ['Coordinates', 'GPS Location']
+          locationParts: ['GPS Coordinates', 'Location Detected']
         });
         
-        toast.success(`📍 Location detected`, {
+        toast.success(`📍 Location detected (using coordinates)`, {
           icon: '📍',
           style: { borderRadius: '10px', background: '#333', color: '#fff' },
         });
@@ -2107,96 +2261,226 @@ const AdvancedDashboard = () => {
 
           {/* Bottom Sections: Location Based Analysis & Advanced Analysis */}
           <div className="space-y-6 mt-6">
-            {/* Location Based Analysis */}
+            {/* Advanced Global Risk Analysis */}
             <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-blue-600" />
-                  Location Based Analysis
+                  <Globe className="h-5 w-5 text-blue-600" />
+                  <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Advanced Global Risk Analysis</span>
                 </CardTitle>
                 <CardDescription>
-                  Explore risk indicators, recent incidents and local readiness by region.
+                  Real-time risk assessment for 7 disaster types: Floods, Landslides, Earthquakes, Cyclones, Wildfires, Tsunamis, Droughts
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                {/* Toolbar */}
-                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-4">
-                  <div className="flex items-center gap-2">
-                    <select className="text-sm border rounded px-2 py-1">
-                      <option>Current Location</option>
-                      <option>North America</option>
-                      <option>Europe</option>
-                      <option>Asia Pacific</option>
-                    </select>
-                    <select className="text-sm border rounded px-2 py-1">
-                      <option>Last 7d</option>
-                      <option>Last 30d</option>
-                      <option>Last 90d</option>
-                    </select>
-                    <Badge variant="outline" className="hidden md:inline-flex">Updated {format(new Date(), 'HH:mm')}</Badge>
+              <CardContent className="space-y-6">
+                {/* Search and Analysis Controls */}
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        placeholder="Search any location worldwide..."
+                        className="w-full px-4 py-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        value={globalSearchQuery}
+                        onChange={(e) => setGlobalSearchQuery(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleGlobalRiskAnalysis()}
+                      />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    </div>
+                    <Button
+                      onClick={handleGlobalRiskAnalysis}
+                      disabled={isAnalyzingGlobal || !globalSearchQuery.trim()}
+                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                    >
+                      {isAnalyzingGlobal ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          <Brain className="h-4 w-4 mr-2" />
+                          Analyze Risk
+                        </>
+                      )}
+                    </Button>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="flex items-center gap-2"><Download className="h-4 w-4" />Export</Button>
-                    <Button variant="outline" size="sm" className="flex items-center gap-2"><Settings className="h-4 w-4" />Configure</Button>
+                    <Badge variant="outline" className="hidden md:inline-flex">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Updated {globalRiskData ? format(new Date(globalRiskData.timestamp), 'HH:mm') : format(new Date(), 'HH:mm')}
+                    </Badge>
+                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                      <Download className="h-4 w-4" />
+                      Export
+                    </Button>
                   </div>
                 </div>
 
-                {/* Tabs */}
-                <Tabs defaultValue="summary" className="w-full">
-                  <TabsList className="mb-4">
-                    <TabsTrigger value="summary">Region Summary</TabsTrigger>
-                    <TabsTrigger value="hazards">Hazard Mix</TabsTrigger>
-                    <TabsTrigger value="resources">Resources</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="summary">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                        <span>Normal</span>
-                        <span className="inline-flex h-2 w-2 rounded-full bg-amber-500 ml-3" />
-                        <span>Elevated</span>
-                        <span className="inline-flex h-2 w-2 rounded-full bg-rose-500 ml-3" />
-                        <span>Critical</span>
+                {/* Analysis Results */}
+                {globalRiskData && (
+                  <div className="space-y-6">
+                    {/* Composite Risk Overview */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="p-6 rounded-xl border bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-slate-700 dark:text-slate-300">
+                        <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Composite Risk</div>
+                        <div className="text-3xl font-bold text-blue-700 dark:text-blue-300">{globalRiskData.composite_risk.score}</div>
+                        <div className="text-sm font-medium text-blue-600 dark:text-blue-400 mt-1">{globalRiskData.composite_risk.level}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">Trend: {globalRiskData.composite_risk.trend}</div>
                       </div>
-                      <div className="text-xs text-muted-foreground">Interactive preview only</div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                      <div className="p-4 rounded-lg border bg-gradient-to-br from-blue-50 to-indigo-50 text-slate-700">
-                        <div className="text-xs uppercase tracking-wide text-slate-500">Risk Index</div>
-                        <div className="mt-2 text-3xl font-bold">78</div>
-                        <div className="mt-1 text-xs text-slate-500">Composite (0-100)</div>
+                      <div className="p-6 rounded-xl border bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 text-slate-700 dark:text-slate-300">
+                        <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Location</div>
+                        <div className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{globalRiskData.location.region}</div>
+                        <div className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">{globalRiskData.location.country}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                          {globalRiskData.location.latitude.toFixed(4)}, {globalRiskData.location.longitude.toFixed(4)}
+                        </div>
                       </div>
-                      <div className="p-4 rounded-lg border bg-gradient-to-br from-emerald-50 to-teal-50 text-slate-700">
-                        <div className="text-xs uppercase tracking-wide text-slate-500">Readiness</div>
-                        <div className="mt-2 text-3xl font-bold">High</div>
-                        <div className="mt-1 text-xs text-slate-500">Resource & Response</div>
+                      <div className="p-6 rounded-xl border bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 text-slate-700 dark:text-slate-300">
+                        <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Analysis Period</div>
+                        <div className="text-lg font-bold text-amber-700 dark:text-amber-300">{globalRiskData.analysis_period}</div>
+                        <div className="text-sm text-amber-600 dark:text-amber-400 mt-1">Real-time Data</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">AI-Powered Models</div>
                       </div>
-                      <div className="p-4 rounded-lg border bg-gradient-to-br from-amber-50 to-yellow-50 text-slate-700">
-                        <div className="text-xs uppercase tracking-wide text-slate-500">Population</div>
-                        <div className="mt-2 text-3xl font-bold">2.4M</div>
-                        <div className="mt-1 text-xs text-slate-500">At Risk</div>
-                      </div>
-                      <div className="p-4 rounded-lg border bg-gradient-to-br from-rose-50 to-red-50 text-slate-700">
-                        <div className="text-xs uppercase tracking-wide text-slate-500">Critical Sites</div>
-                        <div className="mt-2 text-3xl font-bold">5</div>
-                        <div className="mt-1 text-xs text-slate-500">Hospitals, Power</div>
+                      <div className="p-6 rounded-xl border bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 text-slate-700 dark:text-slate-300">
+                        <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Disaster Types</div>
+                        <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">7</div>
+                        <div className="text-sm text-purple-600 dark:text-purple-400 mt-1">Comprehensive</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">Global Coverage</div>
                       </div>
                     </div>
-                    <div className="mt-4 rounded-xl border bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900/40 dark:to-gray-800/40 h-[360px] grid place-items-center text-sm text-muted-foreground">
-                      Regional trend visualization placeholder
+
+                    {/* Disaster Risk Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {Object.entries(globalRiskData.disasters).map(([disasterType, data]) => (
+                        <div key={disasterType} className="group relative overflow-hidden rounded-xl border bg-white dark:bg-gray-800 hover:shadow-lg transition-all duration-300">
+                          <div className="p-5">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{disasterType}</h4>
+                  <div className="flex items-center gap-2">
+                                  <div className={`w-3 h-3 rounded-full ${
+                                    data.color === 'green' ? 'bg-green-500' :
+                                    data.color === 'yellow' ? 'bg-yellow-500' :
+                                    data.color === 'orange' ? 'bg-orange-500' :
+                                    'bg-red-500'
+                                  }`} />
+                                  <span className={`text-sm font-medium ${
+                                    data.color === 'green' ? 'text-green-600 dark:text-green-400' :
+                                    data.color === 'yellow' ? 'text-yellow-600 dark:text-yellow-400' :
+                                    data.color === 'orange' ? 'text-orange-600 dark:text-orange-400' :
+                                    'text-red-600 dark:text-red-400'
+                                  }`}>
+                                    {data.risk_level}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{data.risk_score}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">Risk Score</div>
+                  </div>
+                </div>
+
+                            <div className="space-y-2 mb-4">
+                              <div className="text-xs text-gray-600 dark:text-gray-400">{data.description}</div>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500 dark:text-gray-400">Probability:</span>
+                                <span className="font-medium text-gray-900 dark:text-gray-100">{data.probability}%</span>
+                      </div>
                     </div>
-                  </TabsContent>
-                  <TabsContent value="hazards">
-                    <div className="rounded-xl border bg-gradient-to-br from-blue-50/70 to-indigo-50/70 dark:from-gray-900/40 dark:to-gray-800/40 h-[360px] grid place-items-center text-sm text-muted-foreground">
-                      Hazard composition chart placeholder
+
+                            {/* Risk Factors */}
+                            <div className="space-y-1 mb-4">
+                              <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Risk Factors:</div>
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-500 dark:text-gray-400">Geographical:</span>
+                                  <span className="font-medium">{data.factors.geographical}%</span>
+                      </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-500 dark:text-gray-400">Seasonal:</span>
+                                  <span className="font-medium">{data.factors.seasonal}%</span>
+                      </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-500 dark:text-gray-400">Historical:</span>
+                                  <span className="font-medium">{data.factors.historical}%</span>
+                      </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-500 dark:text-gray-400">Environmental:</span>
+                                  <span className="font-medium">{data.factors.environmental}%</span>
+                      </div>
                     </div>
-                  </TabsContent>
-                  <TabsContent value="resources">
-                    <div className="rounded-xl border bg-gradient-to-br from-emerald-50/70 to-green-50/70 dark:from-gray-900/40 dark:to-gray-800/40 h-[360px] grid place-items-center text-sm text-muted-foreground">
-                      Resource readiness & logistics map placeholder
                     </div>
-                  </TabsContent>
-                </Tabs>
+
+                            {/* Recommendations */}
+                            <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
+                              <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Recommendations:</div>
+                              <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                                {data.recommendations.slice(0, 2).map((rec, index) => (
+                                  <li key={index} className="flex items-start gap-1">
+                                    <span className="text-blue-500 mt-0.5">•</span>
+                                    <span>{rec}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                    </div>
+                    </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Loading State */}
+                {isAnalyzingGlobal && (
+                  <div className="flex items-center justify-center p-12">
+                    <div className="text-center">
+                      <RefreshCw className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-600" />
+                      <div className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Analyzing Global Risk</div>
+                      <div className="text-sm text-muted-foreground">Processing 7 disaster types with AI models...</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error State */}
+                {globalAnalysisError && (
+                  <div className="p-6 rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20">
+                    <div className="flex items-center gap-3 text-red-700 dark:text-red-300">
+                      <AlertCircle className="h-5 w-5" />
+                      <span className="font-medium">Analysis Error</span>
+                    </div>
+                    <div className="text-sm text-red-600 dark:text-red-400 mt-2">{globalAnalysisError}</div>
+                  </div>
+                )}
+
+                {/* Initial State */}
+                {!globalRiskData && !isAnalyzingGlobal && !globalAnalysisError && (
+                  <div className="text-center py-12">
+                    <Globe className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Global Risk Analysis</h3>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      Search for any location worldwide to get comprehensive risk analysis for 7 disaster types
+                    </p>
+                    <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        Low Risk
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                        Moderate Risk
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                        High Risk
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                        Critical Risk
+                      </span>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -2217,48 +2501,28 @@ const AdvancedDashboard = () => {
                   {/* Location Display */}
                   {currentLocation ? (
                     <div className="space-y-3">
-                      {/* Enhanced Location Display Box */}
-                      <div className="relative overflow-hidden rounded-xl border-2 border-blue-200 dark:border-blue-700 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 p-5 shadow-xl">
-                        {/* Decorative background elements */}
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-200/30 dark:bg-blue-700/30 rounded-full -translate-y-12 translate-x-12"></div>
-                        <div className="absolute bottom-0 left-0 w-20 h-20 bg-indigo-200/30 dark:bg-indigo-700/30 rounded-full translate-y-10 -translate-x-10"></div>
-                        <div className="absolute top-1/2 right-8 w-12 h-12 bg-purple-200/20 dark:bg-purple-700/20 rounded-full"></div>
-                        
-                        {/* Location content */}
-                        <div className="relative z-10">
-                          {/* Header with icon */}
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full shadow-lg">
-                              <MapPin className="h-5 w-5 text-white" />
-                            </div>
-                            <div>
-                              <span className="font-bold text-lg text-blue-800 dark:text-blue-200">📍 Your Precise Location</span>
-                              <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">GPS Accuracy: {currentLocation.accuracy ? `${Math.round(currentLocation.accuracy)}m` : 'High'}</div>
-                            </div>
-                          </div>
-                          
-                          {/* Location in words - PROMINENT */}
-                          <div className="mb-4 p-3 bg-white/70 dark:bg-gray-800/70 rounded-lg border border-blue-200 dark:border-blue-600">
-                            <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wide">📍 Location Address</div>
-                            <div className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">
-                              {currentLocation.detailedAddress || currentLocation.address || 'Location detected'}
-                            </div>
-                          </div>
-                          
-                          {/* Coordinates - PROMINENT */}
-                          <div className="p-3 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-800/50 dark:to-indigo-800/50 rounded-lg border border-blue-300 dark:border-blue-500">
-                            <div className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-2 uppercase tracking-wide">🌐 GPS Coordinates</div>
-                            <div className="text-lg font-bold font-mono text-blue-800 dark:text-blue-200 bg-white/80 dark:bg-gray-800/80 px-3 py-2 rounded border border-blue-200 dark:border-blue-600">
-                              {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
-                            </div>
-                            <div className="text-xs text-blue-600 dark:text-blue-400 mt-2 flex items-center gap-2">
-                              <span>Latitude: {currentLocation.lat.toFixed(6)}</span>
-                              <span>•</span>
-                              <span>Longitude: {currentLocation.lng.toFixed(6)}</span>
-                            </div>
-                          </div>
+                      {/* Minimalistic Location Display Box */}
+                      <div className="rounded-xl border border-blue-200 dark:border-blue-700 bg-white dark:bg-gray-800 p-4 shadow-md">
+                        {/* Location in words - Minimalistic style matching coordinates */}
+                        <div className="mb-3">
+                          <div className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1"> Location Address :</div>
+                          <div className="text-sm font-mono text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+                            {currentLocation.detailedAddress && !currentLocation.detailedAddress.startsWith('Coordinates:') 
+                              ? currentLocation.detailedAddress 
+                              : currentLocation.address && !currentLocation.address.startsWith('GPS Location')
+                                ? currentLocation.address
+                                : 'Location detected - Address unavailable'}
+                  </div>
                         </div>
-                      </div>
+                        
+                        {/* Coordinates - Minimalistic format */}
+                        <div>
+                          <div className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1"> GPS Coordinates :</div>
+                          <div className="text-sm font-mono text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+                            Latitude: {currentLocation.lat.toFixed(6)} • Longitude: {currentLocation.lng.toFixed(6)}
+                          </div>
+                  </div>
+                </div>
 
                       {/* Location Map */}
                       <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-md">
@@ -2266,8 +2530,8 @@ const AdvancedDashboard = () => {
                           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                             <MapPin className="h-3 w-3" />
                             <span>Location Map</span>
-                          </div>
-                        </div>
+                    </div>
+                  </div>
                         <LocationMap 
                           latitude={currentLocation.lat}
                           longitude={currentLocation.lng}
@@ -2275,7 +2539,7 @@ const AdvancedDashboard = () => {
                           height={180}
                           accuracy={currentLocation.accuracy}
                         />
-                      </div>
+                    </div>
 
                       {/* Analyze Button */}
                       <div className="flex justify-center pt-2">
@@ -2292,7 +2556,7 @@ const AdvancedDashboard = () => {
                           )}
                           {isAnalyzing ? 'Analyzing Location...' : 'Analyze Disaster Risk'}
                         </Button>
-                      </div>
+                  </div>
                   </div>
                   ) : (
                     <div className="text-center space-y-6 py-10">
@@ -2301,8 +2565,8 @@ const AdvancedDashboard = () => {
                         <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full animate-pulse"></div>
                         <div className="absolute inset-2 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center">
                           <MapPin className="h-10 w-10 text-blue-600 dark:text-blue-400" />
-                        </div>
-                      </div>
+                    </div>
+                  </div>
                       
                       <div className="space-y-3">
                         <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">Location Detection Required</h3>
@@ -2340,6 +2604,24 @@ const AdvancedDashboard = () => {
                             <Settings className="h-4 w-4" />
                             Test Geolocation API
                           </Button>
+                          
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="flex items-center gap-2 mx-auto text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                            onClick={() => {
+                              console.log('🔍 Debug current location state');
+                              console.log('📍 Current location state:', currentLocation);
+                              if (currentLocation) {
+                                console.log('📍 Address:', currentLocation.address);
+                                console.log('📍 Detailed Address:', currentLocation.detailedAddress);
+                                console.log('📍 Coordinates:', currentLocation.lat, currentLocation.lng);
+                              }
+                            }}
+                          >
+                            <Bug className="h-4 w-4" />
+                            Debug Location
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -2364,7 +2646,7 @@ const AdvancedDashboard = () => {
                           </div>
                           <div className="text-xs text-blue-600 mt-1">
                             Probability: {riskAnalysis.flood?.probability || 0}%
-                          </div>
+                        </div>
                           <div className="text-xs text-muted-foreground mt-2">
                             {riskAnalysis.flood?.description || 'No flood risk data available'}
                           </div>
@@ -2382,13 +2664,13 @@ const AdvancedDashboard = () => {
                         <CardContent>
                           <div className="text-2xl font-bold text-orange-700">
                             {riskAnalysis.earthquake?.risk_level || 'N/A'}
-                          </div>
+                        </div>
                           <div className="text-xs text-orange-600 mt-1">
                             Probability: {riskAnalysis.earthquake?.probability || 0}%
-                        </div>
+                          </div>
                           <div className="text-xs text-muted-foreground mt-2">
                             {riskAnalysis.earthquake?.description || 'No earthquake risk data available'}
-                          </div>
+                        </div>
                         </CardContent>
                       </Card>
 
@@ -2403,7 +2685,7 @@ const AdvancedDashboard = () => {
                         <CardContent>
                           <div className="text-2xl font-bold text-amber-700">
                             {riskAnalysis.drought?.risk_level || 'N/A'}
-                        </div>
+                      </div>
                           <div className="text-xs text-amber-600 mt-1">
                             Probability: {riskAnalysis.drought?.probability || 0}%
                           </div>
@@ -2482,11 +2764,43 @@ const AdvancedDashboard = () => {
                     {riskAnalysis ? (
                       <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/40 p-4">
                         <div className="text-sm font-medium mb-3">AI-Generated Risk Insights</div>
-                        <div className="space-y-2 text-sm">
+                        <div className="space-y-3 text-sm">
                           {riskAnalysis.insights?.map((insight: any, index: number) => (
-                            <div key={index} className="p-2 bg-white dark:bg-gray-800 rounded border">
-                              <div className="font-medium text-blue-600">{insight.title}</div>
-                              <div className="text-muted-foreground">{insight.description}</div>
+                            <div key={index} className="group relative overflow-hidden rounded-lg border bg-white dark:bg-gray-800 hover:shadow-md transition-all duration-300">
+                              <div className="p-4">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+                                      <Brain className="h-4 w-4 text-blue-600" />
+                                      {insight.title}
+                                    </h4>
+                                    <p className="text-muted-foreground text-xs leading-relaxed">
+                                      {insight.description}
+                                    </p>
+                                  </div>
+                                  <div className="ml-4 flex-shrink-0">
+                                    <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-50 to-indigo-100 text-blue-700 dark:from-blue-900/20 dark:to-indigo-800/20 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
+                                      <div className="w-2 h-2 rounded-full mr-2 bg-blue-500"></div>
+                                      AI Insight
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+                                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                    <span className="flex items-center">
+                                      <Sparkles className="h-3 w-3 mr-1" />
+                                      AI Generated
+                                    </span>
+                                    <span className="flex items-center">
+                                      <Target className="h-3 w-3 mr-1" />
+                                      Risk Analysis
+                                    </span>
+                                  </div>
+                                  <button className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors">
+                                    Learn More →
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -2501,16 +2815,58 @@ const AdvancedDashboard = () => {
                     {riskAnalysis ? (
                       <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/40 p-4">
                         <div className="text-sm font-medium mb-3">Risk Scenarios</div>
-                        <div className="space-y-2 text-sm">
+                        <div className="space-y-3 text-sm">
                           {riskAnalysis.scenarios?.map((scenario: any, index: number) => (
-                            <div key={index} className="p-2 bg-white dark:bg-gray-800 rounded border">
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium">{scenario.name}</span>
-                                <Badge variant={scenario.severity === 'High' ? 'destructive' : 'secondary'}>
-                                  {scenario.severity}
-                                </Badge>
+                            <div key={index} className="group relative overflow-hidden rounded-lg border bg-white dark:bg-gray-800 hover:shadow-md transition-all duration-300">
+                              <div className="p-4">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                                      {scenario.name}
+                                    </h4>
+                                    <p className="text-muted-foreground text-xs leading-relaxed">
+                                      {scenario.description}
+                                    </p>
+                                  </div>
+                                  <div className="ml-4 flex-shrink-0">
+                                    <div className={`
+                                      inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                                      ${scenario.severity === 'High' 
+                                        ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 dark:from-red-900/30 dark:to-red-800/30 dark:text-red-300 border border-red-200 dark:border-red-700'
+                                        : scenario.severity === 'Medium'
+                                        ? 'bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 dark:from-orange-900/30 dark:to-orange-800/30 dark:text-orange-300 border border-orange-200 dark:border-orange-700'
+                                        : 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 dark:from-yellow-900/30 dark:to-yellow-800/30 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700'
+                                      }
+                                    `}>
+                                      <div className={`
+                                        w-2 h-2 rounded-full mr-2
+                                        ${scenario.severity === 'High' 
+                                          ? 'bg-red-500 animate-pulse'
+                                          : scenario.severity === 'Medium'
+                                          ? 'bg-orange-500'
+                                          : 'bg-yellow-500'
+                                        }
+                                      `}></div>
+                                      {scenario.severity}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+                                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                    <span className="flex items-center">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Immediate
+                                    </span>
+                                    <span className="flex items-center">
+                                      <AlertTriangle className="h-3 w-3 mr-1" />
+                                      Critical
+                                    </span>
+                                  </div>
+                                  <button className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors">
+                                    View Details →
+                                  </button>
+                                </div>
                               </div>
-                              <div className="text-muted-foreground text-xs mt-1">{scenario.description}</div>
                             </div>
                           ))}
                         </div>
@@ -2525,14 +2881,62 @@ const AdvancedDashboard = () => {
                     {riskAnalysis ? (
                       <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/40 p-4">
                         <div className="text-sm font-medium mb-3">Response Resources</div>
-                        <div className="space-y-2 text-sm">
+                        <div className="space-y-3 text-sm">
                           {riskAnalysis.resources?.map((resource: any, index: number) => (
-                            <div key={index} className="p-2 bg-white dark:bg-gray-800 rounded border">
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium">{resource.name}</span>
-                                <Badge variant="outline">{resource.type}</Badge>
+                            <div key={index} className="group relative overflow-hidden rounded-lg border bg-white dark:bg-gray-800 hover:shadow-md transition-all duration-300">
+                              <div className="p-4">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                                      {resource.name}
+                                    </h4>
+                                    <p className="text-muted-foreground text-xs leading-relaxed">
+                                      {resource.description}
+                                    </p>
+                                  </div>
+                                  <div className="ml-4 flex-shrink-0">
+                                    <div className={`
+                                      inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium
+                                      ${resource.type === 'Emergency' 
+                                        ? 'bg-gradient-to-r from-red-50 to-red-100 text-red-700 dark:from-red-900/20 dark:to-red-800/20 dark:text-red-300 border border-red-200 dark:border-red-700'
+                                        : resource.type === 'Information'
+                                        ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 dark:from-blue-900/20 dark:to-blue-800/20 dark:text-blue-300 border border-blue-200 dark:border-blue-700'
+                                        : resource.type === 'Support'
+                                        ? 'bg-gradient-to-r from-green-50 to-green-100 text-green-700 dark:from-green-900/20 dark:to-green-800/20 dark:text-green-300 border border-green-200 dark:border-green-700'
+                                        : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 dark:from-gray-900/20 dark:to-gray-800/20 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
+                                      }
+                                    `}>
+                                      <div className={`
+                                        w-2 h-2 rounded-full mr-2
+                                        ${resource.type === 'Emergency' 
+                                          ? 'bg-red-500'
+                                          : resource.type === 'Information'
+                                          ? 'bg-blue-500'
+                                          : resource.type === 'Support'
+                                          ? 'bg-green-500'
+                                          : 'bg-gray-500'
+                                        }
+                                      `}></div>
+                                      {resource.type}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+                                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                    <span className="flex items-center">
+                                      <MapPin className="h-3 w-3 mr-1" />
+                                      Local
+                                    </span>
+                                    <span className="flex items-center">
+                                      <Phone className="h-3 w-3 mr-1" />
+                                      Available 24/7
+                                    </span>
+                                  </div>
+                                  <button className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors">
+                                    Access Resource →
+                                  </button>
+                                </div>
                               </div>
-                              <div className="text-muted-foreground text-xs mt-1">{resource.description}</div>
                             </div>
                           ))}
                         </div>

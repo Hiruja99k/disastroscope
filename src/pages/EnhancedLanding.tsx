@@ -276,7 +276,7 @@ export default function EnhancedLanding() {
     solutions: ['Open data platform', 'Research grants', 'Global network']
   }];
   const stats = [{
-    number: '99.2%',
+    number: '68.2%',
     label: 'Prediction Accuracy',
     icon: Target,
     trend: '+2.1%'
@@ -286,10 +286,10 @@ export default function EnhancedLanding() {
     icon: Globe,
     trend: '+5'
   }, {
-    number: '10M+',
+    number: '100K+',
     label: 'Lives Protected',
     icon: Users,
-    trend: '+1.2M'
+    trend: '200'
   }, {
     number: '0.3s',
     label: 'Response Time',
@@ -297,7 +297,7 @@ export default function EnhancedLanding() {
     trend: '-0.1s'
   }];
   const testimonials = [{
-    name: 'Dr. Sarah Chen',
+    name: 'Person 01',
     role: 'Director of Emergency Management',
     organization: 'FEMA',
     content: 'DisastroScope has revolutionized our disaster response capabilities. The AI-powered predictions have helped us save thousands of lives and prevent billions in damages.',
@@ -305,7 +305,7 @@ export default function EnhancedLanding() {
     avatar: '👩‍⚕️',
     metrics: ['50% faster response', '$2.3B prevented', '99.5% accuracy']
   }, {
-    name: 'Prof. Michael Rodriguez',
+    name: 'Person 02',
     role: 'Climate Research Lead',
     organization: 'NOAA',
     content: 'The accuracy and speed of DisastroScope\'s predictions are unmatched. It\'s become an essential tool in our climate research and disaster preparedness strategy.',
@@ -313,7 +313,7 @@ export default function EnhancedLanding() {
     avatar: '👨‍🔬',
     metrics: ['94.2% accuracy', '1000+ studies', '150 partnerships']
   }, {
-    name: 'Amanda Foster',
+    name: 'Person 03',
     role: 'Emergency Response Coordinator',
     organization: 'Red Cross International',
     content: 'The platform\'s real-time monitoring and alert system have dramatically improved our response times and coordination efforts across multiple countries.',

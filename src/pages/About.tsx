@@ -39,7 +39,7 @@ export default function About() {
 
   const stats = [
     { number: '195', label: 'Countries Monitored', icon: Globe },
-    { number: '10M+', label: 'Lives Protected', icon: Users },
+    { number: '100K', label: 'Lives Protected', icon: Users },
     { number: '99.7%', label: 'Uptime Guarantee', icon: Award },
     { number: '3.2min', label: 'Average Response', icon: Target }
   ];

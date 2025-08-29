@@ -3,11 +3,12 @@ import ReactApexChart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 
 interface DisasterChartProps {
-  type: 'line' | 'bar' | 'pie';
+  type: 'line' | 'bar' | 'pie' | 'area';
   data?: any[];
   title?: string;
   dataKey?: string;
   nameKey?: string;
+  height?: number;
 }
 
 const COLORS = [
@@ -40,6 +41,15 @@ const generateSampleData = (type: string) => {
         { region: 'Indian Ocean', high: 38, medium: 29, low: 20 },
         { region: 'Arctic', high: 8, medium: 15, low: 42 }
       ];
+    case 'area':
+      // Use a region-based dataset that works well for stacked area
+      return [
+        { region: 'Pacific', high: 40, medium: 30, low: 15 },
+        { region: 'Atlantic', high: 28, medium: 34, low: 20 },
+        { region: 'Mediterranean', high: 18, medium: 26, low: 28 },
+        { region: 'Indian Ocean', high: 34, medium: 24, low: 18 },
+        { region: 'Arctic', high: 10, medium: 14, low: 36 }
+      ];
     case 'pie':
       return [
         { name: 'Earthquakes', value: 35, color: COLORS[0] },
@@ -53,7 +63,7 @@ const generateSampleData = (type: string) => {
   }
 };
 
-export default function DisasterChart({ type, data, title, dataKey = 'value', nameKey = 'name' }: DisasterChartProps) {
+export default function DisasterChart({ type, data, title, dataKey = 'value', nameKey = 'name', height = 192 }: DisasterChartProps) {
   const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
@@ -74,41 +84,68 @@ export default function DisasterChart({ type, data, title, dataKey = 'value', na
           { name: 'floods', data: chartData.map((d) => d.floods) },
         ];
         const options: ApexOptions = {
-          chart: { type: 'line', toolbar: { show: false } },
+          chart: { type: 'line', toolbar: { show: false }, parentHeightOffset: 0 },
           stroke: { curve: 'smooth', width: 2 },
+          fill: { type: 'solid', opacity: 0 },
           xaxis: { categories },
           colors: COLORS,
-          legend: { position: 'top' },
-          grid: { borderColor: 'rgba(0,0,0,0.1)' },
+          legend: { position: 'bottom', horizontalAlign: 'center' },
+          grid: { borderColor: 'rgba(0,0,0,0.08)', padding: { top: 0, right: 0, bottom: 0, left: 0 } },
         };
-        return <ReactApexChart options={options} series={series} type="line" height={300} />;
+        return <ReactApexChart options={options} series={series} type="line" height={height} />;
       }
-      case 'bar': {
+      case 'area': {
         const categories = chartData.map((d) => d.region);
         const options: ApexOptions = {
-          chart: { type: 'bar', toolbar: { show: false } },
-          plotOptions: { bar: { horizontal: false, columnWidth: '50%' } },
+          chart: { type: 'area', stacked: true, toolbar: { show: false }, parentHeightOffset: 0 },
           xaxis: { categories },
           colors: COLORS,
-          grid: { borderColor: 'rgba(0,0,0,0.1)' },
-          legend: { position: 'top' },
+          stroke: { curve: 'smooth', width: 2 },
+          fill: { type: 'solid', opacity: 0.25 },
+          dataLabels: { enabled: false },
+          legend: { position: 'bottom' },
+          grid: { borderColor: 'rgba(0,0,0,0.08)', padding: { top: 0, right: 0, bottom: 0, left: 0 } },
         };
         const series = [
           { name: 'high', data: chartData.map((d) => d.high) },
           { name: 'medium', data: chartData.map((d) => d.medium) },
           { name: 'low', data: chartData.map((d) => d.low) },
         ];
-        return <ReactApexChart options={options} series={series} type="bar" height={300} />;
+        return <ReactApexChart options={options} series={series} type="area" height={height} />;
+      }
+      case 'bar': {
+        const categories = chartData.map((d) => d.region);
+        const options: ApexOptions = {
+          chart: { type: 'bar', toolbar: { show: false }, parentHeightOffset: 0 },
+          plotOptions: { bar: { horizontal: false, columnWidth: '55%' } },
+          xaxis: { categories },
+          colors: COLORS,
+          grid: { borderColor: 'rgba(0,0,0,0.08)', padding: { top: 0, right: 0, bottom: 0, left: 0 } },
+          legend: { position: 'bottom' },
+        };
+        const series = [
+          { name: 'high', data: chartData.map((d) => d.high) },
+          { name: 'medium', data: chartData.map((d) => d.medium) },
+          { name: 'low', data: chartData.map((d) => d.low) },
+        ];
+        return <ReactApexChart options={options} series={series} type="bar" height={height} />;
       }
       case 'pie': {
         const options: ApexOptions = {
-          chart: { type: 'donut', toolbar: { show: false } },
+          chart: { type: 'donut', toolbar: { show: false }, parentHeightOffset: 0 },
           labels: chartData.map((d) => d[nameKey]),
           colors: chartData.map((d, i) => d.color || COLORS[i % COLORS.length]),
           legend: { position: 'bottom' },
+          plotOptions: {
+            pie: {
+              donut: {
+                size: '72%'
+              }
+            }
+          }
         };
         const series = chartData.map((d) => d[dataKey]);
-        return <ReactApexChart options={options} series={series} type="donut" height={300} />;
+        return <ReactApexChart options={options} series={series} type="donut" height={height} />;
       }
       default:
         return (

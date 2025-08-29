@@ -117,6 +117,41 @@ export interface AIPrediction {
   timestamp: string;
 }
 
+export interface GlobalRiskAnalysis {
+  location: {
+    query?: string;
+    latitude: number;
+    longitude: number;
+    country: string;
+    region: string;
+  };
+  timestamp: string;
+  analysis_period: string;
+  disasters: {
+    [key: string]: {
+      risk_score: number;
+      risk_level: string;
+      color: string;
+      probability: number;
+      severity: string;
+      factors: {
+        geographical: number;
+        seasonal: number;
+        historical: number;
+        environmental: number;
+      };
+      description: string;
+      recommendations: string[];
+      last_updated: string;
+    };
+  };
+  composite_risk: {
+    score: number;
+    level: string;
+    trend: string;
+  };
+}
+
 // API Service Class
 class ApiService {
   private socket: Socket | null = null;
@@ -392,6 +427,31 @@ class ApiService {
     } catch (error) {
       console.error('Error training models:', error);
       return false;
+    }
+  }
+
+  async analyzeGlobalRisk(locationQuery?: string, latitude?: number, longitude?: number): Promise<GlobalRiskAnalysis | null> {
+    try {
+      const payload: any = {};
+      if (locationQuery) payload.location_query = locationQuery;
+      if (latitude !== undefined) payload.latitude = latitude;
+      if (longitude !== undefined) payload.longitude = longitude;
+      
+      const response = await fetch(`${API_BASE_URL}/api/global-risk-analysis`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error analyzing global risk:', error);
+      return null;
     }
   }
 

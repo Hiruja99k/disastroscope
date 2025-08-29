@@ -92,6 +92,15 @@ export default function Insights() {
     change: '-18%',
     icon: Calendar
   }];
+  const breakdownData = [
+    { date: '2024-01-01', earthquakes: 22, wildfires: 12, floods: 8 },
+    { date: '2024-01-02', earthquakes: 18, wildfires: 14, floods: 10 },
+    { date: '2024-01-03', earthquakes: 25, wildfires: 9, floods: 12 },
+    { date: '2024-01-04', earthquakes: 20, wildfires: 16, floods: 14 },
+    { date: '2024-01-05', earthquakes: 24, wildfires: 18, floods: 11 },
+    { date: '2024-01-06', earthquakes: 17, wildfires: 15, floods: 9 },
+    { date: '2024-01-07', earthquakes: 21, wildfires: 19, floods: 13 },
+  ];
   return <div className="min-h-screen bg-background pt-16">
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
@@ -157,7 +166,7 @@ export default function Insights() {
         }} transition={{
           delay: 0.2 + index * 0.1
         }}>
-              <Card className="p-6 bg-gradient-card border-border/50 h-80">
+              <Card className="p-6 bg-gradient-card border-border/50 h-96">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -175,8 +184,13 @@ export default function Insights() {
                 </div>
                 
                 {/* Real Chart */}
-                <div className="h-48 mb-4">
-                  <DisasterChart type={chart.icon === LineChart ? 'line' : chart.icon === BarChart ? 'bar' : 'pie'} title={chart.subtitle} />
+                <div className="h-64 mb-2">
+                  <DisasterChart
+                    height={260}
+                    type="line"
+                    title={chart.subtitle}
+                    data={chart.title === 'Disaster Type Breakdown' ? breakdownData : undefined}
+                  />
                 </div>
                 
                 
@@ -255,15 +269,15 @@ export default function Insights() {
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="p-6 bg-gradient-card border-border/50">
               <h3 className="text-xl font-semibold text-foreground mb-4">Global Disaster Frequency</h3>
-              <div className="h-64">
-                <DisasterChart type="bar" title="Historical trend analysis" />
+              <div className="h-64 -mt-2">
+                <DisasterChart height={220} type="bar" title="Historical trend analysis" />
               </div>
             </Card>
 
             <Card className="p-6 bg-gradient-card border-border/50">
               <h3 className="text-xl font-semibold text-foreground mb-4">Risk Assessment Timeline</h3>
-              <div className="h-64">
-                <DisasterChart type="line" title="Predictive modeling results" />
+              <div className="h-64 -mt-2">
+                <DisasterChart height={220} type="line" title="Predictive modeling results" />
               </div>
             </Card>
           </div>

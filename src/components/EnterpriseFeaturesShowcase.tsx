@@ -152,9 +152,9 @@ export function EnterpriseFeaturesShowcase() {
       title: "AI-Powered Analytics",
       description: "Advanced machine learning for predictive insights",
       metrics: [
-        { value: "94.2%", label: "Prediction Accuracy" },
+        { value: "68.2%", label: "Prediction Accuracy" },
         { value: "2.3ms", label: "Response Time" },
-        { value: "15", label: "ML Models", change: 12 }
+        { value: "12", label: "ML Models", change: 12 }
       ],
       color: "bg-blue-500",
       delay: 0.2
