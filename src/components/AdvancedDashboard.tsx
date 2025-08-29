@@ -411,133 +411,130 @@ const AdvancedDashboard = () => {
         throw new Error('Geolocation is not supported by this browser');
       }
 
-      // Use extremely high accuracy settings for precise location
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,  // Maximum accuracy - uses GPS, cellular, and WiFi
-          timeout: 30000,           // 30 seconds for maximum accuracy
-          maximumAge: 0             // Always get fresh location
-        });
-      });
-
-      const { latitude: lat, longitude: lng, accuracy } = position.coords;
+      // Use extremely high accuracy settings for precise location with multiple attempts
+      let bestPosition: GeolocationPosition | null = null;
+      let bestAccuracy = Infinity;
       
-      console.log('📍 GPS Coordinates:', { lat, lng, accuracy: `${accuracy}m accuracy` });
-      
-      // If accuracy is poor (>100m), try to get better accuracy
-      if (accuracy > 100) {
-        console.log('⚠️ Poor GPS accuracy detected, attempting to improve...');
+      // Try up to 3 times to get the best possible accuracy
+      for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-          const betterPosition = await new Promise<GeolocationPosition>((resolve, reject) => {
+          console.log(`📍 GPS Attempt ${attempt}/3 - Getting high accuracy location...`);
+          
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 45000,  // Even longer timeout for better accuracy
-              maximumAge: 0
+              enableHighAccuracy: true,  // Maximum accuracy - uses GPS, cellular, and WiFi
+              timeout: 60000,           // 60 seconds for maximum accuracy
+              maximumAge: 0             // Always get fresh location
             });
           });
+
+          const { accuracy } = position.coords;
+          console.log(`📍 GPS Attempt ${attempt} - Accuracy: ${accuracy}m`);
           
-          const betterCoords = betterPosition.coords;
-          if (betterCoords.accuracy < accuracy) {
-            console.log(`✅ Improved accuracy: ${accuracy}m → ${betterCoords.accuracy}m`);
-            Object.assign(position.coords, betterCoords);
+          // Keep the position with the best accuracy
+          if (accuracy < bestAccuracy) {
+            bestAccuracy = accuracy;
+            bestPosition = position;
+            console.log(`✅ New best accuracy: ${accuracy}m`);
           }
-        } catch (retryError) {
-          console.log('⚠️ Accuracy improvement failed, using original position');
+          
+          // If we get excellent accuracy (<10m), we can stop early
+          if (accuracy < 10) {
+            console.log(`🎯 Excellent accuracy achieved: ${accuracy}m - stopping attempts`);
+            break;
+          }
+          
+          // Wait a bit before the next attempt to let GPS settle
+          if (attempt < 3) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+          
+        } catch (attemptError) {
+          console.log(`⚠️ GPS Attempt ${attempt} failed:`, attemptError);
+          if (attempt === 3) {
+            throw attemptError; // Re-throw on final attempt
+          }
         }
       }
       
-      // Get detailed address using Mapbox Geocoding API with multiple requests for better accuracy
+      if (!bestPosition) {
+        throw new Error('Failed to get GPS position after multiple attempts');
+      }
+      
+      const { latitude: lat, longitude: lng, accuracy } = bestPosition.coords;
+      console.log(`📍 Final GPS Coordinates: ${lat}, ${lng} (Accuracy: ${accuracy}m)`);
+      
+      // Get detailed address using Mapbox Geocoding API with improved accuracy
       try {
         const mapboxToken = 'pk.eyJ1IjoiaGlydWpha2wiLCJhIjoiY21lczA2ZTdsMGQ0czJxcTFjYzI4bDJvMiJ9.NvKvNXcT-gqoNomkWFeouw';
         
-        // Make multiple geocoding requests for different place types to get the most accurate location
-        const requests = [
-          // 1. Get precise address (most accurate)
-          fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&types=address&limit=1`),
-          // 2. Get neighborhood/suburb
-          fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&types=neighborhood,poi&limit=1`),
-          // 3. Get city/district
-          fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&types=place,locality&limit=1`)
-        ];
+        // Use a more comprehensive geocoding request to get the most accurate location
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&types=address,poi,neighborhood,place,locality,district,region,country&limit=3`
+        );
         
-        const responses = await Promise.allSettled(requests);
-        const results = responses.map((response, index) => {
-          if (response.status === 'fulfilled' && response.value.ok) {
-            return response.value.json();
-          }
-          return null;
-        });
-        
-        // Extract the most relevant information from each request
-        let preciseAddress = '';
-        let neighborhood = '';
-        let city = '';
-        
-        // Get precise address from first request
-        if (results[0] && results[0].features && results[0].features.length > 0) {
-          const feature = results[0].features[0];
-          preciseAddress = feature.place_name || feature.text || '';
-        }
-        
-        // Get neighborhood from second request
-        if (results[1] && results[1].features && results[1].features.length > 0) {
-          const feature = results[1].features[0];
-          neighborhood = feature.text || feature.place_name || '';
-        }
-        
-        // Get city from third request
-        if (results[2] && results[2].features && results[2].features.length > 0) {
-          const feature = results[2].features[0];
-          city = feature.text || feature.place_name || '';
-        }
-        
-        // Build a comprehensive 3-part location display
-        const locationParts = [];
-        if (preciseAddress) locationParts.push(preciseAddress);
-        if (neighborhood && !preciseAddress.includes(neighborhood)) locationParts.push(neighborhood);
-        if (city && !locationParts.some(part => part.includes(city))) locationParts.push(city);
-        
-        // If we don't have enough parts, try a general geocoding request
-        if (locationParts.length < 2) {
-          const generalResponse = await fetch(
-            `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&types=poi,address,neighborhood,place,locality,district,region,country&limit=1`
-          );
+        if (response.ok) {
+          const data = await response.json();
+          console.log('🗺️ Mapbox Geocoding Response:', data);
           
-          if (generalResponse.ok) {
-            const generalData = await generalResponse.json();
-            if (generalData.features && generalData.features.length > 0) {
-              const feature = generalData.features[0];
-              const context = feature.context || [];
-              
-              // Extract specific parts
-              const placeName = feature.text || '';
-              const locality = context.find((c: any) => c.id.startsWith('locality'))?.text || '';
-              const district = context.find((c: any) => c.id.startsWith('district'))?.text || '';
-              const region = context.find((c: any) => c.id.startsWith('region'))?.text || '';
-              const country = context.find((c: any) => c.id.startsWith('country'))?.text || '';
-              
-              // Build 3-part location
-              const parts = [];
-              if (placeName) parts.push(placeName);
-              if (locality && !parts.includes(locality)) parts.push(locality);
-              if (district && !parts.includes(district)) parts.push(district);
-              if (region && !parts.includes(region)) parts.push(region);
-              if (country && !parts.includes(country)) parts.push(country);
-              
-              // Take first 3 parts
-              locationParts.length = 0; // Clear existing parts
-              locationParts.push(...parts.slice(0, 3));
+          if (data.features && data.features.length > 0) {
+            // Get the most relevant feature (usually the first one)
+            const primaryFeature = data.features[0];
+            const context = primaryFeature.context || [];
+            
+            // Extract location components with better logic
+            const placeName = primaryFeature.text || '';
+            const locality = context.find((c: any) => c.id.startsWith('locality'))?.text || '';
+            const district = context.find((c: any) => c.id.startsWith('district'))?.text || '';
+            const region = context.find((c: any) => c.id.startsWith('region'))?.text || '';
+            const country = context.find((c: any) => c.id.startsWith('country'))?.text || '';
+            
+            // Build a clean, accurate location string
+            const locationParts = [];
+            
+            // Add the most specific location first (place name or address)
+            if (placeName && placeName !== locality && placeName !== district) {
+              locationParts.push(placeName);
             }
-          }
-        }
-        
-        // Ensure we have at least 3 parts
-        while (locationParts.length < 3) {
-          locationParts.push('Unknown Area');
-        }
-        
-        const address = locationParts.join(', ');
-        const detailedAddress = locationParts.join(' • ');
+            
+            // Add locality (city/town) if different from place name
+            if (locality && !locationParts.includes(locality)) {
+              locationParts.push(locality);
+            }
+            
+            // Add district if different from locality
+            if (district && !locationParts.includes(district) && district !== locality) {
+              locationParts.push(district);
+            }
+            
+            // Add region if different from district
+            if (region && !locationParts.includes(region) && region !== district) {
+              locationParts.push(region);
+            }
+            
+            // Add country if not already included
+            if (country && !locationParts.includes(country)) {
+              locationParts.push(country);
+            }
+            
+            // If we don't have enough meaningful parts, use the full place name
+            if (locationParts.length < 2) {
+              const fullPlaceName = primaryFeature.place_name || '';
+              if (fullPlaceName) {
+                // Split by comma and take the most relevant parts
+                const parts = fullPlaceName.split(',').map(p => p.trim()).filter(p => p);
+                locationParts.length = 0; // Clear existing parts
+                locationParts.push(...parts.slice(0, 3)); // Take first 3 meaningful parts
+              }
+            }
+            
+            // Ensure we have at least 2 meaningful parts
+            if (locationParts.length < 2) {
+              locationParts.push('Location Detected');
+            }
+            
+            const address = locationParts.join(', ');
+            const detailedAddress = locationParts.join(' • ');
         
         setCurrentLocation({
           lat,
@@ -556,17 +553,17 @@ const AdvancedDashboard = () => {
       } catch (geocodingError) {
         console.error('Reverse geocoding failed:', geocodingError);
         
-        // Fallback to coordinates with accuracy info
+        // Fallback to coordinates
         setCurrentLocation({
           lat,
           lng,
           address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
-          detailedAddress: `Precise coordinates (${accuracy}m accuracy)`,
+          detailedAddress: `Precise coordinates`,
           accuracy,
-          locationParts: ['Coordinates', 'Precise Location', 'GPS Detected']
+          locationParts: ['Coordinates', 'GPS Location']
         });
         
-        toast.success(`📍 Location detected (${accuracy}m accuracy)`, {
+        toast.success(`📍 Location detected`, {
           icon: '📍',
           style: { borderRadius: '10px', background: '#333', color: '#fff' },
         });
@@ -2166,94 +2163,18 @@ const AdvancedDashboard = () => {
                   {/* Location Display */}
                   {currentLocation ? (
                     <div className="space-y-3">
-                                                                    {/* Advanced Location Display */}
-                       <div className="relative overflow-hidden rounded-xl border-2 border-gradient-to-r from-blue-500/20 to-purple-500/20 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-blue-900/20 dark:via-gray-900 dark:to-purple-900/20 shadow-lg">
-                         {/* Animated background gradient */}
-                         <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 via-transparent to-purple-400/10 animate-pulse"></div>
-                         
-                         {/* Location header with icon */}
-                         <div className="relative p-4 border-b border-blue-200/50 dark:border-blue-700/50">
-                           <div className="flex items-center gap-3">
-                             <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg">
-                               <MapPin className="h-5 w-5 text-white" />
-                             </div>
-                             <div>
-                               <h3 className="font-bold text-gray-800 dark:text-gray-200">Your Precise Location</h3>
-                               <p className="text-xs text-gray-500 dark:text-gray-400">GPS Accuracy: ±{currentLocation.accuracy || 'Unknown'}m</p>
-                             </div>
-                           </div>
+                                                                    {/* Simple Location Display */}
+                       <div className="p-4 rounded-lg border bg-blue-50 dark:bg-blue-900/20">
+                         <div className="flex items-center gap-2 text-sm mb-2">
+                           <MapPin className="h-4 w-4 text-blue-600" />
+                           <span className="font-medium">Your Location</span>
                          </div>
-                         
-                         {/* 3-Part Location Display */}
-                         <div className="relative p-4">
-                           {currentLocation.locationParts && currentLocation.locationParts.length >= 3 ? (
-                             <div className="space-y-3">
-                               {/* Primary Location */}
-                               <div className="flex items-center gap-2">
-                                 <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                                 <div className="flex-1">
-                                   <div className="text-sm font-medium text-gray-600 dark:text-gray-300">Primary Area</div>
-                                   <div className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                                     {currentLocation.locationParts[0]}
-                                   </div>
-                                 </div>
-                               </div>
-                               
-                               {/* Secondary Location */}
-                               <div className="flex items-center gap-2">
-                                 <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-                                 <div className="flex-1">
-                                   <div className="text-sm font-medium text-gray-600 dark:text-gray-300">District/Neighborhood</div>
-                                   <div className="text-lg font-bold text-purple-700 dark:text-purple-300">
-                                     {currentLocation.locationParts[1]}
-                                   </div>
-                                 </div>
-                               </div>
-                               
-                               {/* Tertiary Location */}
-                               <div className="flex items-center gap-2">
-                                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" style={{ animationDelay: '1s' }}></div>
-                                 <div className="flex-1">
-                                   <div className="text-sm font-medium text-gray-600 dark:text-gray-300">City/Region</div>
-                                   <div className="text-lg font-bold text-green-700 dark:text-green-300">
-                                     {currentLocation.locationParts[2]}
-                                   </div>
-                                 </div>
-                               </div>
-                             </div>
-                           ) : (
-                             <div className="text-center py-4">
-                               <div className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                                 {currentLocation.detailedAddress || currentLocation.address || 'Location detected'}
-                               </div>
-                             </div>
-                           )}
-                           
-                           {/* Coordinates with copy button */}
-                           <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                             <div className="flex items-center justify-between">
-                               <div className="flex items-center gap-2">
-                                 <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
-                                 <span className="text-xs font-mono text-gray-600 dark:text-gray-400">
-                                   {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
-                                 </span>
-                               </div>
-                               <button
-                                 onClick={() => {
-                                   navigator.clipboard.writeText(`${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)}`);
-                                   toast.success('Coordinates copied!');
-                                 }}
-                                 className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                               >
-                                 Copy
-                               </button>
-                             </div>
-                           </div>
+                         <div className="text-lg font-semibold text-blue-800 dark:text-blue-200">
+                           {currentLocation.detailedAddress || currentLocation.address || 'Location detected'}
                          </div>
-                         
-                         {/* Decorative elements */}
-                         <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-gradient-to-r from-blue-400/20 to-purple-400/20"></div>
-                         <div className="absolute bottom-2 left-2 w-6 h-6 rounded-full bg-gradient-to-r from-purple-400/20 to-blue-400/20"></div>
+                         <div className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                           {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
+                         </div>
                        </div>
 
                                              {/* Location Map */}
