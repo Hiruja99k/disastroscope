@@ -2214,87 +2214,119 @@ const AdvancedDashboard = () => {
                   {/* Location Display */}
                   {currentLocation ? (
                     <div className="space-y-3">
-                                                                    {/* Simple Location Display */}
-                       <div className="p-4 rounded-lg border bg-blue-50 dark:bg-blue-900/20">
-                         <div className="flex items-center gap-2 text-sm mb-2">
-                           <MapPin className="h-4 w-4 text-blue-600" />
-                           <span className="font-medium">Your Location</span>
-                         </div>
-                         <div className="text-lg font-semibold text-blue-800 dark:text-blue-200">
-                           {currentLocation.detailedAddress || currentLocation.address || 'Location detected'}
-                         </div>
-                         <div className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                           {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
-                         </div>
-                       </div>
+                      {/* Enhanced Location Display Box */}
+                      <div className="relative overflow-hidden rounded-xl border-2 border-blue-200 dark:border-blue-700 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 p-4 shadow-lg">
+                        {/* Decorative background elements */}
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-blue-200/30 dark:bg-blue-700/30 rounded-full -translate-y-10 translate-x-10"></div>
+                        <div className="absolute bottom-0 left-0 w-16 h-16 bg-indigo-200/30 dark:bg-indigo-700/30 rounded-full translate-y-8 -translate-x-8"></div>
+                        
+                        {/* Location content */}
+                        <div className="relative z-10">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full">
+                              <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <span className="font-semibold text-blue-800 dark:text-blue-200 text-sm">📍 Your Location</span>
+                          </div>
+                          
+                          {/* Location in words */}
+                          <div className="mb-2">
+                            <div className="text-base font-medium text-gray-800 dark:text-gray-200 leading-tight">
+                              {currentLocation.detailedAddress || currentLocation.address || 'Location detected'}
+                            </div>
+                          </div>
+                          
+                          {/* Coordinates */}
+                          <div className="text-xs text-blue-600 dark:text-blue-400 font-mono bg-white/50 dark:bg-gray-800/50 px-2 py-1 rounded">
+                            {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
+                          </div>
+                        </div>
+                      </div>
 
-                                             {/* Location Map */}
-                       <LocationMap 
-                         latitude={currentLocation.lat}
-                         longitude={currentLocation.lng}
-                         address={currentLocation.detailedAddress || currentLocation.address}
-                         height={200}
-                         accuracy={currentLocation.accuracy}
-                       />
+                      {/* Location Map */}
+                      <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-md">
+                        <div className="bg-gray-50 dark:bg-gray-800 px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <MapPin className="h-3 w-3" />
+                            <span>Location Map</span>
+                          </div>
+                        </div>
+                        <LocationMap 
+                          latitude={currentLocation.lat}
+                          longitude={currentLocation.lng}
+                          address={currentLocation.detailedAddress || currentLocation.address}
+                          height={180}
+                          accuracy={currentLocation.accuracy}
+                        />
+                      </div>
 
                       {/* Analyze Button */}
-                      <div className="flex justify-center">
+                      <div className="flex justify-center pt-2">
                         <Button 
                           size="lg" 
-                          className="flex items-center gap-2 px-8"
+                          className="flex items-center gap-3 px-10 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                           onClick={analyzeLocation}
                           disabled={isAnalyzing}
                         >
                           {isAnalyzing ? (
-                            <RefreshCw className="h-4 w-4 animate-spin" />
+                            <RefreshCw className="h-5 w-5 animate-spin" />
                           ) : (
-                            <Sparkles className="h-4 w-4" />
+                            <Sparkles className="h-5 w-5" />
                           )}
-                          {isAnalyzing ? 'Analyzing...' : 'Analyze Risk'}
+                          {isAnalyzing ? 'Analyzing Location...' : '🔍 Analyze Disaster Risk'}
                         </Button>
-                    </div>
+                      </div>
                   </div>
                   ) : (
-                    /* Location Detection Prompt */
-                    <div className="text-center space-y-4 py-8">
-                      <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                        <MapPin className="h-8 w-8 text-blue-600" />
-                    </div>
-                      <div>
-                        <h3 className="text-lg font-semibold mb-2">Location Detection Required</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          We need your location to provide accurate disaster risk analysis
+                    {/* Location Detection Prompt */}
+                    <div className="text-center space-y-6 py-10">
+                      {/* Animated location icon */}
+                      <div className="relative mx-auto w-20 h-20">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full animate-pulse"></div>
+                        <div className="absolute inset-2 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center">
+                          <MapPin className="h-10 w-10 text-blue-600 dark:text-blue-400" />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">📍 Location Detection Required</h3>
+                        <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                          We need your precise location to provide accurate disaster risk analysis using AI-powered prediction models.
                         </p>
-                        <Button 
-                          size="lg" 
-                          className="flex items-center gap-2 mx-auto"
-                          onClick={() => {
-                            console.log('🔘 Detect My Location button clicked');
-                            detectUserLocation();
-                          }}
-                          disabled={isDetectingLocation}
-                        >
-                          {isDetectingLocation ? (
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <MapPin className="h-4 w-4" />
-                          )}
-                          {isDetectingLocation ? 'Detecting Location...' : 'Detect My Location'}
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="flex items-center gap-2 mx-auto mt-2"
-                          onClick={() => {
-                            console.log('🧪 Test Geolocation button clicked');
-                            testGeolocation();
-                          }}
-                        >
-                          <Settings className="h-4 w-4" />
-                          Test Geolocation API
-                        </Button>
-                  </div>
-                  </div>
+                        
+                        <div className="flex flex-col gap-3 pt-2">
+                          <Button 
+                            size="lg" 
+                            className="flex items-center gap-3 mx-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                            onClick={() => {
+                              console.log('🔘 Detect My Location button clicked');
+                              detectUserLocation();
+                            }}
+                            disabled={isDetectingLocation}
+                          >
+                            {isDetectingLocation ? (
+                              <RefreshCw className="h-5 w-5 animate-spin" />
+                            ) : (
+                              <MapPin className="h-5 w-5" />
+                            )}
+                            {isDetectingLocation ? 'Detecting Location...' : '🚀 Detect My Location'}
+                          </Button>
+                          
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="flex items-center gap-2 mx-auto text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                            onClick={() => {
+                              console.log('🧪 Test Geolocation button clicked');
+                              testGeolocation();
+                            }}
+                          >
+                            <Settings className="h-4 w-4" />
+                            Test Geolocation API
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   )}
                     </div>
 
