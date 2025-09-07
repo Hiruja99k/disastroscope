@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Globe, Shield } from 'lucide-react';
+import AuthStatus from './AuthStatus';
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,14 +44,7 @@ export default function Navigation() {
                 {item.name}
               </Link>
             ))}
-            <Button 
-              onClick={() => window.location.href = '/dashboard'} 
-              variant="default" 
-              size="sm" 
-              className="bg-gradient-primary hover:shadow-glow"
-            >
-              Launch App
-            </Button>
+            <AuthStatus />
           </div>
 
           {/* Mobile menu button */}
@@ -84,14 +78,9 @@ export default function Navigation() {
                   {item.name}
                 </Link>
               ))}
-              <Button 
-                onClick={() => window.location.href = '/dashboard'} 
-                variant="default" 
-                size="sm" 
-                className="w-full mt-4 bg-gradient-primary"
-              >
-                Launch App
-              </Button>
+              <div className="mt-4">
+                <AuthStatus />
+              </div>
             </div>
           </div>
         )}

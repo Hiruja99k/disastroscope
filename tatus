@@ -1,0 +1,10 @@
+[33med9f1d68[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix
+[33mef6ed8e6[m Debug Edition
+[33mcd929c8e[m Working Edition
+[33m780a34f1[m Remove Maps page; enlarge Insights charts; add advanced chart types; switch to line charts with no gradients; fix Breakdown dataset; UI spacing tweaks
+[33mba7e336b[m Enhance location display box with prominent address and coordinates - Add prominent location address section with bold text and background - Create prominent GPS coordinates section with gradient background - Improve visual hierarchy with better spacing and typography - Add GPS accuracy display and coordinate breakdown - Enhance decorative elements and overall visual appeal
+[33mc1c2b077[m Fix syntax errors in AdvancedDashboard.tsx - Remove invalid JSX comment placement - Fix extra closing div tag - Correct indentation for missing closing tags - Improve switch statement formatting in getTrendIcon function
+[33m0e99e72a[m Implement enhanced UI for location display box - Add gradient background with decorative elements - Improve location display with better typography and spacing - Enhanced location map with header and better styling - Upgrade analyze button with gradient and hover effects - Improve location detection prompt with animated icon and better layout - Make location box smaller, cleaner, and more attractive
+[33m0cee4acc[m Fix Mapbox API coordinate order and improve error handling - Change from lng,lat to lat,lng order for Mapbox geocoding API - Add better error handling for Mapbox API responses - Fix scope issues with data variable
+[33m8c707934[m Add comprehensive debugging for location detection - Add console logs and test function to identify why location detection gets stuck
+[33m5e03ef93[m Fix syntax error in geocoding try-catch block - Add missing closing brace for response.ok condition

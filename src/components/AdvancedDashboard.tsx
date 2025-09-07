@@ -81,8 +81,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { format, subDays, subHours, formatDistanceToNow } from 'date-fns';
-import DisasterMap from './DisasterMap';
-import AdvancedCharts from './AdvancedCharts';
 import RealTimeMonitor from './RealTimeMonitor';
 import AlertSystem from './AlertSystem';
 import EarthquakeMagnitudeMap from './EarthquakeMagnitudeMap';
@@ -90,6 +88,8 @@ import LocationMap from './LocationMap';
 import { useGSAPAnimations } from '@/hooks/useGSAPAnimations';
 import { fetchAllDisasterData, getMockDisasterData, type DisasterEvent, type NotificationItem, type TimelineEvent } from '@/services/disasterDataService';
 import { apiService, type GlobalRiskAnalysis } from '@/services/api';
+import AdvancedCharts from './AdvancedCharts';
+import DisasterMap from './DisasterMap';
 const generateAdvancedData = () => {
   const now = new Date();
   const disasters = [
@@ -234,26 +234,36 @@ const AdvancedDashboard = () => {
       try {
         const backendHealthy = await apiService.healthCheck();
         if (backendHealthy) {
-          // Retrieve events/predictions from backend and adapt to dashboard structures
-          const [events, predictions, models] = await Promise.all([
+          // Retrieve comprehensive disaster data from Railway backend
+          const [events, predictions, models, disasters, eonetEvents] = await Promise.all([
             apiService.getEvents(),
             apiService.getPredictions(),
-            apiService.getModels()
+            apiService.getModels(),
+            apiService.getDisasters(),
+            apiService.getEONETEvents()
           ]);
 
-          const mappedDisasters: DisasterEvent[] = (events || []).map((e: any) => ({
-            id: e.id || `event-${Math.random().toString(36).slice(2)}`,
-            type: e.event_type || 'Event',
-            title: e.name || e.description || 'Disaster Event',
-            location: e.location || 'Unknown',
-            coordinates: [e.coordinates?.lat ?? 0, e.coordinates?.lng ?? 0],
-            severity: (e.severity || 'Medium') as DisasterEvent['severity'],
+          // Combine all disaster sources from Railway backend
+          const allDisasters = [
+            ...(events || []),
+            ...(disasters || []),
+            ...(eonetEvents || [])
+          ];
+
+          const mappedDisasters: DisasterEvent[] = allDisasters.map((e: any, index: number) => ({
+            id: e.id || `railway-${index}-${Math.random().toString(36).slice(2)}`,
+            type: e.event_type || e.type || e.category || 'Disaster',
+            title: e.name || e.title || e.description || 'Disaster Event',
+            location: e.location || e.place || e.state || 'Unknown',
+            coordinates: e.coordinates ? [e.coordinates.lat || e.coordinates[1], e.coordinates.lng || e.coordinates[0]] : 
+                        e.geometry ? [e.geometry.coordinates[1], e.geometry.coordinates[0]] : [0, 0],
+            severity: (e.severity || e.magnitude || 'Medium') as DisasterEvent['severity'],
             status: (e.status || 'Active') as DisasterEvent['status'],
-            timestamp: new Date(e.updated_at || e.created_at || Date.now()),
-            magnitude: e.magnitude,
-            affected: e.affected_population,
-            source: e.source || 'Backend',
-            description: e.description
+            timestamp: new Date(e.updated_at || e.created_at || e.date || Date.now()),
+            magnitude: e.magnitude || e.mag || 0,
+            affected: e.affected_population || e.affected || 0,
+            source: e.source || 'Railway Backend',
+            description: e.description || e.title || 'Disaster event from Railway backend'
           }));
 
           const notifications: NotificationItem[] = mappedDisasters.slice(0, 5).map(d => ({
@@ -279,7 +289,7 @@ const AdvancedDashboard = () => {
           setRealNotifications(notifications);
           setRealTimeline(timeline);
           setLastDataUpdate(new Date());
-          toast.success('🌍 Connected to backend and updated data', {
+          toast.success('🚂 Connected to Railway backend and updated disaster data', {
             icon: '⚡',
             style: { borderRadius: '10px', background: '#333', color: '#fff' },
           });
@@ -1409,13 +1419,6 @@ const AdvancedDashboard = () => {
               <PieChart className="h-4 w-4" />
               <span className="whitespace-nowrap">Analytics</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="enterprise" 
-              className="relative -mb-px rounded-none flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base hover:bg-gray-50 dark:hover:bg-gray-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:bg-slate-900 dark:data-[state=active]:after:bg-white"
-            >
-              <Crown className="h-4 w-4" />
-              <span className="whitespace-nowrap">Enterprise</span>
-            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -1487,7 +1490,7 @@ const AdvancedDashboard = () => {
                   <div className="relative z-10 flex items-center justify-between">
                     <div>
                       <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-muted-foreground'}`}>Active Disasters</p>
-                      <p className="text-4xl font-bold text-red-600">{data.disasters.filter(d => d.status === 'Active').length}</p>
+                      <p className="text-4xl font-bold text-red-600">{realDisasters.filter(d => d.status === 'Active').length}</p>
                       <div className="flex items-center gap-1 text-sm text-red-600">
                         <TrendingUp className="h-4 w-4" />
                         +2 today
@@ -1609,7 +1612,19 @@ const AdvancedDashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <DisasterMap disasters={data.disasters} />
+                  <DisasterMap 
+                    disasters={realDisasters.map((d, index) => ({
+                      id: index + 1,
+                      type: d.type,
+                      location: d.location,
+                      magnitude: d.magnitude || 0,
+                      severity: d.severity,
+                      status: d.status,
+                      timestamp: d.timestamp,
+                      affected: d.affected || 0,
+                      coordinates: d.coordinates
+                    }))} 
+                  />
                 </CardContent>
               </Card>
             </div>
@@ -2719,7 +2734,7 @@ const AdvancedDashboard = () => {
               </CardHeader>
               <CardContent>
                 {(() => {
-                  const ongoing = data.disasters
+                  const ongoing = realDisasters
                     .filter(d => String(d.status).toLowerCase() !== 'resolved')
                     .sort((a, b) => (b.affected || 0) - (a.affected || 0))
                     .slice(0, 5);
@@ -2777,6 +2792,390 @@ const AdvancedDashboard = () => {
             </Card>
           </div>
         </TabsContent>
+
+        {/* Monitoring Tab */}
+        <TabsContent value="monitoring" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Satellite className="h-5 w-5 text-blue-600" />
+                  Real-time Monitoring
+                </CardTitle>
+                <CardDescription>
+                  Live disaster monitoring and early warning systems
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20">
+                      <div className="text-sm font-medium text-green-700 dark:text-green-300">Active Sensors</div>
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">247</div>
+                    </div>
+                    <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                      <div className="text-sm font-medium text-blue-700 dark:text-blue-300">Alerts Today</div>
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">12</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>System Status</span>
+                      <Badge variant="default" className="bg-green-500">Operational</Badge>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Last Update</span>
+                      <span>2 minutes ago</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-purple-600" />
+                  System Health
+                </CardTitle>
+                <CardDescription>
+                  Monitoring system performance and connectivity
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">API Response Time</span>
+                      <span className="text-sm font-medium">45ms</span>
+                    </div>
+                    <Progress value={95} className="h-2" />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Data Accuracy</span>
+                      <span className="text-sm font-medium">98.5%</span>
+                    </div>
+                    <Progress value={98} className="h-2" />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Uptime</span>
+                      <span className="text-sm font-medium">99.9%</span>
+                    </div>
+                    <Progress value={99} className="h-2" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Maps Tab */}
+        <TabsContent value="maps" className="space-y-6">
+          <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Map className="h-5 w-5 text-green-600" />
+                    Real-Time Disaster Map
+                  </CardTitle>
+                  <CardDescription>
+                    Live disaster events from Railway backend: Events, FEMA disasters, and NASA EONET data
+                  </CardDescription>
+                </div>
+                <Button
+                  onClick={async () => {
+                    setIsLoadingDisasterData(true);
+                    try {
+                      const backendHealthy = await apiService.healthCheck();
+                                              if (backendHealthy) {
+                          const [events, disasters, eonetEvents] = await Promise.all([
+                            apiService.getEvents(),
+                            apiService.getDisasters(),
+                            apiService.getEONETEvents()
+                          ]);
+
+                          const allDisasters = [
+                            ...(events || []),
+                            ...(disasters || []),
+                            ...(eonetEvents || [])
+                          ];
+
+                          const mappedDisasters: DisasterEvent[] = allDisasters.map((e: any, index: number) => ({
+                            id: e.id || `railway-${index}-${Math.random().toString(36).slice(2)}`,
+                            type: e.event_type || e.type || e.category || 'Disaster',
+                            title: e.name || e.title || e.description || 'Disaster Event',
+                            location: e.location || e.place || e.state || 'Unknown',
+                            coordinates: e.coordinates ? [e.coordinates.lat || e.coordinates[1], e.coordinates.lng || e.coordinates[0]] : 
+                                        e.geometry ? [e.geometry.coordinates[1], e.geometry.coordinates[0]] : [0, 0],
+                            severity: (e.severity || e.magnitude || 'Medium') as DisasterEvent['severity'],
+                            status: (e.status || 'Active') as DisasterEvent['status'],
+                            timestamp: new Date(e.updated_at || e.created_at || e.date || Date.now()),
+                            magnitude: e.magnitude || e.mag || 0,
+                            affected: e.affected_population || e.affected || 0,
+                            source: e.source || 'Railway Backend',
+                            description: e.description || e.title || 'Disaster event from Railway backend'
+                          }));
+                          setRealDisasters(mappedDisasters);
+                        toast.success('🚂 Map data refreshed from Railway backend', {
+                          icon: '⚡',
+                          style: { borderRadius: '10px', background: '#333', color: '#fff' },
+                        });
+                      } else {
+                        const disasterData = await fetchAllDisasterData();
+                        setRealDisasters(disasterData.disasters);
+                        toast.success('🔄 Map data refreshed from public APIs', {
+                          icon: '⚡',
+                          style: { borderRadius: '10px', background: '#333', color: '#fff' },
+                        });
+                      }
+                    } catch (error) {
+                      console.error('Error refreshing map data:', error);
+                      toast.error('⚠️ Failed to refresh map data', {
+                        icon: '⚠️',
+                        style: { borderRadius: '10px', background: '#dc2626', color: '#fff' },
+                      });
+                    } finally {
+                      setIsLoadingDisasterData(false);
+                    }
+                  }}
+                  disabled={isLoadingDisasterData}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoadingDisasterData ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <DisasterMap 
+                disasters={realDisasters.map((d, index) => ({
+                  id: index + 1,
+                  type: d.type,
+                  location: d.location,
+                  magnitude: d.magnitude || 0,
+                  severity: d.severity,
+                  status: d.status,
+                  timestamp: d.timestamp,
+                  affected: d.affected || 0,
+                  coordinates: d.coordinates
+                }))} 
+                advanced={true} 
+                height={600} 
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Alerts Tab */}
+        <TabsContent value="alerts" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bell className="h-5 w-5 text-red-600" />
+                      Real-Time Disaster Alerts
+                    </CardTitle>
+                    <CardDescription>
+                      Live alerts from Railway backend: Events, FEMA disasters, and NASA EONET data
+                    </CardDescription>
+                  </div>
+                  <Button
+                    onClick={async () => {
+                      setIsLoadingDisasterData(true);
+                      try {
+                        const backendHealthy = await apiService.healthCheck();
+                        if (backendHealthy) {
+                          const [events, disasters, eonetEvents] = await Promise.all([
+                            apiService.getEvents(),
+                            apiService.getDisasters(),
+                            apiService.getEONETEvents()
+                          ]);
+
+                          const allDisasters = [
+                            ...(events || []),
+                            ...(disasters || []),
+                            ...(eonetEvents || [])
+                          ];
+
+                          const mappedDisasters: DisasterEvent[] = allDisasters.map((e: any, index: number) => ({
+                            id: e.id || `railway-${index}-${Math.random().toString(36).slice(2)}`,
+                            type: e.event_type || e.type || e.category || 'Disaster',
+                            title: e.name || e.title || e.description || 'Disaster Event',
+                            location: e.location || e.place || e.state || 'Unknown',
+                            coordinates: e.coordinates ? [e.coordinates.lat || e.coordinates[1], e.coordinates.lng || e.coordinates[0]] : 
+                                        e.geometry ? [e.geometry.coordinates[1], e.geometry.coordinates[0]] : [0, 0],
+                            severity: (e.severity || e.magnitude || 'Medium') as DisasterEvent['severity'],
+                            status: (e.status || 'Active') as DisasterEvent['status'],
+                            timestamp: new Date(e.updated_at || e.created_at || e.date || Date.now()),
+                            magnitude: e.magnitude || e.mag || 0,
+                            affected: e.affected_population || e.affected || 0,
+                            source: e.source || 'Railway Backend',
+                            description: e.description || e.title || 'Disaster event from Railway backend'
+                          }));
+                          setRealDisasters(mappedDisasters);
+                          toast.success('🚂 Alerts refreshed from Railway backend', {
+                            icon: '⚡',
+                            style: { borderRadius: '10px', background: '#333', color: '#fff' },
+                          });
+                        } else {
+                          const disasterData = await fetchAllDisasterData();
+                          setRealDisasters(disasterData.disasters);
+                          toast.success('🔄 Alerts refreshed from public APIs', {
+                            icon: '⚡',
+                            style: { borderRadius: '10px', background: '#333', color: '#fff' },
+                          });
+                        }
+                      } catch (error) {
+                        console.error('Error refreshing alerts:', error);
+                        toast.error('⚠️ Failed to refresh alerts', {
+                          icon: '⚠️',
+                          style: { borderRadius: '10px', background: '#dc2626', color: '#fff' },
+                        });
+                      } finally {
+                        setIsLoadingDisasterData(false);
+                      }
+                    }}
+                    disabled={isLoadingDisasterData}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isLoadingDisasterData ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {realDisasters.slice(0, 5).map((disaster) => (
+                    <div 
+                      key={disaster.id}
+                      className={`p-4 rounded-lg border ${
+                        disaster.severity === 'Critical' ? 'border-red-200 bg-red-50 dark:bg-red-900/20' :
+                        disaster.severity === 'High' ? 'border-orange-200 bg-orange-50 dark:bg-orange-900/20' :
+                        disaster.severity === 'Medium' ? 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20' :
+                        'border-blue-200 bg-blue-50 dark:bg-blue-900/20'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertTriangle className={`h-4 w-4 ${
+                          disaster.severity === 'Critical' ? 'text-red-600' :
+                          disaster.severity === 'High' ? 'text-orange-600' :
+                          disaster.severity === 'Medium' ? 'text-yellow-600' :
+                          'text-blue-600'
+                        }`} />
+                        <span className={`font-medium ${
+                          disaster.severity === 'Critical' ? 'text-red-800 dark:text-red-200' :
+                          disaster.severity === 'High' ? 'text-orange-800 dark:text-orange-200' :
+                          disaster.severity === 'Medium' ? 'text-yellow-800 dark:text-yellow-200' :
+                          'text-blue-800 dark:text-blue-200'
+                        }`}>
+                          {disaster.severity} Risk Alert
+                        </span>
+                        <Badge variant="outline" className="ml-auto text-xs">
+                          {(disaster as any).source || 'Unknown'}
+                        </Badge>
+                      </div>
+                      <div className={`text-sm ${
+                        disaster.severity === 'Critical' ? 'text-red-700 dark:text-red-300' :
+                        disaster.severity === 'High' ? 'text-orange-700 dark:text-orange-300' :
+                        disaster.severity === 'Medium' ? 'text-yellow-700 dark:text-yellow-300' :
+                        'text-blue-700 dark:text-blue-300'
+                      }`}>
+                        {((disaster as any).title) || disaster.type} in {disaster.location}
+                      </div>
+                      <div className={`text-xs mt-1 ${
+                        disaster.severity === 'Critical' ? 'text-red-600 dark:text-red-400' :
+                        disaster.severity === 'High' ? 'text-orange-600 dark:text-orange-400' :
+                        disaster.severity === 'Medium' ? 'text-yellow-600 dark:text-yellow-400' :
+                        'text-blue-600 dark:text-blue-400'
+                      }`}>
+                        {(() => {
+                          const now = new Date();
+                          const diff = now.getTime() - disaster.timestamp.getTime();
+                          const hours = Math.floor(diff / (1000 * 60 * 60));
+                          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                          if (hours > 0) return `${hours}h ${minutes}m ago`;
+                          return `${minutes}m ago`;
+                        })()}
+                      </div>
+                    </div>
+                  ))}
+                  {realDisasters.length === 0 && (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      <Bell className="h-12 w-12 mx-auto mb-4" />
+                      <div className="text-lg font-medium">No Active Alerts</div>
+                      <div className="text-sm">All systems are operating normally</div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-xl`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  Alert Statistics
+                </CardTitle>
+                <CardDescription>
+                  Real-time alert metrics and response data
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20">
+                      <div className="text-sm font-medium text-red-700 dark:text-red-300">Critical</div>
+                      <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                        {realDisasters.filter(d => d.severity === 'Critical').length}
+                      </div>
+                    </div>
+                    <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
+                      <div className="text-sm font-medium text-yellow-700 dark:text-yellow-300">Warning</div>
+                      <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                        {realDisasters.filter(d => d.severity === 'High' || d.severity === 'Medium').length}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Total Alerts</span>
+                      <span>{realDisasters.length}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Data Sources</span>
+                      <span>{new Set(realDisasters.map(d => ((d as any).source) || 'Unknown')).size}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Last Update</span>
+                      <span>{(() => {
+                        const now = new Date();
+                        const latest = Math.max(...realDisasters.map(d => d.timestamp.getTime()));
+                        const diff = now.getTime() - latest;
+                        const minutes = Math.floor(diff / (1000 * 60));
+                        return `${minutes}m ago`;
+                      })()}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className="space-y-6">
+          <AdvancedCharts type="analytics" />
+        </TabsContent>
+
       </Tabs>
     </div>
   );

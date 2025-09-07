@@ -2,8 +2,8 @@
 export const environment = {
   // API Configuration
   api: {
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
-    socketURL: import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000',
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://web-production-47673.up.railway.app',
+    socketURL: import.meta.env.VITE_SOCKET_URL || 'https://web-production-47673.up.railway.app',
     timeout: 10000,
     retries: 3,
   },

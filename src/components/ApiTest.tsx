@@ -12,7 +12,7 @@ const ApiTest: React.FC = () => {
 
   useEffect(() => {
     // Get the API URL from environment
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://web-production-47673.up.railway.app';
     setApiUrl(baseUrl);
 
     // Test health endpoint

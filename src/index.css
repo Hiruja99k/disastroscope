@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom gradient utilities */
+.bg-gradient-radial {
+	background: radial-gradient(circle, var(--tw-gradient-stops));
+}
+
 /* Subtle animated gradient dots background */
 .bg-animated-minimal {
 	position: relative;
@@ -22,6 +27,35 @@
 @keyframes float-bg {
 	0% { transform: translate3d(0,0,0) scale(1); }
 	100% { transform: translate3d(2%, -2%, 0) scale(1.03); }
+}
+
+/* Futuristic scanning animations */
+@keyframes scan {
+	0% { transform: translateY(0); }
+	100% { transform: translateY(100vh); }
+}
+
+@keyframes scanVertical {
+	0% { transform: translateX(0); }
+	100% { transform: translateX(100vw); }
+}
+
+/* Fog drift animation */
+@keyframes fogDrift {
+	0% { transform: translate3d(0, 0, 0) scale(1); }
+	100% { transform: translate3d(2%, -1%, 0) scale(1.05); }
+}
+
+/* Smooth error message transitions */
+.error-message {
+	transition: all 0.3s ease-in-out;
+	opacity: 0;
+	transform: translateY(-10px);
+}
+
+.error-message.show {
+	opacity: 1;
+	transform: translateY(0);
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 

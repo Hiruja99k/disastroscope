@@ -1,0 +1,20 @@
+DESCRIPTION >
+    Tracking user behavior events on the website
+
+SCHEMA >
+    `event_id` String `json:$.event_id`,
+    `user_id` String `json:$.user_id`,
+    `session_id` String `json:$.session_id`,
+    `event_type` String `json:$.event_type`,
+    `page_url` String `json:$.page_url`,
+    `referrer` String `json:$.referrer`,
+    `timestamp` DateTime64(3) `json:$.timestamp`,
+    `device` String `json:$.device`,
+    `browser` String `json:$.browser`,
+    `os` String `json:$.os`,
+    `country` String `json:$.country`,
+    `city` String `json:$.city`,
+    `properties` String `json:$.properties`
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "timestamp, user_id, session_id, event_type"

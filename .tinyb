@@ -1,0 +1,14 @@
+{
+    "host": "https://api.tinybird.co",
+    "id": "67a64d1a-e7ef-4c00-9b48-3a0a5048db74",
+    "name": "DisastroScope",
+    "scope": "user",
+    "token": "p.eyJ1IjogIjY3YTY0ZDFhLWU3ZWYtNGMwMC05YjQ4LTNhMGE1MDQ4ZGI3NCIsICJpZCI6ICJmN2NmZDMwOS0wNDdhLTRhZWQtYmRlZi0yYzM5NWNhODU2NDQiLCAiaG9zdCI6ICJldV9zaGFyZWQifQ.deRf6iW9sqb6Ff89f3ujskCsN2xKIzFg4TwppADH1-8",
+    "tokens": {
+        "https://api.tinybird.co": "p.eyJ1IjogIjY3YTY0ZDFhLWU3ZWYtNGMwMC05YjQ4LTNhMGE1MDQ4ZGI3NCIsICJpZCI6ICJmN2NmZDMwOS0wNDdhLTRhZWQtYmRlZi0yYzM5NWNhODU2NDQiLCAiaG9zdCI6ICJldV9zaGFyZWQifQ.deRf6iW9sqb6Ff89f3ujskCsN2xKIzFg4TwppADH1-8"
+    },
+    "user_email": "alcatroz.workspace@gmail.com",
+    "user_id": "e737f139-2c77-4e1a-b699-9024784a030b",
+    "user_token": "p.eyJ1IjogImU3MzdmMTM5LTJjNzctNGUxYS1iNjk5LTkwMjQ3ODRhMDMwYiIsICJpZCI6ICI1YWY1NzgyMi1kYzlkLTRkYjAtYjViNS05MmM3NTI1M2M1OTYiLCAiaG9zdCI6ICJldV9zaGFyZWQifQ.ucfgObsSTUt88Yeui1tvKOTHrI_vfejAxy-WMLC-Up4",
+    "version": "0.0.1.dev295"
+}

@@ -16,6 +16,9 @@ import RealTimeBridge from "./components/RealTimeBridge";
 import WeatherExplorer from "./pages/WeatherExplorer";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PerformanceMonitor from "./components/PerformanceMonitor";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AuthPage from "./pages/AuthPage";
+import { AuthProvider } from "./contexts/EnhancedAuthContext";
 import { trackPageView } from "./utils/monitoring";
 import { Refine } from "@refinedev/core";
 import { dataProvider, liveProvider, notificationProvider } from "./lib/refine";
@@ -41,6 +44,7 @@ function PageViewTracker() {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
+      <AuthProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -71,14 +75,63 @@ const App = () => (
                   <Navigation />
 
                   <Routes>
+                    {/* Public Routes */}
                     <Route path="/" element={<Landing />} />
-                    <Route path="/predictions" element={<Predictions />} />
-                    <Route path="/weather" element={<WeatherExplorer />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/dashboard-simple" element={<SimpleDashboard />} />
-                    <Route path="/insights" element={<Insights />} />
                     <Route path="/about" element={<About />} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    
+                    {/* Auth Route - Only accessible when not authenticated */}
+                    <Route 
+                      path="/auth" 
+                      element={
+                        <ProtectedRoute requireAuth={false}>
+                          <AuthPage />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* Protected Routes - Require authentication */}
+                    <Route 
+                      path="/dashboard" 
+                      element={
+                        <ProtectedRoute>
+                          <Dashboard />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/dashboard-simple" 
+                      element={
+                        <ProtectedRoute>
+                          <SimpleDashboard />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/predictions" 
+                      element={
+                        <ProtectedRoute>
+                          <Predictions />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/weather" 
+                      element={
+                        <ProtectedRoute>
+                          <WeatherExplorer />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/insights" 
+                      element={
+                        <ProtectedRoute>
+                          <Insights />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* Catch-all route */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Refine>
@@ -86,6 +139,7 @@ const App = () => (
             );
           })()}
         </TooltipProvider>
+      </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );

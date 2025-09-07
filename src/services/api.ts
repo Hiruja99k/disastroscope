@@ -1,32 +1,22 @@
 import { io, Socket } from 'socket.io-client';
 
-// API Configuration - robust defaults: use Railway for any non-local host
-const inferredBase = (() => {
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname.toLowerCase();
-    const isLocal = host === 'localhost' || host === '127.0.0.1';
-    if (!isLocal) {
-      // Default to your Railway backend when running on Vercel or any non-local domain
-      return 'https://web-production-47673.up.railway.app';
-    }
-    // For local development, always use Railway since local backend isn't running
-    return 'https://web-production-47673.up.railway.app';
-  }
-  return 'https://web-production-47673.up.railway.app';
-})();
+// API Configuration - FORCE Railway backend URL
+const RAILWAY_BACKEND_URL = 'https://web-production-47673.up.railway.app';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || inferredBase).replace(/\/$/, '');
-const SOCKET_URL = (import.meta.env.VITE_SOCKET_URL || API_BASE_URL).replace(/\/$/, '');
+// Always use Railway backend - override any environment variables
+const API_BASE_URL = RAILWAY_BACKEND_URL;
+const SOCKET_URL = RAILWAY_BACKEND_URL;
 const OPENWEATHER_KEY = (import.meta.env.VITE_OPENWEATHER_API_KEY || '').trim();
 
 // Debug logging to see which URLs are being used
-console.log('🔧 API Configuration:', {
+console.log('🔧 API Configuration (FORCED TO RAILWAY):', {
   VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
   VITE_SOCKET_URL: import.meta.env.VITE_SOCKET_URL,
   API_BASE_URL,
   SOCKET_URL,
   NODE_ENV: import.meta.env.NODE_ENV,
-  MODE: import.meta.env.MODE
+  MODE: import.meta.env.MODE,
+  FORCED_RAILWAY_URL: RAILWAY_BACKEND_URL
 });
 
 // Types

@@ -1,0 +1,28 @@
+DESCRIPTION >
+    Analyze page performance and popularity
+
+NODE page_performance_node
+SQL >
+    %
+    SELECT 
+        page_url,
+        count() as view_count,
+        countIf(event_type = 'click') as click_count,
+        countDistinct(user_id) as unique_visitors,
+        countDistinct(session_id) as unique_sessions,
+        avg(toFloat64(JSONExtractFloat(properties, 'time_on_page'))) as avg_time_on_page_seconds
+    FROM website_events
+    WHERE 1=1
+    {% if defined(start_date) %}
+        AND timestamp >= {{DateTime(start_date, '2023-01-01 00:00:00')}}
+    {% end %}
+    {% if defined(end_date) %}
+        AND timestamp <= {{DateTime(end_date, '2023-12-31 23:59:59')}}
+    {% end %}
+    {% if defined(country) %}
+        AND country = {{String(country, '')}}
+    {% end %}
+    GROUP BY page_url
+    ORDER BY view_count DESC
+
+TYPE endpoint
