@@ -15,7 +15,7 @@ import {
   sendEmailVerification,
   deleteUser
 } from 'firebase/auth';
-import { auth } from '../lib/firebase.js';
+import { auth } from '@/lib/firebase.js';
 import { tinybirdService } from '../services/tinybirdService';
 
 // Create Auth Context
