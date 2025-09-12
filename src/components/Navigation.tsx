@@ -13,7 +13,7 @@ export default function Navigation() {
     { name: 'Weather', href: '/weather' },
     { name: 'Predictions', href: '/predictions' },
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Insights', href: '/insights' },
+    { name: 'Disaster Management', href: '/disaster-management' },
     { name: 'About', href: '/about' },
   ];
 

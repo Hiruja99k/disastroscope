@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import DisasterChart from '@/components/charts/DisasterChart';
 import { BarChart, LineChart, PieChart, TrendingUp, TrendingDown, Activity, AlertTriangle, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-export default function Insights() {
+export default function DisasterManagement() {
   const { toast } = useToast();
 
   const handleExportReport = () => {

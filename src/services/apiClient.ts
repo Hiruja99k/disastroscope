@@ -1,6 +1,9 @@
 import { environment } from '@/config/environment';
 import { trackApiCall, trackError } from '@/utils/monitoring';
 
+// Force Railway backend URL for disaster management
+const RAILWAY_BACKEND_URL = 'https://web-production-47673.up.railway.app';
+
 // API Response types
 export interface ApiResponse<T = any> {
   data: T;
@@ -36,7 +39,8 @@ export class ApiClient {
   private timeout: number;
 
   constructor(config: { baseURL?: string; timeout?: number } = {}) {
-    this.baseURL = config.baseURL || environment.api.baseURL;
+    // Force Railway backend URL for disaster management
+    this.baseURL = config.baseURL || RAILWAY_BACKEND_URL;
     this.timeout = config.timeout || environment.api.timeout;
   }
 

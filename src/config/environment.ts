@@ -14,6 +14,7 @@ export const environment = {
     enableAI: import.meta.env.VITE_ENABLE_AI !== 'false',
     enableChatbot: import.meta.env.VITE_ENABLE_CHATBOT !== 'false',
     enableMaps: import.meta.env.VITE_ENABLE_MAPS !== 'false',
+    forceMockDisasters: (import.meta.env.VITE_FORCE_MOCK_DISASTERS === 'true') || import.meta.env.DEV,
   },
   
   // External Services

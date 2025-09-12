@@ -9,7 +9,7 @@ import Landing from "./pages/EnhancedLanding";
 import Predictions from "./pages/EnhancedPredictions";
 import Dashboard from "./pages/ProDashboard";
 import SimpleDashboard from "./pages/Dashboard";
-import Insights from "./pages/Insights";
+import DisasterManagement from "./pages/DisasterManagement";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import RealTimeBridge from "./components/RealTimeBridge";
@@ -21,6 +21,7 @@ import AuthPage from "./pages/AuthPage";
 import { AuthProvider } from "./contexts/EnhancedAuthContext";
 import { trackPageView } from "./utils/monitoring";
 import { Refine } from "@refinedev/core";
+import CursorFollower from "./components/CursorFollower";
 import { dataProvider, liveProvider, notificationProvider } from "./lib/refine";
 
 
@@ -48,6 +49,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <CursorFollower />
           {(() => {
             const useHash =
               import.meta.env.VITE_HASH_ROUTER === 'true' ||
@@ -67,6 +69,7 @@ const App = () => (
                     { name: 'predictions' },
                     { name: 'sensors' },
                     { name: 'reports' },
+                    { name: 'disaster-management/disasters' },
                   ]}
                 >
                   <PerformanceMonitor />
@@ -123,10 +126,10 @@ const App = () => (
                       } 
                     />
                     <Route 
-                      path="/insights" 
+                      path="/disaster-management" 
                       element={
                         <ProtectedRoute>
-                          <Insights />
+                          <DisasterManagement />
                         </ProtectedRoute>
                       } 
                     />
